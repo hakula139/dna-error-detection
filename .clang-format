@@ -1,0 +1,5 @@
+Language: Cpp
+BasedOnStyle: Google
+
+PenaltyBreakAssignment: 60
+PenaltyBreakBeforeFirstCallParameter: 0
