@@ -1,4 +1,4 @@
-TARGET    := solution.out
+TARGET    := solution
 
 BIN_DIR   := bin
 BUILD_DIR := build
