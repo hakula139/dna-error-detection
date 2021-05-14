@@ -83,6 +83,10 @@ void Dna::FindDelta(const Dna& sv, size_t chunk_size) {
       auto n = min(value_sv.length() - j, chunk_size);
       FindDeltaChunk(key, &value_ref, i, m, &value_sv, j, n);
       i += m, j += n;
+
+      logger.Info(
+          "Dna::FindDelta",
+          key + ": " + to_string(i) + " / " + to_string(value_ref.length()));
     }
   }
 }
@@ -140,9 +144,10 @@ void Dna::FindDeltaChunk(
 
       auto end = mid;
       auto snake = 0;
-      for (; end.x_ < m && end.y_ < n &&
-             (*ref_p)[ref_start + end.x_] == (*sv_p)[sv_start + end.y_];
-           ++end.x_, ++end.y_, ++snake) {
+      for (; end.x_ < m && end.y_ < n; ++end.x_, ++end.y_, ++snake) {
+        auto ref_char = (*ref_p)[ref_start + end.x_];
+        auto sv_char = (*sv_p)[sv_start + end.y_];
+        if (ref_char != sv_char && ref_char != 'N' && sv_char != 'N') break;
       }
 
       end_xs[k + padding] = end.x_;
@@ -175,21 +180,27 @@ void Dna::FindDeltaChunk(
     auto mid_x = from_up ? start.x_ : start.x_ + 1;
     auto mid = Point(mid_x, mid_x - k);
 
-    logger.Debug(
-        "Dna::FindDeltaChunk",
-        start.Stringify() + " " + mid.Stringify() + " " + end.Stringify());
+    // logger.Debug(
+    //     "Dna::FindDeltaChunk",
+    //     start.Stringify() + " " + mid.Stringify() + " " + end.Stringify());
 
     if (mid != end || from_up != prev_from_up) {
       if (prev_from_up && end.y_ < prev_end.y_) {
         ins_delta_.Set(key, {ref_start + end.y_, ref_start + prev_end.y_});
+        prev_end = mid;
       } else if (!prev_from_up && end.x_ < prev_end.x_) {
         del_delta_.Set(key, {ref_start + end.x_, ref_start + prev_end.x_});
+        prev_end = mid;
       }
-      prev_end = mid;
     }
 
     prev_from_up = from_up;
     cur = start;
+  }
+  if (prev_from_up && prev_end.y_) {
+    ins_delta_.Set(key, {ref_start, ref_start + prev_end.y_});
+  } else if (!prev_from_up && prev_end.x_) {
+    del_delta_.Set(key, {ref_start, ref_start + prev_end.x_});
   }
 }
 
