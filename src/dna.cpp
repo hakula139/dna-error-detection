@@ -14,6 +14,7 @@ using std::get;
 using std::getline;
 using std::ifstream;
 using std::min;
+using std::ofstream;
 using std::string;
 using std::to_string;
 using std::tuple;
@@ -21,7 +22,7 @@ using std::unordered_map;
 using std::vector;
 
 struct Point {
-  Point(size_t x, size_t y) : x_(x), y_(y) {}
+  Point(int x, int y) : x_(x), y_(y) {}
   string Stringify() const {
     return "(" + to_string(x_) + ", " + to_string(y_) + ")";
   }
@@ -30,8 +31,8 @@ struct Point {
   }
   bool operator!=(const Point& that) const { return !(*this == that); }
 
-  size_t x_ = 0;
-  size_t y_ = 0;
+  int x_ = 0;
+  int y_ = 0;
 };
 
 extern Logger logger;
@@ -116,13 +117,13 @@ void Dna::FindDeltaChunk(
    * Otherwise, we choose to start from the adjacent k-line which has a
    * greater x value.
    */
-  auto is_from_up = [](const vector<int>& end_xs, int k, int step) {
+  auto is_from_up = [=](const vector<int>& end_xs, int k, int step) {
     if (k == -step) return true;
     if (k == step) return false;
-    return end_xs[k + 1] > end_xs[k - 1];
+    return end_xs[k + 1 + padding] > end_xs[k - 1 + padding];
   };
 
-  for (auto step = 0ul; step <= max_steps; ++step) {
+  for (auto step = 0; step <= max_steps; ++step) {
     /**
      * At each step, we can only reach the k-line ranged from -step to step.
      * Notice that we can only reach odd (even) k-lines after odd (even) steps,
@@ -131,7 +132,7 @@ void Dna::FindDeltaChunk(
     for (auto k = -step; k <= step; k += 2) {
       auto from_up = is_from_up(end_xs, k, step);
       auto prev_k = from_up ? k + 1 : k - 1;
-      auto start_x = end_xs[prev_k];
+      auto start_x = end_xs[prev_k + padding];
       auto start = Point(start_x, start_x - prev_k);
 
       auto mid_x = from_up ? start.x_ : start.x_ + 1;
@@ -139,12 +140,13 @@ void Dna::FindDeltaChunk(
 
       auto end = mid;
       auto snake = 0;
-      for (; end.x_ < m && end.y_ < n && (*ref_p)[end.x_] == (*sv_p)[end.y_];
+      for (; end.x_ < m && end.y_ < n &&
+             (*ref_p)[ref_start + end.x_] == (*sv_p)[sv_start + end.y_];
            ++end.x_, ++end.y_, ++snake) {
       }
 
       end_xs[k + padding] = end.x_;
-      if (end.x_ == m && end.y_ == n) {
+      if (end.x_ >= m && end.y_ >= n) {
         solution_found = true;
         break;
       }
@@ -154,7 +156,7 @@ void Dna::FindDeltaChunk(
   }
 
   auto prev_from_up = false;
-  auto prev_end = Point{m, n};
+  auto prev_end = Point{static_cast<int>(m), static_cast<int>(n)};
   for (auto cur = prev_end; cur.x_ > 0 || cur.y_ > 0;) {
     end_xs = end_xss.back();
     end_xss.pop_back();
@@ -162,12 +164,12 @@ void Dna::FindDeltaChunk(
 
     auto k = cur.x_ - cur.y_;
 
-    auto end_x = end_xs[k];
+    auto end_x = end_xs[k + padding];
     auto end = Point(end_x, end_x - k);
 
     auto from_up = is_from_up(end_xs, k, step);
     auto prev_k = from_up ? k + 1 : k - 1;
-    auto start_x = end_xs[prev_k];
+    auto start_x = end_xs[prev_k + padding];
     auto start = Point(start_x, start_x - prev_k);
 
     auto mid_x = from_up ? start.x_ : start.x_ + 1;
@@ -178,20 +180,30 @@ void Dna::FindDeltaChunk(
         start.Stringify() + " " + mid.Stringify() + " " + end.Stringify());
 
     if (mid != end || from_up != prev_from_up) {
-      if (prev_from_up) {
+      if (prev_from_up && end.y_ < prev_end.y_) {
         ins_delta_.Set(key, {ref_start + end.y_, ref_start + prev_end.y_});
-      } else {
+      } else if (!prev_from_up && end.x_ < prev_end.x_) {
         del_delta_.Set(key, {ref_start + end.x_, ref_start + prev_end.x_});
       }
       prev_end = mid;
     }
 
+    prev_from_up = from_up;
     cur = start;
   }
 }
 
 bool Dna::PrintDelta(const string& filename) const {
-  return ins_delta_.Print(filename) && del_delta_.Print(filename) &&
-         dup_delta_.Print(filename) && inv_delta_.Print(filename) &&
-         tra_delta_.Print(filename);
+  ofstream out_file(filename);
+  if (!out_file) {
+    logger.Error("Dna::PrintDelta", "output file " + filename + " not found\n");
+    return false;
+  }
+
+  ins_delta_.Print(out_file);
+  del_delta_.Print(out_file);
+  dup_delta_.Print(out_file);
+  inv_delta_.Print(out_file);
+  tra_delta_.Print(out_file);
+  return true;
 }

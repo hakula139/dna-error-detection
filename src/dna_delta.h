@@ -1,6 +1,7 @@
 #ifndef SRC_DNA_DELTA_H_
 #define SRC_DNA_DELTA_H_
 
+#include <fstream>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -15,7 +16,7 @@ struct Range {
 class DnaDeltaBase {
  public:
   explicit DnaDeltaBase(const std::string& type) : type_(type) {}
-  virtual bool Print(const std::string& filename) const = 0;
+  virtual void Print(std::ofstream& out_file) const = 0;
 
  protected:
   std::string type_;
@@ -24,7 +25,7 @@ class DnaDeltaBase {
 class DnaDelta : public DnaDeltaBase {
  public:
   explicit DnaDelta(const std::string& type) : DnaDeltaBase{type} {}
-  bool Print(const std::string& filename) const override;
+  void Print(std::ofstream& out_file) const override;
   void Set(const std::string& key, const Range& value);
 
  private:
@@ -34,7 +35,7 @@ class DnaDelta : public DnaDeltaBase {
 class DnaMultiDelta : public DnaDeltaBase {
  public:
   explicit DnaMultiDelta(const std::string& type) : DnaDeltaBase{type} {}
-  bool Print(const std::string& filename) const override;
+  void Print(std::ofstream& out_file) const override;
   void Set(
       const std::string& key1,
       const Range& value1,

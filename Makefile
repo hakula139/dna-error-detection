@@ -11,8 +11,8 @@ DEPS := $(OBJS:.o=.d)
 INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-CXX       := g++
-CXXFLAGS  := -g -Wall -O3 -std=c++17 $(INC_FLAGS) -MMD -MP
+CXX       := clang++
+CXXFLAGS  := -g -Wall -O0 -std=c++17 $(INC_FLAGS) -MMD -MP
 MKDIR     := mkdir -p
 RM        := rm -rf
 
