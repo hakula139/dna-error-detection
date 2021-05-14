@@ -1,5 +1,6 @@
 #include "config.h"
 
-Config config = {
+Config config{
     .debug = true,
+    .path = "tests/tiny_demo/",
 };

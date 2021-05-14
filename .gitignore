@@ -4,7 +4,7 @@
 .vscode/
 bin/
 build/
-tests/demo/
+tests/*demo/
 
 ## Cpp
 
