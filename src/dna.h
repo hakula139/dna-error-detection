@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include "dna_delta.h"
+#include "point.h"
 
 class Dna {
  public:
@@ -25,14 +26,15 @@ class Dna {
   DnaDelta inv_delta_{"INV"};
   DnaMultiDelta tra_delta_{"TRA"};
 
-  void FindDeltaChunk(
+  Point FindDeltaChunk(
       const std::string& key,
       const std::string* ref_p,
       size_t ref_start,
       size_t m,
       const std::string* sv_p,
       size_t sv_start,
-      size_t n);
+      size_t n,
+      bool reach_end = false);
 };
 
 #endif  // SRC_DNA_H_

@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "point.h"
+#include "utils/config.h"
 #include "utils/logger.h"
 
 using std::get;
@@ -21,19 +23,7 @@ using std::tuple;
 using std::unordered_map;
 using std::vector;
 
-struct Point {
-  Point(int x, int y) : x_(x), y_(y) {}
-  string Stringify() const {
-    return "(" + to_string(x_) + ", " + to_string(y_) + ")";
-  }
-  bool operator==(const Point& that) const {
-    return x_ == that.x_ && y_ == that.y_;
-  }
-  bool operator!=(const Point& that) const { return !(*this == that); }
-
-  int x_ = 0;
-  int y_ = 0;
-};
+extern Config config;
 
 extern Logger logger;
 
@@ -81,8 +71,11 @@ void Dna::FindDelta(const Dna& sv, size_t chunk_size) {
          i < value_ref.length() || j < value_sv.length();) {
       auto m = min(value_ref.length() - i, chunk_size);
       auto n = min(value_sv.length() - j, chunk_size);
-      FindDeltaChunk(key, &value_ref, i, m, &value_sv, j, n);
-      i += m, j += n;
+      auto reach_end = !m || !n;
+      auto next_chunk_start = FindDeltaChunk(
+          key, &value_ref, i, m, &value_sv, j, n, reach_end);
+      i = next_chunk_start.x_;
+      j = next_chunk_start.y_;
 
       logger.Info(
           "Dna::FindDelta",
@@ -92,14 +85,15 @@ void Dna::FindDelta(const Dna& sv, size_t chunk_size) {
 }
 
 // Myers' diff algorithm implementation
-void Dna::FindDeltaChunk(
+Point Dna::FindDeltaChunk(
     const string& key,
     const string* ref_p,
     size_t ref_start,
     size_t m,
     const string* sv_p,
     size_t sv_start,
-    size_t n) {
+    size_t n,
+    bool reach_end) {
   auto max_steps = m + n;
   auto padding = max_steps;
   /**
@@ -114,6 +108,7 @@ void Dna::FindDeltaChunk(
   // end_xss[step] stores end_xs at each step.
   auto end_xss = vector<vector<int>>{};
   auto solution_found = false;
+  auto next_chunk_start = Point(ref_start + m, sv_start + n);
 
   /**
    * If k == -step, we must come from k-line of (k + 1).
@@ -149,10 +144,13 @@ void Dna::FindDeltaChunk(
         auto sv_char = (*sv_p)[sv_start + end.y_];
         if (ref_char != sv_char && ref_char != 'N' && sv_char != 'N') break;
       }
+      if (snake < config.tolerance) end = mid;
 
       end_xs[k + padding] = end.x_;
-      if (end.x_ >= m && end.y_ >= n) {
+
+      if (reach_end ? end.x_ >= m && end.y_ >= n : end.x_ >= m || end.y_ >= n) {
         solution_found = true;
+        next_chunk_start = Point(ref_start + end.x_, sv_start + end.y_);
         break;
       }
     }
@@ -202,6 +200,8 @@ void Dna::FindDeltaChunk(
   } else if (!prev_from_up && prev_end.x_) {
     del_delta_.Set(key, {ref_start, ref_start + prev_end.x_});
   }
+
+  return next_chunk_start;
 }
 
 bool Dna::PrintDelta(const string& filename) const {

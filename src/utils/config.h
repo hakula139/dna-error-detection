@@ -6,6 +6,7 @@
 struct Config {
   bool debug;
   std::string path;
+  size_t tolerance;
 };
 
 #endif  // SRC_UTILS_CONFIG_H_
