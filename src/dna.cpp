@@ -293,11 +293,36 @@ void Dna::FindInvDeltas() {
   }
 }
 
+void Dna::FindTraDeltas() {
+  for (auto&& [key_ins, value_ins] : ins_deltas_.data_) {
+    for (auto range_i = value_ins.begin(); range_i < value_ins.end();) {
+      auto erased = false;
+      for (auto&& [key_del, value_del] : del_deltas_.data_) {
+        for (auto range_j = value_del.begin(); range_j < value_del.end();
+             ++range_j) {
+          if (QuickCompare(*range_i, *range_j) &&
+              QuickCompare(range_i->value_, range_j->value_) &&
+              FuzzyCompare(range_i->value_, range_j->value_)) {
+            tra_deltas_.Set(key_ins, *range_i, key_del, *range_j);
+            range_i = value_ins.erase(range_i);
+            range_j = value_del.erase(range_j);
+            erased = true;
+            break;
+          }
+        }
+        if (erased) break;
+      }
+      if (!erased) ++range_i;
+    }
+  }
+}
+
 void Dna::ProcessDeltas() {
   ins_deltas_.Combine();
   del_deltas_.Combine();
   FindDupDeltas();
   FindInvDeltas();
+  FindTraDeltas();
 }
 
 bool Dna::PrintDeltas(const string& filename) const {

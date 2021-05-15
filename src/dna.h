@@ -18,6 +18,7 @@ class Dna {
   void FindDeltas(const Dna& sv, size_t chunk_size = 10000);
   void FindDupDeltas();
   void FindInvDeltas();
+  void FindTraDeltas();
   void ProcessDeltas();
   bool PrintDeltas(const std::string& filename) const;
 
