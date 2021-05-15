@@ -74,8 +74,8 @@ void Dna::FindDeltas(const Dna& sv, size_t chunk_size) {
       auto reach_end = m < chunk_size || n < chunk_size;
       auto next_chunk_start = FindDeltasChunk(
           key, &value_ref, i, m, &value_sv, j, n, reach_end);
-      i = next_chunk_start.x_;
-      j = next_chunk_start.y_;
+      i += next_chunk_start.x_;
+      j += next_chunk_start.y_;
 
       logger.Info(
           "Dna::FindDeltas",
@@ -108,7 +108,7 @@ Point Dna::FindDeltasChunk(
   // end_xss[step] stores end_xs at each step.
   auto end_xss = vector<vector<int>>{};
   auto solution_found = false;
-  auto next_chunk_start = Point(ref_start + m, sv_start + n);
+  auto next_chunk_start = Point(m, n);
 
   /**
    * If k == -step, we must come from k-line of (k + 1).
@@ -150,7 +150,7 @@ Point Dna::FindDeltasChunk(
 
       if (reach_end ? end.x_ >= m && end.y_ >= n : end.x_ >= m || end.y_ >= n) {
         solution_found = true;
-        next_chunk_start = Point(ref_start + end.x_, sv_start + end.y_);
+        next_chunk_start = Point(end.x_, end.y_);
         break;
       }
     }
@@ -160,8 +160,7 @@ Point Dna::FindDeltasChunk(
 
   auto prev_from_up = false;
   auto prev_end = Point();
-  for (auto cur = Point(static_cast<int>(m), static_cast<int>(n));
-       cur.x_ > 0 || cur.y_ > 0;) {
+  for (auto cur = next_chunk_start; cur.x_ > 0 || cur.y_ > 0;) {
     end_xs = end_xss.back();
     end_xss.pop_back();
     auto step = end_xss.size();
@@ -182,11 +181,12 @@ Point Dna::FindDeltasChunk(
     // logger.Debug(
     //     "Dna::FindDeltasChunk",
     //     start.Stringify() + " " + mid.Stringify() + " " + end.Stringify());
+    assert(mid.x_ <= end.x_ && mid.y_ <= end.y_);
 
     auto reach_start = start.x_ <= 0 && start.y_ <= 0;
 
     // If we meet a snake or the direction is changed, we store previous deltas.
-    if (mid != end || from_up != prev_from_up) {
+    if (mid != end || (from_up != prev_from_up)) {
       if (prev_from_up && end.y_ < prev_end.y_) {
         ins_delta_.Set(key, {ref_start + end.y_, ref_start + prev_end.y_});
       } else if (!prev_from_up && end.x_ < prev_end.x_) {
