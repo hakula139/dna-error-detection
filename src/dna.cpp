@@ -254,6 +254,21 @@ void Dna::FindDupDeltas() {
 }
 
 void Dna::FindInvDeltas() {
+  const unordered_map<char, char> dna_base_pair{
+      {'A', 'T'},
+      {'T', 'A'},
+      {'C', 'G'},
+      {'G', 'C'},
+      {'N', 'N'},
+  };
+  auto invert_chain = [&](const string& chain) {
+    string inverted_chain;
+    for (auto i = chain.rbegin(); i < chain.rend(); ++i) {
+      inverted_chain += dna_base_pair.at(*i);
+    }
+    return inverted_chain;
+  };
+
   for (auto&& [key, value_ins] : ins_deltas_.data_) {
     for (auto range_i = value_ins.begin(); range_i < value_ins.end();) {
       auto erased = false;
@@ -264,7 +279,7 @@ void Dna::FindInvDeltas() {
              ++range_j) {
           if (range_i->start_ == range_j->end_ &&
               QuickCompare(*range_i, *range_j) &&
-              FuzzyCompare(range_i->value_, range_j->value_)) {
+              FuzzyCompare(range_i->value_, invert_chain(range_j->value_))) {
             inv_deltas_.Set(key, *range_j);
             range_i = value_ins.erase(range_i);
             range_j = value_del.erase(range_j);
