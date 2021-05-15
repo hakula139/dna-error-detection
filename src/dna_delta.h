@@ -37,9 +37,9 @@ class DnaMultiDelta : public DnaDeltaBase {
   void Print(std::ofstream& out_file) const override;
   void Set(
       const std::string& key1,
-      const Range& value1,
+      const Range& range1,
       const std::string& key2,
-      const Range& value2);
+      const Range& range2);
 
  private:
   struct PairHash {
