@@ -158,7 +158,7 @@ Point Dna::FindDeltasChunk(
     if (solution_found) break;
   }
 
-  auto prev_from_up = false;
+  auto prev_from_up = -1;
   auto prev_end = Point();
   for (auto cur = next_chunk_start; cur.x_ > 0 || cur.y_ > 0;) {
     end_xs = end_xss.back();
@@ -183,11 +183,9 @@ Point Dna::FindDeltasChunk(
     //     start.Stringify() + " " + mid.Stringify() + " " + end.Stringify());
     assert(mid.x_ <= end.x_ && mid.y_ <= end.y_);
 
-    auto reach_start = start.x_ <= 0 && start.y_ <= 0;
-
     // If we meet a snake or the direction is changed, we store previous deltas.
-    if (mid != end || (from_up != prev_from_up)) {
-      if (prev_from_up && end.y_ < prev_end.y_) {
+    if (mid != end || from_up != prev_from_up) {
+      if (prev_from_up == 1 && end.y_ < prev_end.y_) {
         ins_delta_.Set(key, {ref_start + end.y_, ref_start + prev_end.y_});
       } else if (!prev_from_up && end.x_ < prev_end.x_) {
         del_delta_.Set(key, {ref_start + end.x_, ref_start + prev_end.x_});
@@ -197,18 +195,19 @@ Point Dna::FindDeltasChunk(
 
     // If we meet the start point, we should store all unsaved deltas before the
     // loop terminates.
-    if (reach_start && prev_end != Point()) {
+    auto reach_start = start.x_ <= 0 && start.y_ <= 0;
+    if (reach_start && prev_end != Point() && end != Point()) {
       // The unsaved deltas must have the same type as current delta, because
       // the direction must be unchanged. Otherwise, it will be handled by
       // previous procedures.
-      if (prev_from_up) {
+      if (from_up) {
         ins_delta_.Set(key, {ref_start, ref_start + prev_end.y_});
       } else {
         del_delta_.Set(key, {ref_start, ref_start + prev_end.x_});
       }
     }
 
-    prev_from_up = from_up;
+    prev_from_up = mid == end ? from_up : -1;
     cur = start;
   }
 
