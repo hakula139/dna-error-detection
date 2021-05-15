@@ -5,6 +5,7 @@
 
 class Logger {
  public:
+  void Trace(const std::string& context, const std::string& message);
   void Debug(const std::string& context, const std::string& message);
   void Info(const std::string& context, const std::string& message);
   void Warn(const std::string& context, const std::string& message);

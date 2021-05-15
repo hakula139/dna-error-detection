@@ -10,6 +10,13 @@ using std::string;
 
 extern Config config;
 
+void Logger::Trace(const string& context, const string& message) {
+  if (config.log_level <= Config::Level::TRACE) {
+    printf("[TRACE] ");
+    Log(context, message);
+  }
+}
+
 void Logger::Debug(const string& context, const string& message) {
   if (config.log_level <= Config::Level::DEBUG) {
     printf("[DEBUG] ");

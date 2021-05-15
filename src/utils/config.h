@@ -5,16 +5,18 @@
 
 struct Config {
   enum Level {
-    DEBUG = 0,
-    INFO = 1,
-    WARN = 2,
-    ERROR = 3,
-    FATAL = 4,
+    TRACE,
+    DEBUG,
+    INFO,
+    WARN,
+    ERROR,
+    FATAL,
   };
 
   int log_level;
   std::string path;
   size_t tolerance;
+  size_t min_length;
   double fuzzy_rate;
 };
 

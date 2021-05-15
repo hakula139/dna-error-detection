@@ -178,9 +178,9 @@ Point Dna::FindDeltasChunk(
     auto mid_x = from_up ? start.x_ : start.x_ + 1;
     auto mid = Point(mid_x, mid_x - k);
 
-    // logger.Debug(
-    //     "Dna::FindDeltasChunk",
-    //     start.Stringify() + " " + mid.Stringify() + " " + end.Stringify());
+    logger.Trace(
+        "Dna::FindDeltasChunk",
+        start.Stringify() + " " + mid.Stringify() + " " + end.Stringify());
     assert(mid.x_ <= end.x_ && mid.y_ <= end.y_);
 
     auto insert_delta = [&](const Point& start, const Point& end) {
