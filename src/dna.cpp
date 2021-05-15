@@ -14,7 +14,6 @@
 #include "utils/utils.h"
 
 using std::get;
-using std::getline;
 using std::ifstream;
 using std::min;
 using std::ofstream;
@@ -34,9 +33,10 @@ bool Dna::Import(const string& filename) {
     return false;
   }
 
-  for (string key; getline(in_file, key);) {
-    string value;
-    getline(in_file, value);
+  while (!in_file.eof()) {
+    string key, value;
+    in_file >> key >> value;
+    if (!key.length()) break;
     ImportEntry(key.substr(1), value);
   }
 
