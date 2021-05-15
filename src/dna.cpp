@@ -214,6 +214,11 @@ Point Dna::FindDeltasChunk(
   return next_chunk_start;
 }
 
+void Dna::ProcessDeltas() {
+  ins_delta_.Combine();
+  del_delta_.Combine();
+}
+
 bool Dna::PrintDeltas(const string& filename) const {
   ofstream out_file(filename);
   if (!out_file) {

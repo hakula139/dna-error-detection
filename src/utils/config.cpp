@@ -2,6 +2,6 @@
 
 Config config{
     .debug = true,
-    .path = "tests/tiny_demo/",
+    .path = "tests/demo/",
     .tolerance = 20,
 };

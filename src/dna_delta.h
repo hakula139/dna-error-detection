@@ -27,6 +27,7 @@ class DnaDelta : public DnaDeltaBase {
   explicit DnaDelta(const std::string& type) : DnaDeltaBase{type} {}
   void Print(std::ofstream& out_file) const override;
   void Set(const std::string& key, const Range& value);
+  void Combine();
 
  private:
   std::unordered_map<std::string, std::vector<Range>> data_;

@@ -1,6 +1,7 @@
 #include "dna_delta.h"
 
 #include <fstream>
+#include <iterator>
 #include <string>
 #include <utility>
 
@@ -8,6 +9,7 @@
 
 using std::make_pair;
 using std::ofstream;
+using std::prev;
 using std::string;
 using std::to_string;
 
@@ -37,6 +39,22 @@ void DnaDelta::Set(const string& key, const Range& value) {
   data_[key].push_back(value);
   logger.Debug(
       "DnaDelta::Set", "Saved: " + type_ + " " + Stringify(key, value));
+}
+
+void DnaDelta::Combine() {
+  if (type_ == "INS" || type_ == "DEL") {
+    for (auto&& [key, value] : data_) {
+      if (!value.size()) continue;
+      for (auto range_i = value.begin() + 1; range_i < value.end();) {
+        if (range_i->start_ == prev(range_i)->start_) {
+          prev(range_i)->end_ += range_i->end_ - range_i->start_;
+          range_i = value.erase(range_i);
+        } else {
+          ++range_i;
+        }
+      }
+    }
+  }
 }
 
 void DnaMultiDelta::Print(ofstream& out_file) const {
