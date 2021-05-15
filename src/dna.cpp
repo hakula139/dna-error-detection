@@ -186,9 +186,9 @@ Point Dna::FindDeltasChunk(
     // If we meet a snake or the direction is changed, we store previous deltas.
     if (mid != end || from_up != prev_from_up) {
       if (prev_from_up == 1 && end.y_ < prev_end.y_) {
-        ins_delta_.Set(key, {ref_start + end.y_, ref_start + prev_end.y_});
+        ins_deltas_.Set(key, {ref_start + end.y_, ref_start + prev_end.y_});
       } else if (!prev_from_up && end.x_ < prev_end.x_) {
-        del_delta_.Set(key, {ref_start + end.x_, ref_start + prev_end.x_});
+        del_deltas_.Set(key, {ref_start + end.x_, ref_start + prev_end.x_});
       }
       prev_end = mid;
     }
@@ -201,9 +201,9 @@ Point Dna::FindDeltasChunk(
       // the direction must be unchanged. Otherwise, it will be handled by
       // previous procedures.
       if (from_up) {
-        ins_delta_.Set(key, {ref_start, ref_start + prev_end.y_});
+        ins_deltas_.Set(key, {ref_start, ref_start + prev_end.y_});
       } else {
-        del_delta_.Set(key, {ref_start, ref_start + prev_end.x_});
+        del_deltas_.Set(key, {ref_start, ref_start + prev_end.x_});
       }
     }
 
@@ -215,8 +215,8 @@ Point Dna::FindDeltasChunk(
 }
 
 void Dna::ProcessDeltas() {
-  ins_delta_.Combine();
-  del_delta_.Combine();
+  ins_deltas_.Combine();
+  del_deltas_.Combine();
 }
 
 bool Dna::PrintDeltas(const string& filename) const {
@@ -227,10 +227,10 @@ bool Dna::PrintDeltas(const string& filename) const {
     return false;
   }
 
-  ins_delta_.Print(out_file);
-  del_delta_.Print(out_file);
-  dup_delta_.Print(out_file);
-  inv_delta_.Print(out_file);
-  tra_delta_.Print(out_file);
+  ins_deltas_.Print(out_file);
+  del_deltas_.Print(out_file);
+  dup_deltas_.Print(out_file);
+  inv_deltas_.Print(out_file);
+  tra_deltas_.Print(out_file);
   return true;
 }

@@ -19,14 +19,7 @@ class Dna {
   void ProcessDeltas();
   bool PrintDeltas(const std::string& filename) const;
 
- private:
-  std::unordered_map<std::string, std::string> data_;
-  DnaDelta ins_delta_{"INS"};
-  DnaDelta del_delta_{"DEL"};
-  DnaDelta dup_delta_{"DUP"};
-  DnaDelta inv_delta_{"INV"};
-  DnaMultiDelta tra_delta_{"TRA"};
-
+ protected:
   Point FindDeltasChunk(
       const std::string& key,
       const std::string* ref_p,
@@ -36,6 +29,14 @@ class Dna {
       size_t sv_start,
       size_t n,
       bool reach_end = false);
+
+ private:
+  std::unordered_map<std::string, std::string> data_;
+  DnaDelta ins_deltas_{"INS"};
+  DnaDelta del_deltas_{"DEL"};
+  DnaDelta dup_deltas_{"DUP"};
+  DnaDelta inv_deltas_{"INV"};
+  DnaMultiDelta tra_deltas_{"TRA"};
 };
 
 #endif  // SRC_DNA_H_
