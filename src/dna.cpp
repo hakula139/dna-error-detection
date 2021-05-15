@@ -11,6 +11,7 @@
 #include "point.h"
 #include "utils/config.h"
 #include "utils/logger.h"
+#include "utils/utils.h"
 
 using std::get;
 using std::getline;
@@ -24,7 +25,6 @@ using std::unordered_map;
 using std::vector;
 
 extern Config config;
-
 extern Logger logger;
 
 bool Dna::Import(const string& filename) {
@@ -186,9 +186,21 @@ Point Dna::FindDeltasChunk(
     // If we meet a snake or the direction is changed, we store previous deltas.
     if (mid != end || from_up != prev_from_up) {
       if (prev_from_up == 1 && end.y_ < prev_end.y_) {
-        ins_deltas_.Set(key, {ref_start + end.y_, ref_start + prev_end.y_});
+        ins_deltas_.Set(
+            key,
+            {
+                ref_start + end.y_,
+                ref_start + prev_end.y_,
+                sv_p->substr(sv_start + end.y_, prev_end.y_ - end.y_),
+            });
       } else if (!prev_from_up && end.x_ < prev_end.x_) {
-        del_deltas_.Set(key, {ref_start + end.x_, ref_start + prev_end.x_});
+        del_deltas_.Set(
+            key,
+            {
+                ref_start + end.x_,
+                ref_start + prev_end.x_,
+                ref_p->substr(ref_start + end.x_, prev_end.x_ - end.x_),
+            });
       }
       prev_end = mid;
     }
@@ -201,9 +213,21 @@ Point Dna::FindDeltasChunk(
       // the direction must be unchanged. Otherwise, it will be handled by
       // previous procedures.
       if (from_up) {
-        ins_deltas_.Set(key, {ref_start, ref_start + prev_end.y_});
+        ins_deltas_.Set(
+            key,
+            {
+                ref_start,
+                ref_start + prev_end.y_,
+                sv_p->substr(sv_start, prev_end.y_),
+            });
       } else {
-        del_deltas_.Set(key, {ref_start, ref_start + prev_end.x_});
+        del_deltas_.Set(
+            key,
+            {
+                ref_start,
+                ref_start + prev_end.x_,
+                ref_p->substr(ref_start, prev_end.x_),
+            });
       }
     }
 
@@ -214,9 +238,27 @@ Point Dna::FindDeltasChunk(
   return next_chunk_start;
 }
 
+void Dna::FindDupDeltas() {
+  for (auto&& [key, value] : ins_deltas_.data_) {
+    for (auto range_i = value.begin(); range_i < value.end();) {
+      auto size = range_i->end_ - range_i->start_;
+      auto prev_start = range_i->start_ - size;
+      if (prev_start < 0) continue;
+      auto prev_value = data_[key].substr(prev_start, size);
+      if (FuzzyCompare(range_i->value_, prev_value)) {
+        dup_deltas_.Set(key, {prev_start, range_i->start_, prev_value});
+        range_i = value.erase(range_i);
+      } else {
+        ++range_i;
+      }
+    }
+  }
+}
+
 void Dna::ProcessDeltas() {
   ins_deltas_.Combine();
   del_deltas_.Combine();
+  FindDupDeltas();
 }
 
 bool Dna::PrintDeltas(const string& filename) const {

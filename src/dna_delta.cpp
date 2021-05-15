@@ -5,6 +5,7 @@
 #include <string>
 #include <utility>
 
+#include "range.h"
 #include "utils/logger.h"
 
 using std::make_pair;
@@ -42,16 +43,14 @@ void DnaDelta::Set(const string& key, const Range& value) {
 }
 
 void DnaDelta::Combine() {
-  if (type_ == "INS" || type_ == "DEL") {
-    for (auto&& [key, value] : data_) {
-      if (!value.size()) continue;
-      for (auto range_i = value.begin() + 1; range_i < value.end();) {
-        if (range_i->start_ == prev(range_i)->start_) {
-          prev(range_i)->end_ += range_i->end_ - range_i->start_;
-          range_i = value.erase(range_i);
-        } else {
-          ++range_i;
-        }
+  for (auto&& [key, value] : data_) {
+    if (!value.size()) continue;
+    for (auto range_i = value.begin() + 1; range_i < value.end();) {
+      if (range_i->start_ == prev(range_i)->start_) {
+        prev(range_i)->end_ += range_i->end_ - range_i->start_;
+        range_i = value.erase(range_i);
+      } else {
+        ++range_i;
       }
     }
   }

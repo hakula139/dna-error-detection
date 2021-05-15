@@ -7,11 +7,7 @@
 #include <utility>
 #include <vector>
 
-struct Range {
-  Range(size_t start, size_t end) : start_(start), end_(end) {}
-  size_t start_ = 0;
-  size_t end_ = 0;
-};
+#include "range.h"
 
 class DnaDeltaBase {
  public:
@@ -28,6 +24,8 @@ class DnaDelta : public DnaDeltaBase {
   void Print(std::ofstream& out_file) const override;
   void Set(const std::string& key, const Range& value);
   void Combine();
+
+  friend class Dna;
 
  private:
   std::unordered_map<std::string, std::vector<Range>> data_;

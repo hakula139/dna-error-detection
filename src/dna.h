@@ -16,6 +16,7 @@ class Dna {
   bool ImportEntry(const std::string& key, const std::string& value);
   bool Get(const std::string& key, std::string* value) const;
   void FindDeltas(const Dna& sv, size_t chunk_size = 10000);
+  void FindDupDeltas();
   void ProcessDeltas();
   bool PrintDeltas(const std::string& filename) const;
 
