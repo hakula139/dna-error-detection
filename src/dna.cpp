@@ -59,11 +59,11 @@ bool Dna::Get(const string& key, string* value) const {
   }
 }
 
-void Dna::FindDelta(const Dna& sv, size_t chunk_size) {
+void Dna::FindDeltas(const Dna& sv, size_t chunk_size) {
   for (const auto& [key, value_ref] : data_) {
     string value_sv;
     if (!sv.Get(key, &value_sv)) {
-      logger.Warn("Dna::FindDelta", "key " + key + " not found in sv chain");
+      logger.Warn("Dna::FindDeltas", "key " + key + " not found in sv chain");
       continue;
     }
 
@@ -71,21 +71,21 @@ void Dna::FindDelta(const Dna& sv, size_t chunk_size) {
          i < value_ref.length() || j < value_sv.length();) {
       auto m = min(value_ref.length() - i, chunk_size);
       auto n = min(value_sv.length() - j, chunk_size);
-      auto reach_end = !m || !n;
-      auto next_chunk_start = FindDeltaChunk(
+      auto reach_end = m < chunk_size || n < chunk_size;
+      auto next_chunk_start = FindDeltasChunk(
           key, &value_ref, i, m, &value_sv, j, n, reach_end);
       i = next_chunk_start.x_;
       j = next_chunk_start.y_;
 
       logger.Info(
-          "Dna::FindDelta",
+          "Dna::FindDeltas",
           key + ": " + to_string(i) + " / " + to_string(value_ref.length()));
     }
   }
 }
 
 // Myers' diff algorithm implementation
-Point Dna::FindDeltaChunk(
+Point Dna::FindDeltasChunk(
     const string& key,
     const string* ref_p,
     size_t ref_start,
@@ -204,10 +204,10 @@ Point Dna::FindDeltaChunk(
   return next_chunk_start;
 }
 
-bool Dna::PrintDelta(const string& filename) const {
+bool Dna::PrintDeltas(const string& filename) const {
   ofstream out_file(filename);
   if (!out_file) {
-    logger.Error("Dna::PrintDelta", "output file " + filename + " not found\n");
+    logger.Error("Dna::PrintDeltas", "output file " + filename + " not found\n");
     return false;
   }
 

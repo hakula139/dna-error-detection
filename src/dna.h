@@ -15,8 +15,8 @@ class Dna {
   bool Import(const std::string& filename);
   bool ImportEntry(const std::string& key, const std::string& value);
   bool Get(const std::string& key, std::string* value) const;
-  void FindDelta(const Dna& sv, size_t chunk_size = 10000);
-  bool PrintDelta(const std::string& filename) const;
+  void FindDeltas(const Dna& sv, size_t chunk_size = 10000);
+  bool PrintDeltas(const std::string& filename) const;
 
  private:
   std::unordered_map<std::string, std::string> data_;
@@ -26,7 +26,7 @@ class Dna {
   DnaDelta inv_delta_{"INV"};
   DnaMultiDelta tra_delta_{"TRA"};
 
-  Point FindDeltaChunk(
+  Point FindDeltasChunk(
       const std::string& key,
       const std::string* ref_p,
       size_t ref_start,
