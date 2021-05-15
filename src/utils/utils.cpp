@@ -16,7 +16,6 @@ extern Config config;
 bool FuzzyCompare(const string& str1, const string& str2) {
   auto len1 = str1.length();
   auto len2 = str2.length();
-  auto max_len = max(len1, len2);
 
   auto dp = vector<vector<int16_t>>(len1 + 1, vector<int16_t>(len2 + 1, 0));
   for (auto i = 1; i <= len1; ++i) {
@@ -29,5 +28,5 @@ bool FuzzyCompare(const string& str1, const string& str2) {
     }
   }
 
-  return dp[len1][len2] >= max_len * config.fuzzy_match_rate;
+  return dp[len1][len2] >= max(len1, len2) * config.fuzzy_match_rate;
 }

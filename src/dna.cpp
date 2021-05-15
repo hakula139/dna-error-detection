@@ -239,7 +239,7 @@ Point Dna::FindDeltasChunk(
 void Dna::FindDupDeltas() {
   for (auto&& [key, value] : ins_deltas_.data_) {
     for (auto range_i = value.begin(); range_i < value.end();) {
-      auto size = range_i->end_ - range_i->start_;
+      auto size = range_i->size();
       auto prev_start = range_i->start_ - size;
       if (prev_start < 0) continue;
       auto prev_value = data_[key].substr(prev_start, size);
@@ -253,10 +253,36 @@ void Dna::FindDupDeltas() {
   }
 }
 
+void Dna::FindInvDeltas() {
+  for (auto&& [key, value_ins] : ins_deltas_.data_) {
+    for (auto range_i = value_ins.begin(); range_i < value_ins.end();) {
+      auto erased = false;
+      if (del_deltas_.data_.count(key)) {
+        auto value_del = del_deltas_.data_[key];
+        for (auto range_j = value_del.begin();
+             range_j < value_del.end() && range_i->start_ >= range_j->start_;
+             ++range_j) {
+          if (range_i->start_ == range_j->end_ &&
+              QuickCompare(*range_i, *range_j) &&
+              FuzzyCompare(range_i->value_, range_j->value_)) {
+            inv_deltas_.Set(key, *range_j);
+            range_i = value_ins.erase(range_i);
+            range_j = value_del.erase(range_j);
+            erased = true;
+            break;
+          }
+        }
+      }
+      if (!erased) ++range_i;
+    }
+  }
+}
+
 void Dna::ProcessDeltas() {
   ins_deltas_.Combine();
   del_deltas_.Combine();
   FindDupDeltas();
+  FindInvDeltas();
 }
 
 bool Dna::PrintDeltas(const string& filename) const {

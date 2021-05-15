@@ -47,7 +47,7 @@ void DnaDelta::Combine() {
     if (!value.size()) continue;
     for (auto range_i = value.begin() + 1; range_i < value.end();) {
       if (range_i->start_ == prev(range_i)->start_) {
-        prev(range_i)->end_ += range_i->end_ - range_i->start_;
+        prev(range_i)->end_ += range_i->size();
         range_i = value.erase(range_i);
       } else {
         ++range_i;
