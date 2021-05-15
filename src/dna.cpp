@@ -183,24 +183,34 @@ Point Dna::FindDeltasChunk(
     //     start.Stringify() + " " + mid.Stringify() + " " + end.Stringify());
     assert(mid.x_ <= end.x_ && mid.y_ <= end.y_);
 
+    auto insert_delta = [&](const Point& start, const Point& end) {
+      auto size = end.y_ - start.y_;
+      ins_deltas_.Set(
+          key,
+          {
+              ref_start + start.x_,
+              ref_start + start.x_ + size,
+              sv_p->substr(sv_start + start.y_, size),
+          });
+    };
+
+    auto delete_delta = [&](const Point& start, const Point& end) {
+      auto size = end.x_ - start.x_;
+      del_deltas_.Set(
+          key,
+          {
+              ref_start + start.x_,
+              ref_start + end.x_,
+              ref_p->substr(ref_start + start.x_, size),
+          });
+    };
+
     // If we meet a snake or the direction is changed, we store previous deltas.
     if (mid != end || from_up != prev_from_up) {
       if (prev_from_up == 1 && end.y_ < prev_end.y_) {
-        ins_deltas_.Set(
-            key,
-            {
-                ref_start + end.y_,
-                ref_start + prev_end.y_,
-                sv_p->substr(sv_start + end.y_, prev_end.y_ - end.y_),
-            });
+        insert_delta(end, prev_end);
       } else if (!prev_from_up && end.x_ < prev_end.x_) {
-        del_deltas_.Set(
-            key,
-            {
-                ref_start + end.x_,
-                ref_start + prev_end.x_,
-                ref_p->substr(ref_start + end.x_, prev_end.x_ - end.x_),
-            });
+        delete_delta(end, prev_end);
       }
       prev_end = mid;
     }
@@ -213,21 +223,9 @@ Point Dna::FindDeltasChunk(
       // the direction must be unchanged. Otherwise, it will be handled by
       // previous procedures.
       if (from_up) {
-        ins_deltas_.Set(
-            key,
-            {
-                ref_start,
-                ref_start + prev_end.y_,
-                sv_p->substr(sv_start, prev_end.y_),
-            });
+        insert_delta({}, prev_end);
       } else {
-        del_deltas_.Set(
-            key,
-            {
-                ref_start,
-                ref_start + prev_end.x_,
-                ref_p->substr(ref_start, prev_end.x_),
-            });
+        delete_delta({}, prev_end);
       }
     }
 
