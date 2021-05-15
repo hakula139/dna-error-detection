@@ -368,5 +368,7 @@ bool Dna::PrintDeltas(const string& filename) const {
   dup_deltas_.Print(out_file);
   inv_deltas_.Print(out_file);
   tra_deltas_.Print(out_file);
+
+  out_file.close();
   return true;
 }
