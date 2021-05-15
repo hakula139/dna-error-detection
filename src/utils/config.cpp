@@ -6,4 +6,5 @@ Config config{
     .tolerance = 20,
     .min_length = 50,
     .fuzzy_rate = 0.8,
+    .cover_rate = 0.9,
 };

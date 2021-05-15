@@ -18,6 +18,7 @@ struct Config {
   size_t tolerance;
   size_t min_length;
   double fuzzy_rate;
+  double cover_rate;
 };
 
 #endif  // SRC_UTILS_CONFIG_H_

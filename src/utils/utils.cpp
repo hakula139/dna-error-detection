@@ -36,7 +36,7 @@ bool FuzzyCompare(const string& str1, const string& str2) {
 }
 
 bool QuickCompare(int num1, int num2) {
-  return abs(num1 - num2) <= ceil(max(num1, num2) * (1 - config.fuzzy_rate));
+  return abs(num1 - num2) <= ceil(max(num1, num2) * (1 - config.cover_rate));
 }
 
 bool QuickCompare(const string& str1, const string& str2) {
