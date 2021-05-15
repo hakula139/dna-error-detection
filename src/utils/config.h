@@ -15,7 +15,7 @@ struct Config {
   int log_level;
   std::string path;
   size_t tolerance;
-  double fuzzy_match_rate;
+  double fuzzy_rate;
 };
 
 #endif  // SRC_UTILS_CONFIG_H_
