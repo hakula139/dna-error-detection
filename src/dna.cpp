@@ -159,8 +159,9 @@ Point Dna::FindDeltasChunk(
   }
 
   auto prev_from_up = false;
-  auto prev_end = Point{static_cast<int>(m), static_cast<int>(n)};
-  for (auto cur = prev_end; cur.x_ > 0 || cur.y_ > 0;) {
+  auto prev_end = Point();
+  for (auto cur = Point(static_cast<int>(m), static_cast<int>(n));
+       cur.x_ > 0 || cur.y_ > 0;) {
     end_xs = end_xss.back();
     end_xss.pop_back();
     auto step = end_xss.size();
@@ -179,26 +180,36 @@ Point Dna::FindDeltasChunk(
     auto mid = Point(mid_x, mid_x - k);
 
     // logger.Debug(
-    //     "Dna::FindDeltaChunk",
+    //     "Dna::FindDeltasChunk",
     //     start.Stringify() + " " + mid.Stringify() + " " + end.Stringify());
 
+    auto reach_start = start.x_ <= 0 && start.y_ <= 0;
+
+    // If we meet a snake or the direction is changed, we store previous deltas.
     if (mid != end || from_up != prev_from_up) {
       if (prev_from_up && end.y_ < prev_end.y_) {
         ins_delta_.Set(key, {ref_start + end.y_, ref_start + prev_end.y_});
-        prev_end = mid;
       } else if (!prev_from_up && end.x_ < prev_end.x_) {
         del_delta_.Set(key, {ref_start + end.x_, ref_start + prev_end.x_});
-        prev_end = mid;
+      }
+      prev_end = mid;
+    }
+
+    // If we meet the start point, we should store all unsaved deltas before the
+    // loop terminates.
+    if (reach_start && prev_end != Point()) {
+      // The unsaved deltas must have the same type as current delta, because
+      // the direction must be unchanged. Otherwise, it will be handled by
+      // previous procedures.
+      if (prev_from_up) {
+        ins_delta_.Set(key, {ref_start, ref_start + prev_end.y_});
+      } else {
+        del_delta_.Set(key, {ref_start, ref_start + prev_end.x_});
       }
     }
 
     prev_from_up = from_up;
     cur = start;
-  }
-  if (prev_from_up && prev_end.y_) {
-    ins_delta_.Set(key, {ref_start, ref_start + prev_end.y_});
-  } else if (!prev_from_up && prev_end.x_) {
-    del_delta_.Set(key, {ref_start, ref_start + prev_end.x_});
   }
 
   return next_chunk_start;
@@ -207,7 +218,8 @@ Point Dna::FindDeltasChunk(
 bool Dna::PrintDeltas(const string& filename) const {
   ofstream out_file(filename);
   if (!out_file) {
-    logger.Error("Dna::PrintDeltas", "output file " + filename + " not found\n");
+    logger.Error(
+        "Dna::PrintDeltas", "output file " + filename + " not found\n");
     return false;
   }
 
