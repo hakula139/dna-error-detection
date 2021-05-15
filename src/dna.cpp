@@ -333,7 +333,7 @@ void Dna::FindTraDeltas() {
           if (QuickCompare(range_ins.value_, range_del.value_) &&
               FuzzyCompare(range_ins.value_, range_del.value_)) {
             range_ins.end_ = range_ins.start_;
-            range_ins.start_ -= range_ins.size();
+            range_ins.start_ -= size;
             tra_deltas_.Set(key_ins, range_ins, key_del, range_del);
             entry_i = entries_ins.erase(entry_i);
             entry_j = entries_del.erase(entry_j);
