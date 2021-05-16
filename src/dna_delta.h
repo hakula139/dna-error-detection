@@ -23,9 +23,11 @@ class DnaDelta : public DnaDeltaBase {
   explicit DnaDelta(const std::string& type) : DnaDeltaBase{type} {}
   void Print(std::ofstream& out_file) const override;
   void Set(const std::string& key, const Range& value);
-  void Combine();
 
   friend class Dna;
+
+ protected:
+  bool Combine(Range* base_p, const Range* range_p) const;
 
  private:
   std::unordered_map<std::string, std::vector<Range>> data_;
@@ -40,6 +42,11 @@ class DnaMultiDelta : public DnaDeltaBase {
       const Range& range1,
       const std::string& key2,
       const Range& range2);
+
+ protected:
+  bool Combine(
+      std::pair<Range, Range>* base_p,
+      const std::pair<Range, Range>* range_p) const;
 
  private:
   struct PairHash {

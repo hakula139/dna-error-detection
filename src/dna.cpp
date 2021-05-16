@@ -278,13 +278,17 @@ void Dna::FindInvDeltas() {
              range_j < ranges_del.end() && range_i->start_ >= range_j->start_;
              ++range_j) {
           if (range_i->start_ == range_j->end_ &&
-              QuickCompare(*range_i, *range_j) &&
-              FuzzyCompare(range_i->value_, invert_chain(range_j->value_))) {
-            inv_deltas_.Set(key, *range_j);
-            range_i = ranges_ins.erase(range_i);
-            range_j = ranges_del.erase(range_j);
-            erased = true;
-            break;
+              QuickCompare(*range_i, *range_j)) {
+            auto size = range_i->size();
+            range_i->start_ = range_j->start_;
+            range_i->end_ = range_j->start_ + size;
+            if (FuzzyCompare(range_i->value_, invert_chain(range_j->value_))) {
+              inv_deltas_.Set(key, *range_j);
+              range_i = ranges_ins.erase(range_i);
+              range_j = ranges_del.erase(range_j);
+              erased = true;
+              break;
+            }
           }
         }
       }
@@ -305,7 +309,7 @@ void Dna::FindTraDeltas() {
         for (auto range_j = ranges_del.begin();
              range_j < ranges_del.end() && range_i->start_ >= range_j->start_;
              ++range_j) {
-          if (range_i->start_ == range_j->end_ &&
+          if (range_i->start_ == range_j->start_ &&
               QuickCompare(*range_i, *range_j)) {
             auto size = range_i->size();
             ins_cache[size].push_back({key, *range_i});
@@ -332,8 +336,6 @@ void Dna::FindTraDeltas() {
           auto [key_del, range_del] = *entry_j;
           if (QuickCompare(range_ins.value_, range_del.value_) &&
               FuzzyCompare(range_ins.value_, range_del.value_)) {
-            range_ins.end_ = range_ins.start_;
-            range_ins.start_ -= size;
             tra_deltas_.Set(key_ins, range_ins, key_del, range_del);
             entry_i = entries_ins.erase(entry_i);
             entry_j = entries_del.erase(entry_j);
@@ -348,8 +350,6 @@ void Dna::FindTraDeltas() {
 }
 
 void Dna::ProcessDeltas() {
-  ins_deltas_.Combine();
-  del_deltas_.Combine();
   FindDupDeltas();
   FindInvDeltas();
   FindTraDeltas();
