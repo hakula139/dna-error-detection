@@ -2,6 +2,8 @@
 
 An error detection algorithm for DNA sequences, written in modern C++.
 
+[中文](./report/report.md)
+
 ## Getting Started
 
 ### Building
