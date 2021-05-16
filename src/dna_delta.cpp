@@ -9,6 +9,7 @@
 #include "range.h"
 #include "utils/config.h"
 #include "utils/logger.h"
+#include "utils/utils.h"
 
 using std::make_pair;
 using std::max;
@@ -55,15 +56,10 @@ bool DnaDelta::Combine(Range* base_p, const Range* range_p) const {
     base_p->end_ += range_p->size();
     return true;
   }
-  if ((base_p->size() < config.min_length ||
-       range_p->size() < config.min_length) &&
-      range_p->start_ <= base_p->end_ + config.min_length &&
-      base_p->start_ <= range_p->end_ + config.min_length) {
-    base_p->start_ = min(base_p->start_, range_p->start_);
-    base_p->end_ = max(base_p->end_, range_p->end_);
-    return true;
-  }
-  return false;
+  return (base_p->size() < config.min_length ||
+          range_p->size() < config.min_length) &&
+         range_p->start_ <= base_p->end_ + config.min_length &&
+         base_p->start_ <= range_p->end_ + config.min_length;
 }
 
 void DnaMultiDelta::Print(ofstream& out_file) const {
@@ -104,8 +100,8 @@ void DnaMultiDelta::Set(
 bool DnaMultiDelta::Combine(
     std::pair<Range, Range>* base_p,
     const std::pair<Range, Range>* range_p) const {
-  return base_p->first.start_ == range_p->first.start_ &&
-         base_p->second.start_ == range_p->second.start_ &&
+  return FuzzyCompare(base_p->first.start_, range_p->first.start_) &&
+         FuzzyCompare(base_p->second.start_, range_p->second.start_) &&
          QuickCompare(base_p->first, range_p->first) &&
          QuickCompare(base_p->second, range_p->second);
 }

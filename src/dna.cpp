@@ -277,8 +277,7 @@ void Dna::FindInvDeltas() {
         for (auto range_j = ranges_del.begin();
              range_j < ranges_del.end() && range_i->start_ >= range_j->start_;
              ++range_j) {
-          if (range_i->start_ == range_j->end_ &&
-              QuickCompare(*range_i, *range_j)) {
+          if (FuzzyCompare(*range_i, *range_j)) {
             auto size = range_i->size();
             range_i->start_ = range_j->start_;
             range_i->end_ = range_j->start_ + size;
@@ -309,8 +308,7 @@ void Dna::FindTraDeltas() {
         for (auto range_j = ranges_del.begin();
              range_j < ranges_del.end() && range_i->start_ >= range_j->start_;
              ++range_j) {
-          if (range_i->start_ == range_j->start_ &&
-              QuickCompare(*range_i, *range_j)) {
+          if (FuzzyCompare(*range_i, *range_j)) {
             auto size = range_i->size();
             ins_cache[size].push_back({key, *range_i});
             del_cache[size].push_back({key, *range_j});

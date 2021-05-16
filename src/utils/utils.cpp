@@ -16,6 +16,10 @@ using std::vector;
 
 extern Config config;
 
+bool FuzzyCompare(int num1, int num2) {
+  return abs(num1 - num2) <= config.tolerance;
+}
+
 bool FuzzyCompare(const string& str1, const string& str2) {
   auto len1 = str1.length();
   auto len2 = str2.length();

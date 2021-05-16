@@ -14,6 +14,7 @@ struct Range {
   std::string value_ = "";
 };
 
+bool FuzzyCompare(const Range& range1, const Range& range2);
 bool QuickCompare(const Range& range1, const Range& range2);
 
 #endif  // SRC_RANGE_H_
