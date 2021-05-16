@@ -15,6 +15,7 @@ using std::make_pair;
 using std::max;
 using std::min;
 using std::ofstream;
+using std::pair;
 using std::prev;
 using std::string;
 using std::to_string;
@@ -44,7 +45,13 @@ void DnaDelta::Print(ofstream& out_file) const {
 
 void DnaDelta::Set(const string& key, const Range& range) {
   auto& ranges = data_[key];
-  if (!ranges.size() || !Combine(&ranges.back(), &range)) {
+  auto exist = [&](const Range& range) {
+    for (auto&& prev : ranges) {
+      if (Combine(&prev, &range)) return true;
+    }
+    return false;
+  };
+  if (!ranges.size() || !exist(range)) {
     ranges.push_back(range);
   }
   logger.Debug(
@@ -56,8 +63,8 @@ bool DnaDelta::Combine(Range* base_p, const Range* range_p) const {
     base_p->end_ += range_p->size();
     return true;
   }
-  if (range_p->start_ <= base_p->end_ + config.min_length &&
-      base_p->start_ <= range_p->end_ + config.min_length) {
+  if (FuzzyCompare(range_p->start_, base_p->end_) ||
+      FuzzyCompare(base_p->start_, range_p->end_)) {
     base_p->start_ = min(base_p->start_, range_p->start_);
     base_p->end_ = max(base_p->start_, range_p->end_);
     return true;
@@ -86,7 +93,13 @@ void DnaMultiDelta::Set(
                         const Range& range2) {
     auto& ranges = data_[make_pair(key1, key2)];
     auto range = make_pair(range1, range2);
-    if (!ranges.size() || !Combine(&ranges.back(), &range)) {
+    auto exist = [&](const pair<Range, Range>& range) {
+      for (auto&& prev : ranges) {
+        if (Combine(&prev, &range)) return true;
+      }
+      return false;
+    };
+    if (!ranges.size() || !exist(range)) {
       ranges.push_back(range);
       logger.Debug(
           "DnaDelta::Set",
@@ -101,8 +114,7 @@ void DnaMultiDelta::Set(
 }
 
 bool DnaMultiDelta::Combine(
-    std::pair<Range, Range>* base_p,
-    const std::pair<Range, Range>* range_p) const {
+    pair<Range, Range>* base_p, const pair<Range, Range>* range_p) const {
   return FuzzyCompare(base_p->first.start_, range_p->first.start_) &&
          FuzzyCompare(base_p->second.start_, range_p->second.start_) &&
          QuickCompare(base_p->first, range_p->first) &&

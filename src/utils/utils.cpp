@@ -16,12 +16,8 @@ using std::vector;
 
 extern Config config;
 
-bool QuickCompare(int num1, int num2) {
-  return abs(num1 - num2) <= ceil(max(num1, num2) * (1 - config.cover_rate));
-}
-
 bool FuzzyCompare(int num1, int num2) {
-  return abs(num1 - num2) <= config.tolerance;
+  return abs(num1 - num2) <= config.compare_diff;
 }
 
 bool FuzzyCompare(const string& str1, const string& str2) {

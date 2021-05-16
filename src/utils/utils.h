@@ -3,7 +3,6 @@
 
 #include <string>
 
-bool QuickCompare(int num1, int num2);
 bool FuzzyCompare(int num1, int num2);
 bool FuzzyCompare(const std::string& str1, const std::string& str2);
 
