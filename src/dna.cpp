@@ -15,6 +15,7 @@
 
 using std::get;
 using std::ifstream;
+using std::max;
 using std::min;
 using std::ofstream;
 using std::string;
@@ -308,13 +309,25 @@ void Dna::FindTraDeltas() {
         for (auto range_j = ranges_del.begin();
              range_j < ranges_del.end() && range_i->start_ >= range_j->start_;
              ++range_j) {
-          if (FuzzyCompare(*range_i, *range_j)) {
-            auto size = range_i->size();
+          auto size = max(range_i->size(), range_j->size());
+          if (QuickCompare(*range_i, *range_j)) {
+            if (FuzzyCompare(range_i->start_, range_j->start_)) {
+              erased = true;
+            } else if (FuzzyCompare(range_i->end_, range_j->start_)) {
+              range_i->start_ = range_j->start_;
+              range_i->end_ = range_j->start_ + size;
+              erased = true;
+            } else if (FuzzyCompare(range_i->start_, range_j->end_)) {
+              range_j->start_ = range_i->start_;
+              range_j->end_ = range_i->start_ + size;
+              erased = true;
+            }
+          }
+          if (erased) {
             ins_cache[size].push_back({key, *range_i});
             del_cache[size].push_back({key, *range_j});
             range_i = ranges_ins.erase(range_i);
             range_j = ranges_del.erase(range_j);
-            erased = true;
             break;
           }
         }
@@ -325,7 +338,7 @@ void Dna::FindTraDeltas() {
 
   for (auto&& [size, entries_ins] : ins_cache) {
     if (del_cache.count(size)) {
-      auto entries_del = del_cache[size];
+      auto& entries_del = del_cache[size];
       for (auto entry_i = entries_ins.begin(); entry_i < entries_ins.end();) {
         auto erased = false;
         auto [key_ins, range_ins] = *entry_i;
