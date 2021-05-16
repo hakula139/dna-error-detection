@@ -119,7 +119,5 @@ void DnaMultiDelta::Set(
 bool DnaMultiDelta::Combine(
     pair<Range, Range>* base_p, const pair<Range, Range>* range_p) const {
   return FuzzyCompare(base_p->first.start_, range_p->first.start_) &&
-         FuzzyCompare(base_p->second.start_, range_p->second.start_) &&
-         QuickCompare(base_p->first, range_p->first) &&
-         QuickCompare(base_p->second, range_p->second);
+         FuzzyCompare(base_p->second.start_, range_p->second.start_);
 }

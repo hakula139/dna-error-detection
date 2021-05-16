@@ -275,8 +275,7 @@ void Dna::FindInvDeltas() {
       auto erased = false;
       if (del_deltas_.data_.count(key)) {
         auto& ranges_del = del_deltas_.data_[key];
-        for (auto range_j = ranges_del.begin();
-             range_j < ranges_del.end() && range_i->start_ >= range_j->start_;
+        for (auto range_j = ranges_del.begin(); range_j < ranges_del.end();
              ++range_j) {
           if (FuzzyCompare(*range_i, *range_j)) {
             auto size = range_i->size();
