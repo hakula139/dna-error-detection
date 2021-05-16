@@ -308,7 +308,7 @@ void Dna::FindTraDeltas() {
         auto& ranges_del = del_deltas_.data_[key];
         for (auto range_j = ranges_del.begin(); range_j < ranges_del.end();
              ++range_j) {
-          if (QuickCompare(*range_i, *range_j)) {
+          if (FuzzyCompare(range_i->size(), range_j->size())) {
             ins_cache.push_back({key, *range_i});
             del_cache.push_back({key, *range_j});
             range_i = ranges_ins.erase(range_i);
