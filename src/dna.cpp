@@ -298,8 +298,8 @@ void Dna::FindInvDeltas() {
 }
 
 void Dna::FindTraDeltas() {
-  unordered_map<size_t, vector<tuple<string, Range>>> ins_cache;
-  unordered_map<size_t, vector<tuple<string, Range>>> del_cache;
+  auto ins_cache = vector<tuple<string, Range>>{};
+  auto del_cache = vector<tuple<string, Range>>{};
 
   for (auto&& [key, ranges_ins] : ins_deltas_.data_) {
     for (auto range_i = ranges_ins.begin(); range_i < ranges_ins.end();) {
@@ -308,10 +308,9 @@ void Dna::FindTraDeltas() {
         auto& ranges_del = del_deltas_.data_[key];
         for (auto range_j = ranges_del.begin(); range_j < ranges_del.end();
              ++range_j) {
-          auto size = max(range_i->size(), range_j->size());
           if (QuickCompare(*range_i, *range_j)) {
-            ins_cache[size].push_back({key, *range_i});
-            del_cache[size].push_back({key, *range_j});
+            ins_cache.push_back({key, *range_i});
+            del_cache.push_back({key, *range_j});
             range_i = ranges_ins.erase(range_i);
             range_j = ranges_del.erase(range_j);
             erased = true;
@@ -323,40 +322,31 @@ void Dna::FindTraDeltas() {
     }
   }
 
-  for (auto&& [size, entries_ins] : ins_cache) {
-    if (del_cache.count(size)) {
-      auto& entries_del = del_cache[size];
-      for (auto entry_i = entries_ins.begin(); entry_i < entries_ins.end();) {
-        auto erased = false;
-        auto [key_ins, range_ins] = *entry_i;
-        for (auto entry_j = entries_del.begin(); entry_j < entries_del.end();
-             ++entry_j) {
-          auto [key_del, range_del] = *entry_j;
-          if (FuzzyCompare(range_ins.value_, range_del.value_)) {
-            tra_deltas_.Set(key_ins, range_ins, key_del, range_del);
-            entry_i = entries_ins.erase(entry_i);
-            entry_j = entries_del.erase(entry_j);
-            erased = true;
-            break;
-          }
-        }
-        if (!erased) ++entry_i;
+  for (auto entry_i = ins_cache.begin(); entry_i < ins_cache.end();) {
+    auto erased = false;
+    auto [key_ins, range_ins] = *entry_i;
+    for (auto entry_j = del_cache.begin(); entry_j < del_cache.end();
+         ++entry_j) {
+      auto [key_del, range_del] = *entry_j;
+      if (FuzzyCompare(range_ins.value_, range_del.value_)) {
+        tra_deltas_.Set(key_ins, range_ins, key_del, range_del);
+        entry_i = ins_cache.erase(entry_i);
+        entry_j = del_cache.erase(entry_j);
+        erased = true;
+        break;
       }
     }
+    if (!erased) ++entry_i;
   }
 
-  for (const auto& [size, entries_ins] : ins_cache) {
-    for (const auto& [key, range] : entries_ins) {
-      auto& ranges_ins = ins_deltas_.data_[key];
-      ranges_ins.push_back(range);
-    }
+  for (const auto& [key, range] : ins_cache) {
+    auto& ranges_ins = ins_deltas_.data_[key];
+    ranges_ins.push_back(range);
   }
 
-  for (const auto& [size, entries_del] : del_cache) {
-    for (const auto& [key, range] : entries_del) {
-      auto& ranges_del = del_deltas_.data_[key];
-      ranges_del.push_back(range);
-    }
+  for (const auto& [key, range] : del_cache) {
+    auto& ranges_del = del_deltas_.data_[key];
+    ranges_del.push_back(range);
   }
 }
 
