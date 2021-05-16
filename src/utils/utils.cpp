@@ -16,6 +16,10 @@ using std::vector;
 
 extern Config config;
 
+bool QuickCompare(int num1, int num2) {
+  return abs(num1 - num2) <= ceil(max(num1, num2) * (1 - config.cover_rate));
+}
+
 bool FuzzyCompare(int num1, int num2) {
   return abs(num1 - num2) <= config.tolerance;
 }
@@ -54,20 +58,4 @@ bool FuzzyCompare(const string& str1, const string& str2) {
   if (dp[len1][len2] >= max_len * config.fuzzy_rate) return true;
 
   return false;
-}
-
-bool QuickCompare(int num1, int num2) {
-  return abs(num1 - num2) <= ceil(max(num1, num2) * (1 - config.cover_rate));
-}
-
-bool QuickCompare(const string& str1, const string& str2) {
-  if (!QuickCompare(str1.length(), str2.length())) return false;
-  unordered_map<char, size_t> count1, count2;
-  for (const auto& c : str1) ++count1[c];
-  for (const auto& c : str2) ++count2[c];
-  for (const auto& [key, value] : count1) {
-    if (key == 'N') continue;
-    if (!QuickCompare(count1[key], count2[key])) return false;
-  }
-  return true;
 }
