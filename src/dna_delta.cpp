@@ -56,10 +56,13 @@ bool DnaDelta::Combine(Range* base_p, const Range* range_p) const {
     base_p->end_ += range_p->size();
     return true;
   }
-  return (base_p->size() < config.min_length ||
-          range_p->size() < config.min_length) &&
-         range_p->start_ <= base_p->end_ + config.min_length &&
-         base_p->start_ <= range_p->end_ + config.min_length;
+  if (range_p->start_ <= base_p->end_ + config.min_length &&
+      base_p->start_ <= range_p->end_ + config.min_length) {
+    base_p->start_ = min(base_p->start_, range_p->start_);
+    base_p->end_ = max(base_p->start_, range_p->end_);
+    return true;
+  }
+  return false;
 }
 
 void DnaMultiDelta::Print(ofstream& out_file) const {
