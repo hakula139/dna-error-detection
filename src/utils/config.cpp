@@ -5,6 +5,7 @@ Config config{
     .path = "tests/demo/",
     .tolerance = 50,
     .compare_diff = 100,
+    .max_length = 1000,
     .strict_rate = 0.5,
     .fuzzy_rate = 0.8,
 };
