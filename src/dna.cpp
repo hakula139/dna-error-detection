@@ -306,28 +306,15 @@ void Dna::FindTraDeltas() {
       auto erased = false;
       if (del_deltas_.data_.count(key)) {
         auto& ranges_del = del_deltas_.data_[key];
-        for (auto range_j = ranges_del.begin();
-             range_j < ranges_del.end() && range_i->start_ >= range_j->start_;
+        for (auto range_j = ranges_del.begin(); range_j < ranges_del.end();
              ++range_j) {
           auto size = max(range_i->size(), range_j->size());
           if (QuickCompare(*range_i, *range_j)) {
-            if (FuzzyCompare(range_i->start_, range_j->start_)) {
-              erased = true;
-            } else if (FuzzyCompare(range_i->end_, range_j->start_)) {
-              range_i->start_ = range_j->start_;
-              range_i->end_ = range_j->start_ + size;
-              erased = true;
-            } else if (FuzzyCompare(range_i->start_, range_j->end_)) {
-              range_j->start_ = range_i->start_;
-              range_j->end_ = range_i->start_ + size;
-              erased = true;
-            }
-          }
-          if (erased) {
             ins_cache[size].push_back({key, *range_i});
             del_cache[size].push_back({key, *range_j});
             range_i = ranges_ins.erase(range_i);
             range_j = ranges_del.erase(range_j);
+            erased = true;
             break;
           }
         }
@@ -345,8 +332,7 @@ void Dna::FindTraDeltas() {
         for (auto entry_j = entries_del.begin(); entry_j < entries_del.end();
              ++entry_j) {
           auto [key_del, range_del] = *entry_j;
-          if (QuickCompare(range_ins.value_, range_del.value_) &&
-              FuzzyCompare(range_ins.value_, range_del.value_)) {
+          if (FuzzyCompare(range_ins.value_, range_del.value_)) {
             tra_deltas_.Set(key_ins, range_ins, key_del, range_del);
             entry_i = entries_ins.erase(entry_i);
             entry_j = entries_del.erase(entry_j);
@@ -356,6 +342,20 @@ void Dna::FindTraDeltas() {
         }
         if (!erased) ++entry_i;
       }
+    }
+  }
+
+  for (const auto& [size, entries_ins] : ins_cache) {
+    for (const auto& [key, range] : entries_ins) {
+      auto& ranges_ins = ins_deltas_.data_[key];
+      ranges_ins.push_back(range);
+    }
+  }
+
+  for (const auto& [size, entries_del] : del_cache) {
+    for (const auto& [key, range] : entries_del) {
+      auto& ranges_del = del_deltas_.data_[key];
+      ranges_del.push_back(range);
     }
   }
 }
