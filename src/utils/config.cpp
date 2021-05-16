@@ -2,8 +2,9 @@
 
 Config config{
     .log_level = Config::Level::INFO,
-    .path = "tests/demo/",
-    .tolerance = 50,
+    .path = "tests/",
+    .chunk_size = 50000,
+    .tolerance = 30,
     .compare_diff = 100,
     .max_length = 1000,
     .strict_rate = 0.5,

@@ -15,6 +15,7 @@ struct Config {
 
   int log_level;
   std::string path;
+  size_t chunk_size;
   size_t tolerance;
   size_t compare_diff;
   size_t max_length;

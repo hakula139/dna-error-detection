@@ -59,14 +59,9 @@ void DnaDelta::Set(const string& key, const Range& range) {
 }
 
 bool DnaDelta::Combine(Range* base_p, const Range* range_p) const {
-  if (base_p->start_ == range_p->start_) {
-    base_p->end_ += range_p->size();
-    return true;
-  }
-  if (FuzzyCompare(range_p->start_, base_p->end_) ||
-      FuzzyCompare(base_p->start_, range_p->end_)) {
+  if (FuzzyCompare(*range_p, *base_p)) {
     auto new_start = min(base_p->start_, range_p->start_);
-    auto new_end = max(base_p->start_, range_p->end_);
+    auto new_end = max(base_p->end_, range_p->end_);
     if (new_end > new_start + config.max_length) return false;
     base_p->start_ = new_start;
     base_p->end_ = new_end;
