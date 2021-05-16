@@ -17,6 +17,7 @@ struct Config {
   std::string path;
   size_t tolerance;
   size_t min_length;
+  double strict_rate;
   double fuzzy_rate;
   double cover_rate;
 };
