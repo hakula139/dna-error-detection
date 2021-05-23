@@ -5,8 +5,8 @@
 bin/
 build/
 tests/*demo/
-*.bed
-index.txt
+tests/**/*.bed
+tests/**/*.txt
 
 ## Cpp
 
