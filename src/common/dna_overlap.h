@@ -1,6 +1,7 @@
 #ifndef SRC_COMMON_DNA_OVERLAP_H_
 #define SRC_COMMON_DNA_OVERLAP_H_
 
+#include <fstream>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -16,6 +17,7 @@ class DnaOverlap {
 
   size_t size() const { return data_.size(); }
   void Sort();
+  void Print(std::ofstream& out_file) const;
   DnaOverlap& operator+=(const DnaOverlap& that);
   DnaOverlap& operator+=(const Minimizer& entry);
   DnaOverlap& operator=(const DnaOverlap& that);

@@ -1,9 +1,11 @@
 #include "dna_overlap.h"
 
 #include <algorithm>
+#include <fstream>
 #include <utility>
 
 using std::get;
+using std::ofstream;
 using std::sort;
 
 void DnaOverlap::Sort() {
@@ -11,6 +13,12 @@ void DnaOverlap::Sort() {
     return get<1>(m1) < get<1>(m2);
   };
   sort(data_.begin(), data_.end(), compare);
+}
+
+void DnaOverlap::Print(ofstream& out_file) const {
+  for (const auto& [key, range_ref, range_seg] : data_) {
+    out_file << range_ref.Stringify() << range_seg.Stringify(key);
+  }
 }
 
 DnaOverlap& DnaOverlap::operator+=(const DnaOverlap& that) {

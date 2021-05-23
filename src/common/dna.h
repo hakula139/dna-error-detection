@@ -28,6 +28,7 @@ class Dna {
   bool PrintIndex(const std::string& filename) const;
   bool FindOverlaps(const Dna& ref);
   void ProcessOverlaps();
+  bool PrintOverlaps(const std::string& filename) const;
 
   void FindDeltas(const Dna& sv, size_t chunk_size = 10000);
   void FindDupDeltas();

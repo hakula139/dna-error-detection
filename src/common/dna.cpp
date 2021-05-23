@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <exception>
 #include <fstream>
 #include <queue>
 #include <string>
@@ -80,7 +81,7 @@ bool Dna::get(const string& key, string* value) const {
   }
 }
 
-bool Dna::Print(const std::string& filename) const {
+bool Dna::Print(const string& filename) const {
   ofstream out_file(filename);
   if (!out_file) {
     logger.Error("Dna::Print", "Cannot create output file " + filename);
@@ -141,7 +142,7 @@ void Dna::CreateIndex() {
   }
 }
 
-bool Dna::PrintIndex(const std::string& filename) const {
+bool Dna::PrintIndex(const string& filename) const {
   ofstream out_file(filename);
   if (!out_file) {
     logger.Error("Dna::PrintIndex", "Cannot create output file " + filename);
@@ -193,7 +194,7 @@ bool Dna::FindOverlaps(const Dna& ref) {
       overlaps_ += overlaps.size() >= overlaps_i.size() ? overlaps : overlaps_i;
     }
 
-    logger.Debug("Dna::FindOverlaps", key + ": done");
+    logger.Debug("Dna::FindOverlaps", key + ": Done");
   }
 
   overlaps_.Sort();
@@ -201,6 +202,19 @@ bool Dna::FindOverlaps(const Dna& ref) {
 }
 
 void Dna::ProcessOverlaps() {}
+
+bool Dna::PrintOverlaps(const string& filename) const {
+  ofstream out_file(filename);
+  if (!out_file) {
+    logger.Error("Dna::PrintOverlaps", "Cannot create output file " + filename);
+    return false;
+  }
+
+  overlaps_.Print(out_file);
+
+  out_file.close();
+  return true;
+}
 
 void Dna::FindDeltas(const Dna& sv, size_t chunk_size) {
   for (const auto& [key, value_ref] : data_) {
@@ -396,7 +410,7 @@ void Dna::FindDupDeltas() {
   }
 }
 
-std::string Dna::Invert(const std::string& chain) {
+string Dna::Invert(const string& chain) {
   const unordered_map<char, char> dna_base_pair{
       {'A', 'T'},
       {'T', 'A'},
