@@ -16,12 +16,17 @@ int main(int argc, char** argv) {
     return EXIT_FAILURE;
   }
 
+  Dna ref(config.path + "ref.fasta");
   if (arg_flags['i']) {
-    // Preprocessing
+    // Create an index of reference data
+    ref.CreateIndex();
+  }
+  if (arg_flags['p']) {
+    // Combine PacBio subsequences
+    Dna reads(config.path + "long.fasta");
   }
   if (arg_flags['s']) {
     // Main process
-    Dna ref(config.path + "ref.fasta");
     Dna sv(config.path + "sv.fasta");
     ref.FindDeltas(sv, config.chunk_size);
     ref.ProcessDeltas();

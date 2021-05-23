@@ -64,7 +64,8 @@ void ShowManual() {
   cout << "usage: solution [option] [args]\n"
        << "Options and arguments:\n"
        << "-a\t : run all preprocessing tasks and start the main process\n"
-       << "-i\t : run the preprocessing tasks only\n"
+       << "-i\t : create an index of reference data only\n"
+       << "-p\t : combine PacBio subsequences only\n"
        << "-s\t : start the main process only\n";
 }
 
@@ -78,13 +79,13 @@ bool ReadArgs(unordered_map<char, bool>* arg_flags, int argc, char** argv) {
         switch (arg) {
           case 'a':
             (*arg_flags)['i'] = true;
+            (*arg_flags)['p'] = true;
             (*arg_flags)['s'] = true;
             break;
           case 'i':
-            (*arg_flags)['i'] = true;
-            break;
+          case 'p':
           case 's':
-            (*arg_flags)['s'] = true;
+            (*arg_flags)[arg] = true;
             break;
           default:
             logger.Warn("ReadArgs", "Invalid argument: " + string(1, arg));
