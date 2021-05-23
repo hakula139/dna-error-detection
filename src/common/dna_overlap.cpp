@@ -17,7 +17,8 @@ void DnaOverlap::Sort() {
 
 void DnaOverlap::Print(ofstream& out_file) const {
   for (const auto& [key, range_ref, range_seg] : data_) {
-    out_file << range_ref.Stringify() << range_seg.Stringify(key);
+    out_file << range_ref.Stringify() << " " << range_seg.Stringify(key)
+             << "\n";
   }
 }
 
