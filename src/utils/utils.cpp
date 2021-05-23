@@ -2,19 +2,23 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include "config.h"
+#include "logger.h"
 
 using std::ceil;
+using std::cout;
 using std::max;
 using std::string;
 using std::unordered_map;
 using std::vector;
 
 extern Config config;
+extern Logger logger;
 
 bool FuzzyCompare(int num1, int num2) {
   return abs(num1 - num2) <= config.compare_diff;
@@ -54,4 +58,42 @@ bool FuzzyCompare(const string& str1, const string& str2) {
   if (dp[len1][len2] >= max_len * config.fuzzy_rate) return true;
 
   return false;
+}
+
+void ShowManual() {
+  cout << "usage: solution [option] [args]\n"
+       << "Options and arguments:\n"
+       << "-a\t : run all preprocessing tasks and start the main process\n"
+       << "-i\t : run the preprocessing tasks only\n"
+       << "-s\t : start the main process only\n";
+}
+
+bool ReadArgs(unordered_map<char, bool>* arg_flags, int argc, char** argv) {
+  try {
+    if (argc <= 1) return false;
+    for (auto i = 1; i < argc; ++i) {
+      if (argv[i][0] != '-') continue;
+      for (auto j = 1; argv[i][j] != '\0'; ++j) {
+        auto arg = argv[i][j];
+        switch (arg) {
+          case 'a':
+            (*arg_flags)['i'] = true;
+            (*arg_flags)['s'] = true;
+            break;
+          case 'i':
+            (*arg_flags)['i'] = true;
+            break;
+          case 's':
+            (*arg_flags)['s'] = true;
+            break;
+          default:
+            logger.Warn("ReadArgs", "Invalid argument: " + string(1, arg));
+            return false;
+        }
+      }
+    }
+    return true;
+  } catch (...) {
+    return false;
+  }
 }
