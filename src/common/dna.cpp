@@ -185,13 +185,19 @@ bool Dna::FindOverlaps(const Dna& ref) {
     return overlap_size >= config.strict_equal_rate * chain_size;
   };
 
-  for (const auto& [key, value_seg] : data_) {
+  for (auto&& [key, value_seg] : data_) {
     auto overlaps = find_overlaps(key, value_seg);
     if (is_valid(overlaps.size(), value_seg.length())) {
       overlaps_ += overlaps;
     } else {
-      auto overlaps_i = find_overlaps(key, Invert(value_seg));
-      overlaps_ += overlaps.size() >= overlaps_i.size() ? overlaps : overlaps_i;
+      auto inverted_value_seg = Invert(value_seg);
+      auto overlaps_invert = find_overlaps(key, inverted_value_seg);
+      if (overlaps.size() >= overlaps_invert.size()) {
+        overlaps_ += overlaps;
+      } else {
+        value_seg = inverted_value_seg;
+        overlaps_ += overlaps_invert;
+      }
     }
 
     logger.Debug("Dna::FindOverlaps", key + ": Done");
