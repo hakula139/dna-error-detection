@@ -224,7 +224,7 @@ Point Dna::FindDeltasChunk(
         auto sv_char = (*sv_p)[sv_start + end.y_];
         if (ref_char != sv_char && ref_char != 'N' && sv_char != 'N') break;
       }
-      if (snake <= config.tolerance) end = mid;
+      if (snake < config.snake_min_len) end = mid;
 
       end_xs[k + padding] = end.x_;
 

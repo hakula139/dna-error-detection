@@ -21,7 +21,7 @@ extern Config config;
 extern Logger logger;
 
 bool FuzzyCompare(int num1, int num2) {
-  return abs(num1 - num2) <= config.compare_diff;
+  return abs(num1 - num2) <= config.gap_max_diff;
 }
 
 bool FuzzyCompare(const string& str1, const string& str2) {
@@ -43,7 +43,7 @@ bool FuzzyCompare(const string& str1, const string& str2) {
       }
     }
   }
-  if (common_len >= max_len * config.strict_rate) return true;
+  if (common_len >= max_len * config.strict_equal_rate) return true;
 
   // Find longest common subsequence.
   for (auto i = 1; i <= len1; ++i) {
@@ -55,7 +55,7 @@ bool FuzzyCompare(const string& str1, const string& str2) {
       }
     }
   }
-  if (dp[len1][len2] >= max_len * config.fuzzy_rate) return true;
+  if (dp[len1][len2] >= max_len * config.fuzzy_equal_rate) return true;
 
   return false;
 }

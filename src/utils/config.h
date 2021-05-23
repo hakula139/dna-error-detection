@@ -18,11 +18,11 @@ struct Config {
   size_t hash_size;
   size_t window_size;
   size_t chunk_size;
-  size_t tolerance;
-  size_t compare_diff;
-  size_t max_length;
-  double strict_rate;
-  double fuzzy_rate;
+  size_t snake_min_len;
+  size_t gap_max_diff;
+  size_t delta_max_len;
+  double strict_equal_rate;
+  double fuzzy_equal_rate;
 };
 
 #endif  // SRC_UTILS_CONFIG_H_

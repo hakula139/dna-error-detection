@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
     if (!ref.ImportIndex(config.path + "index.txt")) {
       return EXIT_FAILURE;
     }
-    Dna reads(config.path + "long.fasta");
+    Dna segments(config.path + "long.fasta");
   }
   if (arg_flags['s']) {
     // Main process
