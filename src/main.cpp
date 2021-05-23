@@ -19,6 +19,7 @@ int main(int argc, char** argv) {
   }
 
   Dna ref(config.path + config.ref_filename);
+  Dna sv;
 
   // Create an index of reference data
   if (arg_flags['i']) {
@@ -34,13 +35,12 @@ int main(int argc, char** argv) {
     Dna segments(config.path + config.seg_filename);
     segments.FindOverlaps(ref);
     segments.PrintOverlaps(config.path + config.overlaps_filename);
-    Dna sv;
     sv.Print(config.path + config.sv_filename);
   }
 
   // Main process
   if (arg_flags['s']) {
-    Dna sv(config.path + config.sv_filename);
+    if (!sv.size()) sv.Import(config.path + config.sv_filename);
     ref.FindDeltas(sv, config.chunk_size);
     ref.ProcessDeltas();
     ref.PrintDeltas(config.path + config.deltas_filename);

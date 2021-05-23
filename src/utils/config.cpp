@@ -10,12 +10,12 @@ Config config{
     .deltas_filename = "sv.bed",
 
     .log_level = Config::Level::DEBUG,
-    .hash_size = 30,
-    .window_size = 300,
+    .hash_size = 20,
+    .window_size = 200,
     .chunk_size = 50000,
     .snake_min_len = 30,
     .gap_max_diff = 100,
     .delta_max_len = 1000,
-    .strict_equal_rate = 0.5,
+    .strict_equal_rate = 0.3,
     .fuzzy_equal_rate = 0.8,
 };
