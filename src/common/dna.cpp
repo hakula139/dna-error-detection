@@ -8,10 +8,10 @@
 #include <unordered_map>
 #include <vector>
 
+#include "config.h"
+#include "logger.h"
 #include "point.h"
-#include "utils/config.h"
-#include "utils/logger.h"
-#include "utils/utils.h"
+#include "utils.h"
 
 using std::get;
 using std::ifstream;

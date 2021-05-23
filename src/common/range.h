@@ -1,5 +1,5 @@
-#ifndef SRC_RANGE_H_
-#define SRC_RANGE_H_
+#ifndef SRC_COMMON_RANGE_H_
+#define SRC_COMMON_RANGE_H_
 
 #include <string>
 
@@ -16,4 +16,4 @@ struct Range {
 
 bool FuzzyCompare(const Range& range1, const Range& range2);
 
-#endif  // SRC_RANGE_H_
+#endif  // SRC_COMMON_RANGE_H_

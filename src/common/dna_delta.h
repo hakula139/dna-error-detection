@@ -1,5 +1,5 @@
-#ifndef SRC_DNA_DELTA_H_
-#define SRC_DNA_DELTA_H_
+#ifndef SRC_COMMON_DNA_DELTA_H_
+#define SRC_COMMON_DNA_DELTA_H_
 
 #include <fstream>
 #include <string>
@@ -64,4 +64,4 @@ class DnaMultiDelta : public DnaDeltaBase {
       data_;
 };
 
-#endif  // SRC_DNA_DELTA_H_
+#endif  // SRC_COMMON_DNA_DELTA_H_

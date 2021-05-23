@@ -2,7 +2,7 @@
 
 Config config{
     .log_level = Config::Level::INFO,
-    .path = "tests/",
+    .path = "tests/test_1/",
     .chunk_size = 50000,
     .tolerance = 30,
     .compare_diff = 100,

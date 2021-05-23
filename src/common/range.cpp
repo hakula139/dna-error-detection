@@ -1,7 +1,7 @@
 #include "range.h"
 
-#include "utils/config.h"
-#include "utils/utils.h"
+#include "config.h"
+#include "utils.h"
 
 extern Config config;
 

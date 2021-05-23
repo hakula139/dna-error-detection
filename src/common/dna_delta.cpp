@@ -6,10 +6,10 @@
 #include <string>
 #include <utility>
 
+#include "config.h"
+#include "logger.h"
 #include "range.h"
-#include "utils/config.h"
-#include "utils/logger.h"
-#include "utils/utils.h"
+#include "utils.h"
 
 using std::make_pair;
 using std::max;

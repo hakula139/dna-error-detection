@@ -1,5 +1,5 @@
-#ifndef SRC_DNA_H_
-#define SRC_DNA_H_
+#ifndef SRC_COMMON_DNA_H_
+#define SRC_COMMON_DNA_H_
 
 #include <string>
 #include <unordered_map>
@@ -42,4 +42,4 @@ class Dna {
   DnaMultiDelta tra_deltas_{"TRA"};
 };
 
-#endif  // SRC_DNA_H_
+#endif  // SRC_COMMON_DNA_H_

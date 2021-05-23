@@ -1,5 +1,5 @@
-#ifndef SRC_POINT_H_
-#define SRC_POINT_H_
+#ifndef SRC_COMMON_POINT_H_
+#define SRC_COMMON_POINT_H_
 
 #include <string>
 
@@ -14,4 +14,4 @@ struct Point {
   int y_ = 0;
 };
 
-#endif  // SRC_POINT_H_
+#endif  // SRC_COMMON_POINT_H_

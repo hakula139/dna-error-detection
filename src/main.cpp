@@ -1,5 +1,5 @@
+#include "config.h"
 #include "dna.h"
-#include "utils/config.h"
 
 extern Config config;
 
