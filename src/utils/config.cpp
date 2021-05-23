@@ -1,8 +1,15 @@
 #include "config.h"
 
 Config config{
-    .log_level = Config::Level::INFO,
     .path = "tests/test_2_demo/",
+    .ref_filename = "ref.fasta",
+    .sv_filename = "sv.fasta",
+    .seg_filename = "long.fasta",
+    .index_filename = "index.txt",
+    .overlaps_filename = "overlaps.txt",
+    .deltas_filename = "sv.bed",
+
+    .log_level = Config::Level::DEBUG,
     .hash_size = 30,
     .window_size = 300,
     .chunk_size = 50000,

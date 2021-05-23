@@ -13,8 +13,15 @@ struct Config {
     FATAL,
   };
 
-  int log_level;
   std::string path;
+  std::string ref_filename;
+  std::string sv_filename;
+  std::string seg_filename;
+  std::string index_filename;
+  std::string overlaps_filename;
+  std::string deltas_filename;
+
+  int log_level;
   size_t hash_size;
   size_t window_size;
   size_t chunk_size;
