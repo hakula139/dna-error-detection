@@ -11,18 +11,18 @@
 #include <vector>
 
 #include "config.h"
+#include "dna_overlap.h"
 #include "logger.h"
 #include "point.h"
 #include "utils.h"
 
-using std::get;
+using std::endl;
 using std::ifstream;
 using std::max;
 using std::min;
 using std::ofstream;
 using std::pair;
 using std::priority_queue;
-using std::sort;
 using std::string;
 using std::to_string;
 using std::tuple;
@@ -70,7 +70,7 @@ bool Dna::ImportIndex(const string& filename) {
   return true;
 }
 
-bool Dna::Get(const string& key, string* value) const {
+bool Dna::get(const string& key, string* value) const {
   try {
     *value = data_.at(key);
     return true;
@@ -78,6 +78,21 @@ bool Dna::Get(const string& key, string* value) const {
     *value = "";
     return false;
   }
+}
+
+bool Dna::Print(const std::string& filename) const {
+  ofstream out_file(filename);
+  if (!out_file) {
+    logger.Error("Dna::Print", "Cannot create output file " + filename);
+    return false;
+  }
+
+  for (const auto& [key, value] : data_) {
+    out_file << ">" << key << "\n" << value << endl;
+  }
+
+  out_file.close();
+  return true;
 }
 
 uint64_t Dna::NextHash(uint64_t hash, char next_base) {
@@ -154,12 +169,12 @@ bool Dna::FindOverlaps(const Dna& ref) {
       prev_hash = NextHash(prev_hash, chain[i]);
     }
 
-    auto overlaps = vector<tuple<string, Range, Range>>{};
+    DnaOverlap overlaps;
     for (auto i = config.hash_size - 1; i < chain.length(); ++i) {
       prev_hash = NextHash(prev_hash, chain[i]);
       if (ref.range_index_.count(prev_hash)) {
         const auto& range_ref = ref.range_index_.at(prev_hash).second;
-        overlaps.push_back({key, range_ref, {i - config.hash_size + 1, i}});
+        overlaps += {key, range_ref, {i - config.hash_size + 1, i}};
       }
     }
     return overlaps;
@@ -171,30 +186,26 @@ bool Dna::FindOverlaps(const Dna& ref) {
 
   for (const auto& [key, value_seg] : data_) {
     auto overlaps = find_overlaps(key, value_seg);
-    auto overlaps_i = find_overlaps(key, Invert(value_seg));
-    if (is_valid(overlaps.size(), value_seg.length()) ||
-        overlaps.size() >= overlaps_i.size()) {
-      overlaps_.reserve(overlaps_.size() + overlaps.size());
-      overlaps_.insert(overlaps_.end(), overlaps.begin(), overlaps.end());
+    if (is_valid(overlaps.size(), value_seg.length())) {
+      overlaps_ += overlaps;
     } else {
-      overlaps_.reserve(overlaps_.size() + overlaps_i.size());
-      overlaps_.insert(overlaps_.end(), overlaps_i.begin(), overlaps_i.end());
+      auto overlaps_i = find_overlaps(key, Invert(value_seg));
+      overlaps_ += overlaps.size() >= overlaps_i.size() ? overlaps : overlaps_i;
     }
+
+    logger.Debug("Dna::FindOverlaps", key + ": done");
   }
 
-  using Minimizer = tuple<string, Range, Range>;
-  auto compare = [](const Minimizer& m1, const Minimizer& m2) {
-    return get<1>(m1) < get<1>(m2);
-  };
-  sort(overlaps_.begin(), overlaps_.end(), compare);
-
+  overlaps_.Sort();
   return true;
 }
+
+void Dna::ProcessOverlaps() {}
 
 void Dna::FindDeltas(const Dna& sv, size_t chunk_size) {
   for (const auto& [key, value_ref] : data_) {
     string value_sv;
-    if (!sv.Get(key, &value_sv)) {
+    if (!sv.get(key, &value_sv)) {
       logger.Warn("Dna::FindDeltas", "key " + key + " not found in sv chain");
       continue;
     }

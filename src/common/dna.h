@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "dna_delta.h"
+#include "dna_overlap.h"
 #include "point.h"
 
 class Dna {
@@ -20,11 +21,13 @@ class Dna {
 
   bool Import(const std::string& filename);
   bool ImportIndex(const std::string& filename);
-  bool Get(const std::string& key, std::string* value) const;
+  bool get(const std::string& key, std::string* value) const;
+  bool Print(const std::string& filename) const;
 
   void CreateIndex();
   bool PrintIndex(const std::string& filename) const;
   bool FindOverlaps(const Dna& ref);
+  void ProcessOverlaps();
 
   void FindDeltas(const Dna& sv, size_t chunk_size = 10000);
   void FindDupDeltas();
@@ -48,7 +51,7 @@ class Dna {
   std::unordered_map<std::string, std::string> data_;
 
   std::unordered_map<uint64_t, std::pair<std::string, Range>> range_index_;
-  std::vector<std::tuple<std::string, Range, Range>> overlaps_;
+  DnaOverlap overlaps_;
 
   DnaDelta ins_deltas_{"INS"};
   DnaDelta del_deltas_{"DEL"};
