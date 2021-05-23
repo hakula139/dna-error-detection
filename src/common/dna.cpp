@@ -1,11 +1,13 @@
 #include "dna.h"
 
 #include <algorithm>
-#include <exception>
+#include <cassert>
 #include <fstream>
+#include <queue>
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "config.h"
@@ -18,6 +20,8 @@ using std::ifstream;
 using std::max;
 using std::min;
 using std::ofstream;
+using std::pair;
+using std::priority_queue;
 using std::string;
 using std::to_string;
 using std::tuple;
@@ -30,7 +34,7 @@ extern Logger logger;
 bool Dna::Import(const string& filename) {
   ifstream in_file(filename);
   if (!in_file) {
-    logger.Error("Dna::Import", "input file " + filename + " not found\n");
+    logger.Error("Dna::Import", "Input file " + filename + " not found");
     return false;
   }
 
@@ -58,6 +62,66 @@ bool Dna::Get(const string& key, string* value) const {
     *value = "";
     return false;
   }
+}
+
+void Dna::CreateIndex() {
+  const unordered_map<char, char> dna_base_map{
+      {'A', 0},
+      {'T', 1},
+      {'C', 2},
+      {'G', 3},
+      {'N', 0},
+  };
+  uint64_t mask = ~(UINT64_MAX << (config.hash_size << 1));
+  auto next_hash = [&, mask](uint64_t hash, char c) -> size_t {
+    return ((hash << 2) & mask) | dna_base_map.at(c);
+  };
+
+  for (const auto& [key, value_ref] : data_) {
+    uint64_t prev_hash = 0;
+    for (auto i = 1; i < config.hash_size; ++i) {
+      prev_hash = next_hash(prev_hash, value_ref[i - 1]);
+    }
+
+    using HashPos = pair<uint64_t, size_t>;
+    auto compare = [](const HashPos& h1, const HashPos& h2) {
+      return h1.first > h2.first;
+    };
+    priority_queue<HashPos, vector<HashPos>, decltype(compare)> hashes{compare};
+
+    assert(config.hash_size <= config.window_size);
+    auto capacity = config.window_size - config.hash_size + 1;
+    for (auto i = config.hash_size; i < value_ref.length(); ++i) {
+      while (hashes.size() && hashes.top().second + config.window_size < i) {
+        hashes.pop();
+      }
+      prev_hash = next_hash(prev_hash, value_ref[i]);
+      hashes.push({prev_hash, i - config.hash_size});
+      if (hashes.size() < capacity) continue;
+      auto min_hash = hashes.top();
+      if (!range_index_.count(min_hash.first)) {
+        range_index_[min_hash.first] = {
+            key,
+            {min_hash.second, min_hash.second + config.hash_size},
+        };
+      }
+    }
+  }
+}
+
+bool Dna::PrintIndex(const std::string& filename) const {
+  ofstream out_file(filename);
+  if (!out_file) {
+    logger.Error("Dna::PrintIndex", "Cannot create output file " + filename);
+    return false;
+  }
+
+  for (const auto& [hash, entry] : range_index_) {
+    out_file << hash << " " << entry.second.Stringify(entry.first) << "\n";
+  }
+
+  out_file.close();
+  return true;
 }
 
 void Dna::FindDeltas(const Dna& sv, size_t chunk_size) {
@@ -358,8 +422,7 @@ void Dna::ProcessDeltas() {
 bool Dna::PrintDeltas(const string& filename) const {
   ofstream out_file(filename);
   if (!out_file) {
-    logger.Error(
-        "Dna::PrintDeltas", "output file " + filename + " not found\n");
+    logger.Error("Dna::PrintDeltas", "Cannot create output file " + filename);
     return false;
   }
 

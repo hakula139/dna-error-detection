@@ -18,27 +18,14 @@ using std::ofstream;
 using std::pair;
 using std::prev;
 using std::string;
-using std::to_string;
 
 extern Logger logger;
 extern Config config;
 
-string Stringify(const string& key, const Range& range) {
-  return key + " " + to_string(range.start_) + " " + to_string(range.end_);
-}
-
-string Stringify(
-    const string& key1,
-    const Range& range1,
-    const string& key2,
-    const Range& range2) {
-  return Stringify(key1, range1) + " " + Stringify(key2, range2);
-}
-
 void DnaDelta::Print(ofstream& out_file) const {
   for (const auto& [key, ranges] : data_) {
     for (const auto& range : ranges) {
-      out_file << type_ << " " << Stringify(key, range) << "\n";
+      out_file << type_ << " " << range.Stringify(key) << "\n";
     }
   }
 }
@@ -54,8 +41,7 @@ void DnaDelta::Set(const string& key, const Range& range) {
   if (!ranges.size() || !exist(range)) {
     ranges.push_back(range);
   }
-  logger.Debug(
-      "DnaDelta::Set", "Saved: " + type_ + " " + Stringify(key, range));
+  logger.Debug("DnaDelta::Set", "Saved: " + type_ + " " + range.Stringify(key));
 }
 
 bool DnaDelta::Combine(Range* base_p, const Range* range_p) const {
@@ -73,9 +59,8 @@ bool DnaDelta::Combine(Range* base_p, const Range* range_p) const {
 void DnaMultiDelta::Print(ofstream& out_file) const {
   for (const auto& [key, ranges] : data_) {
     for (const auto& range : ranges) {
-      out_file << type_ << " "
-               << Stringify(key.first, range.first, key.second, range.second)
-               << "\n";
+      out_file << type_ << " " << range.first.Stringify(key.first) << " "
+               << range.second.Stringify(key.second) << "\n";
     }
   }
 }
@@ -101,7 +86,8 @@ void DnaMultiDelta::Set(
       ranges.push_back(range);
       logger.Debug(
           "DnaDelta::Set",
-          "Saved: " + type_ + " " + Stringify(key1, range1, key2, range2));
+          "Saved: " + type_ + " " + range1.Stringify(key1) + " " +
+              range2.Stringify(key2));
     }
   };
   if (data_.count(make_pair(key2, key1))) {

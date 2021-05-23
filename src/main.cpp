@@ -3,9 +3,11 @@
 
 #include "config.h"
 #include "dna.h"
+#include "logger.h"
 #include "utils.h"
 
 extern Config config;
+extern Logger logger;
 
 using std::unordered_map;
 
@@ -20,6 +22,7 @@ int main(int argc, char** argv) {
   if (arg_flags['i']) {
     // Create an index of reference data
     ref.CreateIndex();
+    ref.PrintIndex(config.path + "index.txt");
   }
   if (arg_flags['p']) {
     // Combine PacBio subsequences
