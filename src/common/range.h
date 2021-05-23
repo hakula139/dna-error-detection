@@ -10,6 +10,7 @@ struct Range {
   size_t size() const { return end_ - start_; }
   std::string Stringify() const;
   std::string Stringify(const std::string& key) const;
+  bool operator<(const Range& that) const;
 
   size_t start_ = 0;
   size_t end_ = 0;

@@ -22,6 +22,7 @@ using std::min;
 using std::ofstream;
 using std::pair;
 using std::priority_queue;
+using std::sort;
 using std::string;
 using std::to_string;
 using std::tuple;
@@ -79,7 +80,7 @@ bool Dna::Get(const string& key, string* value) const {
   }
 }
 
-void Dna::CreateIndex() {
+uint64_t Dna::NextHash(uint64_t hash, char next_base) {
   const unordered_map<char, char> dna_base_map{
       {'A', 0},
       {'T', 1},
@@ -87,15 +88,16 @@ void Dna::CreateIndex() {
       {'G', 3},
       {'N', 0},
   };
-  uint64_t mask = ~(UINT64_MAX << (config.hash_size << 1));
-  auto next_hash = [&, mask](uint64_t hash, char c) -> size_t {
-    return ((hash << 2) & mask) | dna_base_map.at(c);
-  };
+  const uint64_t mask = ~(UINT64_MAX << (config.hash_size << 1));
+  return ((hash << 2) & mask) | dna_base_map.at(next_base);
+}
 
+void Dna::CreateIndex() {
   for (const auto& [key, value_ref] : data_) {
     uint64_t prev_hash = 0;
-    for (auto i = 1; i < config.hash_size; ++i) {
-      prev_hash = next_hash(prev_hash, value_ref[i - 1]);
+    assert(config.hash_size > 0);
+    for (auto i = 0; i < config.hash_size - 1; ++i) {
+      prev_hash = NextHash(prev_hash, value_ref[i]);
     }
 
     using HashPos = pair<uint64_t, size_t>;
@@ -106,11 +108,11 @@ void Dna::CreateIndex() {
 
     assert(config.hash_size <= config.window_size);
     auto capacity = config.window_size - config.hash_size + 1;
-    for (auto i = config.hash_size; i < value_ref.length(); ++i) {
+    for (auto i = config.hash_size - 1; i < value_ref.length(); ++i) {
       while (hashes.size() && hashes.top().second + config.window_size < i) {
         hashes.pop();
       }
-      prev_hash = next_hash(prev_hash, value_ref[i]);
+      prev_hash = NextHash(prev_hash, value_ref[i]);
       hashes.push({prev_hash, i - config.hash_size});
       if (hashes.size() < capacity) continue;
       auto min_hash = hashes.top();
@@ -136,6 +138,56 @@ bool Dna::PrintIndex(const std::string& filename) const {
   }
 
   out_file.close();
+  return true;
+}
+
+bool Dna::FindOverlaps(const Dna& ref) {
+  if (!ref.range_index_.size()) {
+    logger.Warn("Dna::FindOverlaps", "No index found in reference data");
+    return false;
+  }
+
+  auto find_overlaps = [&](const string& key, const string& chain) {
+    uint64_t prev_hash = 0;
+    assert(config.hash_size > 0);
+    for (auto i = 0; i < config.hash_size - 1; ++i) {
+      prev_hash = NextHash(prev_hash, chain[i]);
+    }
+
+    auto overlaps = vector<tuple<string, Range, Range>>{};
+    for (auto i = config.hash_size - 1; i < chain.length(); ++i) {
+      prev_hash = NextHash(prev_hash, chain[i]);
+      if (ref.range_index_.count(prev_hash)) {
+        const auto& range_ref = ref.range_index_.at(prev_hash).second;
+        overlaps.push_back({key, range_ref, {i - config.hash_size + 1, i}});
+      }
+    }
+    return overlaps;
+  };
+
+  auto is_valid = [](uint64_t overlap_size, uint64_t chain_size) {
+    return overlap_size >= config.strict_equal_rate * chain_size;
+  };
+
+  for (const auto& [key, value_seg] : data_) {
+    auto overlaps = find_overlaps(key, value_seg);
+    auto overlaps_i = find_overlaps(key, Invert(value_seg));
+    if (is_valid(overlaps.size(), value_seg.length()) ||
+        overlaps.size() >= overlaps_i.size()) {
+      overlaps_.reserve(overlaps_.size() + overlaps.size());
+      overlaps_.insert(overlaps_.end(), overlaps.begin(), overlaps.end());
+    } else {
+      overlaps_.reserve(overlaps_.size() + overlaps_i.size());
+      overlaps_.insert(overlaps_.end(), overlaps_i.begin(), overlaps_i.end());
+    }
+  }
+
+  using Minimizer = tuple<string, Range, Range>;
+  auto compare = [](const Minimizer& m1, const Minimizer& m2) {
+    return get<1>(m1) < get<1>(m2);
+  };
+  sort(overlaps_.begin(), overlaps_.end(), compare);
+
   return true;
 }
 
@@ -333,7 +385,7 @@ void Dna::FindDupDeltas() {
   }
 }
 
-void Dna::FindInvDeltas() {
+std::string Dna::Invert(const std::string& chain) {
   const unordered_map<char, char> dna_base_pair{
       {'A', 'T'},
       {'T', 'A'},
@@ -341,14 +393,14 @@ void Dna::FindInvDeltas() {
       {'G', 'C'},
       {'N', 'N'},
   };
-  auto invert_chain = [&](const string& chain) {
-    string inverted_chain;
-    for (auto i = chain.rbegin(); i < chain.rend(); ++i) {
-      inverted_chain += dna_base_pair.at(*i);
-    }
-    return inverted_chain;
-  };
+  string inverted_chain;
+  for (auto i = chain.rbegin(); i < chain.rend(); ++i) {
+    inverted_chain += dna_base_pair.at(*i);
+  }
+  return inverted_chain;
+}
 
+void Dna::FindInvDeltas() {
   for (auto&& [key, ranges_ins] : ins_deltas_.data_) {
     for (auto range_i = ranges_ins.begin(); range_i < ranges_ins.end();) {
       auto erased = false;
@@ -360,7 +412,7 @@ void Dna::FindInvDeltas() {
             auto size = range_i->size();
             range_i->start_ = range_j->start_;
             range_i->end_ = range_j->start_ + size;
-            if (FuzzyCompare(range_i->value_, invert_chain(range_j->value_))) {
+            if (FuzzyCompare(range_i->value_, Invert(range_j->value_))) {
               inv_deltas_.Set(key, *range_j);
               range_i = ranges_ins.erase(range_i);
               range_j = ranges_del.erase(range_j);

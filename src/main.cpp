@@ -19,18 +19,22 @@ int main(int argc, char** argv) {
   }
 
   Dna ref(config.path + "ref.fasta");
+
   if (arg_flags['i']) {
     // Create an index of reference data
     ref.CreateIndex();
     ref.PrintIndex(config.path + "index.txt");
   }
+
   if (arg_flags['p']) {
     // Combine PacBio subsequences
     if (!ref.ImportIndex(config.path + "index.txt")) {
       return EXIT_FAILURE;
     }
     Dna segments(config.path + "long.fasta");
+    segments.FindOverlaps(ref);
   }
+
   if (arg_flags['s']) {
     // Main process
     Dna sv(config.path + "sv.fasta");
@@ -38,5 +42,6 @@ int main(int argc, char** argv) {
     ref.ProcessDeltas();
     ref.PrintDeltas(config.path + "sv.bed");
   }
+
   return EXIT_SUCCESS;
 }
