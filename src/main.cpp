@@ -26,6 +26,9 @@ int main(int argc, char** argv) {
   }
   if (arg_flags['p']) {
     // Combine PacBio subsequences
+    if (!ref.ImportIndex(config.path + "index.txt")) {
+      return EXIT_FAILURE;
+    }
     Dna reads(config.path + "long.fasta");
   }
   if (arg_flags['s']) {

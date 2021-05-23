@@ -42,15 +42,30 @@ bool Dna::Import(const string& filename) {
     string key, value;
     in_file >> key >> value;
     if (!key.length()) break;
-    ImportEntry(key.substr(1), value);
+    data_[key.substr(1)] = value;
   }
 
   in_file.close();
   return true;
 }
 
-bool Dna::ImportEntry(const string& key, const string& value) {
-  data_[key] = value;
+bool Dna::ImportIndex(const string& filename) {
+  ifstream in_file(filename);
+  if (!in_file) {
+    logger.Error("Dna::ImportIndex", "Input file " + filename + " not found");
+    return false;
+  }
+
+  while (!in_file.eof()) {
+    uint64_t hash = 0;
+    string key;
+    size_t start, end;
+    in_file >> hash >> key >> start >> end;
+    if (!hash || !key.length()) break;
+    range_index_[hash] = {key, {start, end}};
+  }
+
+  in_file.close();
   return true;
 }
 

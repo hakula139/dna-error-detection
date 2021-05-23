@@ -14,7 +14,7 @@ class Dna {
   explicit Dna(const std::string& filename) { Import(filename); }
 
   bool Import(const std::string& filename);
-  bool ImportEntry(const std::string& key, const std::string& value);
+  bool ImportIndex(const std::string& filename);
   bool Get(const std::string& key, std::string* value) const;
 
   void CreateIndex();
