@@ -10,7 +10,7 @@ Config config{
     .deltas_filename = "sv.bed",
 
     .log_level = Config::Level::DEBUG,
-    .hash_size = 20,
+    .hash_size = 30,
     .window_size = 200,
     .chunk_size = 50000,
     .snake_min_len = 30,

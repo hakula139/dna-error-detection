@@ -112,7 +112,7 @@ uint64_t Dna::NextHash(uint64_t hash, char next_base) {
 void Dna::CreateIndex() {
   for (const auto& [key, value_ref] : data_) {
     uint64_t prev_hash = 0;
-    assert(config.hash_size > 0);
+    assert(config.hash_size > 0 && config.hash_size <= 30);
     for (auto i = 0; i < config.hash_size - 1; ++i) {
       prev_hash = NextHash(prev_hash, value_ref[i]);
     }
@@ -192,6 +192,7 @@ bool Dna::FindOverlaps(const Dna& ref) {
     return overlap_size >= config.strict_equal_rate * chain_size;
   };
 
+  auto progress = 0;
   for (auto&& [key_seg, value_seg] : data_) {
     auto overlaps = find_overlaps(key_seg, value_seg);
     if (is_valid(overlaps.size(), value_seg.length())) {
@@ -207,7 +208,11 @@ bool Dna::FindOverlaps(const Dna& ref) {
       }
     }
 
-    logger.Debug("Dna::FindOverlaps", key_seg + ": Done");
+    if (++progress % 100 == 0) {
+      logger.Debug(
+          "Dna::FindOverlaps",
+          to_string(progress) + " / " + to_string(data_.size()));
+    }
   }
 
   overlaps_.Sort();
