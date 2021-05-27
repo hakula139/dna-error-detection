@@ -192,7 +192,8 @@ bool Dna::FindOverlaps(const Dna& ref) {
     return overlap_size >= config.strict_equal_rate * chain_size;
   };
 
-  auto progress = 0;
+  auto i = 0;
+  auto chunk_size = data_.size() / 20;
   for (auto&& [key_seg, value_seg] : data_) {
     auto overlaps = find_overlaps(key_seg, value_seg);
     if (is_valid(overlaps.size(), value_seg.length())) {
@@ -208,10 +209,9 @@ bool Dna::FindOverlaps(const Dna& ref) {
       }
     }
 
-    if (++progress % 100 == 0) {
-      logger.Debug(
-          "Dna::FindOverlaps",
-          to_string(progress) + " / " + to_string(data_.size()));
+    if (++i % chunk_size == 0) {
+      auto progress = (i / chunk_size) * 5;
+      logger.Debug("Dna::FindOverlaps", to_string(progress) + " %");
     }
   }
 
