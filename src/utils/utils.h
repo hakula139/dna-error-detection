@@ -4,6 +4,11 @@
 #include <string>
 #include <unordered_map>
 
+size_t LongestCommonSubstringLength(
+    const std::string& str1, const std::string& str2);
+size_t LongestCommonSubsequenceLength(
+    const std::string& str1, const std::string& str2);
+
 bool FuzzyCompare(int num1, int num2);
 bool FuzzyCompare(const std::string& str1, const std::string& str2);
 

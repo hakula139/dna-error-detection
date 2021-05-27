@@ -20,19 +20,12 @@ using std::vector;
 extern Config config;
 extern Logger logger;
 
-bool FuzzyCompare(int num1, int num2) {
-  return abs(num1 - num2) <= config.gap_max_diff;
-}
-
-bool FuzzyCompare(const string& str1, const string& str2) {
+size_t LongestCommonSubstringLength(const string& str1, const string& str2) {
   auto len1 = str1.length();
   auto len2 = str2.length();
-  auto max_len = max(len1, len2);
+  auto dp = vector<vector<size_t>>(len1 + 1, vector<size_t>(len2 + 1, 0));
 
-  auto dp = vector<vector<int>>(len1 + 1, vector<int>(len2 + 1, 0));
-
-  // Find longest common substring.
-  auto common_len = 0;
+  size_t common_len = 0;
   for (auto i = 1; i <= len1; ++i) {
     for (auto j = 1; j <= len2; ++j) {
       if (str1[i - 1] == str2[j - 1]) {
@@ -43,9 +36,14 @@ bool FuzzyCompare(const string& str1, const string& str2) {
       }
     }
   }
-  if (common_len >= max_len * config.strict_equal_rate) return true;
+  return common_len;
+}
 
-  // Find longest common subsequence.
+size_t LongestCommonSubsequenceLength(const string& str1, const string& str2) {
+  auto len1 = str1.length();
+  auto len2 = str2.length();
+  auto dp = vector<vector<size_t>>(len1 + 1, vector<size_t>(len2 + 1, 0));
+
   for (auto i = 1; i <= len1; ++i) {
     for (auto j = 1; j <= len2; ++j) {
       if (str1[i - 1] == str2[j - 1]) {
@@ -55,9 +53,19 @@ bool FuzzyCompare(const string& str1, const string& str2) {
       }
     }
   }
-  if (dp[len1][len2] >= max_len * config.fuzzy_equal_rate) return true;
+  return dp[len1][len2];
+}
 
-  return false;
+bool FuzzyCompare(int num1, int num2) {
+  return abs(num1 - num2) <= config.gap_max_diff;
+}
+
+bool FuzzyCompare(const string& str1, const string& str2) {
+  auto max_len = max(str1.length(), str2.length());
+  return LongestCommonSubstringLength(str1, str2) >=
+             max_len * config.strict_equal_rate ||
+         LongestCommonSubsequenceLength(str1, str2) >=
+             max_len * config.fuzzy_equal_rate;
 }
 
 void ShowManual() {
