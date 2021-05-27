@@ -27,14 +27,18 @@ int main(int argc, char** argv) {
     ref.PrintIndex(config.path + config.index_filename);
   }
 
-  // Combine PacBio subsequences
-  if (arg_flags['p']) {
+  // Merge PacBio subsequences
+  if (arg_flags['m']) {
     if (!ref.ImportIndex(config.path + config.index_filename)) {
       return EXIT_FAILURE;
     }
-    Dna segments(config.path + config.seg_filename);
-    segments.FindOverlaps(ref);
-    segments.PrintOverlaps(config.path + config.overlaps_filename);
+    if (!sv.ImportOverlaps(config.path + config.overlaps_filename)) {
+      Dna segments(config.path + config.seg_filename);
+      segments.FindOverlaps(ref);
+      segments.PrintOverlaps(config.path + config.overlaps_filename);
+      sv.ImportOverlaps(segments);
+    }
+
     sv.Print(config.path + config.sv_filename);
   }
 

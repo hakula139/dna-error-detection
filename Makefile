@@ -16,7 +16,7 @@ CXXFLAGS  := -g -Wall -O3 -std=c++17 -stdlib=libc++ $(INC_FLAGS) -MMD -MP
 MKDIR     := mkdir -p
 RM        := rm -rf
 
-.PHONY: all run index combine start clean
+.PHONY: all run index merge start clean
 
 all: $(BIN_DIR)/$(TARGET)
 
@@ -26,8 +26,8 @@ run: $(BIN_DIR)/$(TARGET)
 index: $(BIN_DIR)/$(TARGET)
 	@$< -i
 
-combine: $(BIN_DIR)/$(TARGET)
-	@$< -p
+merge: $(BIN_DIR)/$(TARGET)
+	@$< -m
 
 start: $(BIN_DIR)/$(TARGET)
 	@$< -s

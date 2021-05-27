@@ -73,7 +73,7 @@ void ShowManual() {
        << "Options and arguments:\n"
        << "-a\t : run all preprocessing tasks and start the main process\n"
        << "-i\t : create an index of reference data only\n"
-       << "-p\t : combine PacBio subsequences only\n"
+       << "-m\t : merge PacBio subsequences only\n"
        << "-s\t : start the main process only\n";
 }
 
@@ -87,11 +87,11 @@ bool ReadArgs(unordered_map<char, bool>* arg_flags, int argc, char** argv) {
         switch (arg) {
           case 'a':
             (*arg_flags)['i'] = true;
-            (*arg_flags)['p'] = true;
+            (*arg_flags)['m'] = true;
             (*arg_flags)['s'] = true;
             break;
           case 'i':
-          case 'p':
+          case 'm':
           case 's':
             (*arg_flags)[arg] = true;
             break;

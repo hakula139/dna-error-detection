@@ -75,6 +75,31 @@ bool Dna::ImportIndex(const string& filename) {
   return true;
 }
 
+bool Dna::ImportOverlaps(const string& filename) {
+  ifstream in_file(filename);
+  if (!in_file) {
+    return false;
+  }
+
+  while (!in_file.eof()) {
+    string key_ref, key_seg;
+    size_t range_ref_start, range_ref_end;
+    size_t range_seg_start, range_seg_end;
+    in_file >> key_ref >> range_ref_start >> range_ref_end;
+    in_file >> key_seg >> range_seg_start >> range_seg_end;
+    if (!key_ref.length() || !key_seg.length()) break;
+    overlaps_ += {
+        key_ref,
+        {range_ref_start, range_ref_end},
+        key_seg,
+        {range_seg_start, range_seg_end},
+    };
+  }
+
+  in_file.close();
+  return true;
+}
+
 bool Dna::get(const string& key, string* value) const {
   try {
     *value = data_.at(key);
@@ -228,8 +253,6 @@ bool Dna::FindOverlaps(const Dna& ref) {
   overlaps_.Sort();
   return true;
 }
-
-void Dna::ProcessOverlaps() {}
 
 bool Dna::PrintOverlaps(const string& filename) const {
   ofstream out_file(filename);

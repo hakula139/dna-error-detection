@@ -16,19 +16,18 @@ class Dna {
   Dna() {}
   explicit Dna(const std::string& filename) { Import(filename); }
 
-  static uint64_t NextHash(uint64_t hash, char next_base);
-  static std::string Invert(const std::string& chain);
-
   bool Import(const std::string& filename);
-  bool ImportIndex(const std::string& filename);
   bool get(const std::string& key, std::string* value) const;
   size_t size() const { return data_.size(); }
   bool Print(const std::string& filename) const;
 
+  bool ImportIndex(const std::string& filename);
   void CreateIndex();
   bool PrintIndex(const std::string& filename) const;
+
+  bool ImportOverlaps(const std::string& filename);
+  void ImportOverlaps(const Dna& segments) { overlaps_ = segments.overlaps_; }
   bool FindOverlaps(const Dna& ref);
-  void ProcessOverlaps();
   bool PrintOverlaps(const std::string& filename) const;
 
   void FindDeltas(const Dna& sv, size_t chunk_size = 10000);
@@ -39,6 +38,9 @@ class Dna {
   bool PrintDeltas(const std::string& filename) const;
 
  protected:
+  static uint64_t NextHash(uint64_t hash, char next_base);
+  static std::string Invert(const std::string& chain);
+
   Point FindDeltasChunk(
       const std::string& key,
       const std::string* ref_p,
