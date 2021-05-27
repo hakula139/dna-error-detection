@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <exception>
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -23,9 +24,9 @@ extern Logger logger;
 size_t LongestCommonSubstringLength(const string& str1, const string& str2) {
   auto len1 = str1.length();
   auto len2 = str2.length();
-  auto dp = vector<vector<size_t>>(len1 + 1, vector<size_t>(len2 + 1, 0));
+  auto dp = vector<vector<int>>(len1 + 1, vector<int>(len2 + 1));
 
-  size_t common_len = 0;
+  auto common_len = 0;
   for (auto i = 1; i <= len1; ++i) {
     for (auto j = 1; j <= len2; ++j) {
       if (str1[i - 1] == str2[j - 1]) {
@@ -42,7 +43,7 @@ size_t LongestCommonSubstringLength(const string& str1, const string& str2) {
 size_t LongestCommonSubsequenceLength(const string& str1, const string& str2) {
   auto len1 = str1.length();
   auto len2 = str2.length();
-  auto dp = vector<vector<size_t>>(len1 + 1, vector<size_t>(len2 + 1, 0));
+  auto dp = vector<vector<int>>(len1 + 1, vector<int>(len2 + 1));
 
   for (auto i = 1; i <= len1; ++i) {
     for (auto j = 1; j <= len2; ++j) {
@@ -54,6 +55,42 @@ size_t LongestCommonSubsequenceLength(const string& str1, const string& str2) {
     }
   }
   return dp[len1][len2];
+}
+
+string ShortestCommonSupersequence(const string& str1, const string& str2) {
+  auto len1 = str1.length();
+  auto len2 = str2.length();
+  auto dp = vector<vector<int>>(len1 + 1, vector<int>(len2 + 1));
+
+  for (auto i = 1; i <= len1; ++i) {
+    for (auto j = 1; j <= len2; ++j) {
+      if (str1[i - 1] == str2[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1] + 1;
+      } else {
+        dp[i][j] = max(dp[i - 1][j], dp[i][j - 1]);
+      }
+    }
+  }
+
+  string result;
+  try {
+    for (int i = len1, j = len2; i > 0 || j > 0;) {
+      if (i > 0 && dp[i][j] == dp[i - 1][j]) {
+        result = str1[--i] + result;
+      } else if (j > 0 && dp[i][j] == dp[i][j - 1]) {
+        result = str2[--j] + result;
+      } else {
+        result = str1[--i] + result;
+        --j;
+      }
+    }
+  } catch (const std::out_of_range& error) {
+    logger.Fatal(
+        "ShortestCommonSupersequence",
+        "Unexpected branch, error: " + string(error.what()));
+    throw;
+  }
+  return result;
 }
 
 bool FuzzyCompare(int num1, int num2) {

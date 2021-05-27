@@ -49,7 +49,6 @@ void Logger::Fatal(const string& context, const string& message) {
   if (config.log_level <= Config::Level::FATAL) {
     printf("[FATAL] ");
     Log(context, message);
-    exit(EXIT_FAILURE);
   }
 }
 
