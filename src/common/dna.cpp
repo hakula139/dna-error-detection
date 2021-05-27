@@ -65,7 +65,10 @@ bool Dna::ImportIndex(const string& filename) {
     size_t start, end;
     in_file >> hash >> key >> start >> end;
     if (!hash || !key.length()) break;
-    range_index_[hash] = {key, {start, end}};
+    range_index_.insert({
+        hash,
+        {key, {start, end}},
+    });
   }
 
   in_file.close();
@@ -110,11 +113,12 @@ uint64_t Dna::NextHash(uint64_t hash, char next_base) {
 }
 
 void Dna::CreateIndex() {
-  for (const auto& [key, value_ref] : data_) {
-    uint64_t prev_hash = 0;
-    assert(config.hash_size > 0 && config.hash_size <= 30);
+  assert(config.hash_size > 0 && config.hash_size <= 30);
+
+  for (const auto& [key_ref, value_ref] : data_) {
+    uint64_t hash = 0;
     for (auto i = 0; i < config.hash_size - 1; ++i) {
-      prev_hash = NextHash(prev_hash, value_ref[i]);
+      hash = NextHash(hash, value_ref[i]);
     }
 
     using HashPos = pair<uint64_t, size_t>;
@@ -123,21 +127,24 @@ void Dna::CreateIndex() {
     };
     priority_queue<HashPos, vector<HashPos>, decltype(compare)> hashes{compare};
 
-    assert(config.hash_size <= config.window_size);
-    auto capacity = config.window_size - config.hash_size + 1;
-    for (auto i = config.hash_size - 1; i < value_ref.length(); ++i) {
-      while (hashes.size() && hashes.top().second + config.window_size < i) {
+    HashPos prev_min_hash;
+    for (size_t i = 0; i <= value_ref.length() - config.hash_size; ++i) {
+      while (hashes.size() && hashes.top().second + config.window_size <= i) {
         hashes.pop();
       }
-      prev_hash = NextHash(prev_hash, value_ref[i]);
-      hashes.push({prev_hash, i - config.hash_size});
-      if (hashes.size() < capacity) continue;
+      hash = NextHash(hash, value_ref[i + config.hash_size - 1]);
+      hashes.push({hash, i});
       auto min_hash = hashes.top();
-      if (!range_index_.count(min_hash.first)) {
-        range_index_[min_hash.first] = {
-            key,
-            {min_hash.second, min_hash.second + config.hash_size},
-        };
+      if (min_hash.second != prev_min_hash.second) {
+        Range range_ref{min_hash.second, min_hash.second + config.hash_size};
+        range_index_.insert({
+            min_hash.first,
+            {
+                key_ref,
+                range_ref,
+            },
+        });
+        prev_min_hash = min_hash;
       }
     }
   }
@@ -163,26 +170,29 @@ bool Dna::FindOverlaps(const Dna& ref) {
     logger.Warn("Dna::FindOverlaps", "No index found in reference data");
     return false;
   }
+  assert(config.hash_size > 0 && config.hash_size <= 30);
 
   auto find_overlaps = [&](const string& key_seg, const string& chain_seg) {
-    uint64_t prev_hash = 0;
-    assert(config.hash_size > 0);
+    uint64_t hash = 0;
     for (auto i = 0; i < config.hash_size - 1; ++i) {
-      prev_hash = NextHash(prev_hash, chain_seg[i]);
+      hash = NextHash(hash, chain_seg[i]);
     }
 
     DnaOverlap overlaps;
-    for (auto i = config.hash_size - 1; i < chain_seg.length(); ++i) {
-      prev_hash = NextHash(prev_hash, chain_seg[i]);
-      if (ref.range_index_.count(prev_hash)) {
-        const auto& [key_ref, range_ref] = ref.range_index_.at(prev_hash);
-        auto range_seg = Range(i - config.hash_size + 1, i);
-        overlaps += {
-            key_ref,
-            range_ref,
-            key_seg,
-            range_seg,
-        };
+    for (size_t i = 0; i <= chain_seg.length() - config.hash_size; ++i) {
+      hash = NextHash(hash, chain_seg[i + config.hash_size - 1]);
+      if (ref.range_index_.count(hash)) {
+        const auto& entry_ref_range = ref.range_index_.equal_range(hash);
+        Range range_seg{i, i + config.hash_size};
+        for (auto j = entry_ref_range.first; j != entry_ref_range.second; ++j) {
+          const auto& [key_ref, range_ref] = j->second;
+          overlaps += {
+              key_ref,
+              range_ref,
+              key_seg,
+              range_seg,
+          };
+        }
       }
     }
     return overlaps;

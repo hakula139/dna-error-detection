@@ -52,7 +52,7 @@ class Dna {
  private:
   std::unordered_map<std::string, std::string> data_;
 
-  std::unordered_map<uint64_t, std::pair<std::string, Range>> range_index_;
+  std::unordered_multimap<uint64_t, std::pair<std::string, Range>> range_index_;
   DnaOverlap overlaps_;
 
   DnaDelta ins_deltas_{"INS"};

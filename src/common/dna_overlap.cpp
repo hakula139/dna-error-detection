@@ -10,7 +10,10 @@ using std::sort;
 
 void DnaOverlap::Sort() {
   auto compare = [](const Minimizer& m1, const Minimizer& m2) {
-    return get<1>(m1) < get<1>(m2);
+    const auto& [key_ref_1, range_ref_1, key_seg_1, range_seg_1] = m1;
+    const auto& [key_ref_2, range_ref_2, key_seg_2, range_seg_2] = m2;
+    return key_ref_1 < key_ref_2 ||
+           (key_ref_1 == key_ref_2 && range_ref_1 < range_ref_2);
   };
   sort(data_.begin(), data_.end(), compare);
 }

@@ -11,7 +11,7 @@ Config config{
 
     .log_level = Config::Level::DEBUG,
     .hash_size = 30,
-    .window_size = 200,
+    .window_size = 20,
     .chunk_size = 50000,
     .snake_min_len = 30,
     .gap_max_diff = 100,
