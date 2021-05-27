@@ -15,6 +15,7 @@
 #include "dna_overlap.h"
 #include "logger.h"
 #include "point.h"
+#include "range.h"
 #include "utils.h"
 
 using std::endl;
@@ -163,19 +164,25 @@ bool Dna::FindOverlaps(const Dna& ref) {
     return false;
   }
 
-  auto find_overlaps = [&](const string& key, const string& chain) {
+  auto find_overlaps = [&](const string& key_seg, const string& chain_seg) {
     uint64_t prev_hash = 0;
     assert(config.hash_size > 0);
     for (auto i = 0; i < config.hash_size - 1; ++i) {
-      prev_hash = NextHash(prev_hash, chain[i]);
+      prev_hash = NextHash(prev_hash, chain_seg[i]);
     }
 
     DnaOverlap overlaps;
-    for (auto i = config.hash_size - 1; i < chain.length(); ++i) {
-      prev_hash = NextHash(prev_hash, chain[i]);
+    for (auto i = config.hash_size - 1; i < chain_seg.length(); ++i) {
+      prev_hash = NextHash(prev_hash, chain_seg[i]);
       if (ref.range_index_.count(prev_hash)) {
-        const auto& range_ref = ref.range_index_.at(prev_hash).second;
-        overlaps += {key, range_ref, {i - config.hash_size + 1, i}};
+        const auto& [key_ref, range_ref] = ref.range_index_.at(prev_hash);
+        auto range_seg = Range(i - config.hash_size + 1, i);
+        overlaps += {
+            key_ref,
+            range_ref,
+            key_seg,
+            range_seg,
+        };
       }
     }
     return overlaps;
@@ -185,13 +192,13 @@ bool Dna::FindOverlaps(const Dna& ref) {
     return overlap_size >= config.strict_equal_rate * chain_size;
   };
 
-  for (auto&& [key, value_seg] : data_) {
-    auto overlaps = find_overlaps(key, value_seg);
+  for (auto&& [key_seg, value_seg] : data_) {
+    auto overlaps = find_overlaps(key_seg, value_seg);
     if (is_valid(overlaps.size(), value_seg.length())) {
       overlaps_ += overlaps;
     } else {
       auto inverted_value_seg = Invert(value_seg);
-      auto overlaps_invert = find_overlaps(key, inverted_value_seg);
+      auto overlaps_invert = find_overlaps(key_seg, inverted_value_seg);
       if (overlaps.size() >= overlaps_invert.size()) {
         overlaps_ += overlaps;
       } else {
@@ -200,7 +207,7 @@ bool Dna::FindOverlaps(const Dna& ref) {
       }
     }
 
-    logger.Debug("Dna::FindOverlaps", key + ": Done");
+    logger.Debug("Dna::FindOverlaps", key_seg + ": Done");
   }
 
   overlaps_.Sort();

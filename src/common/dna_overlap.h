@@ -10,7 +10,7 @@
 
 class DnaOverlap {
  public:
-  using Minimizer = std::tuple<std::string, Range, Range>;
+  using Minimizer = std::tuple<std::string, Range, std::string, Range>;
 
   DnaOverlap() {}
   explicit DnaOverlap(const Minimizer& entry) : data_{entry} {}
