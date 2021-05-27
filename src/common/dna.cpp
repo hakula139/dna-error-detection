@@ -83,17 +83,13 @@ bool Dna::ImportOverlaps(const string& filename) {
 
   while (!in_file.eof()) {
     string key_ref, key_seg;
-    size_t range_ref_start, range_ref_end;
-    size_t range_seg_start, range_seg_end;
+    size_t range_ref_start, range_ref_end, range_seg_start, range_seg_end;
     in_file >> key_ref >> range_ref_start >> range_ref_end;
     in_file >> key_seg >> range_seg_start >> range_seg_end;
     if (!key_ref.length() || !key_seg.length()) break;
-    overlaps_ += {
-        key_ref,
-        {range_ref_start, range_ref_end},
-        key_seg,
-        {range_seg_start, range_seg_end},
-    };
+    Range range_ref{range_ref_start, range_ref_end};
+    Range range_seg{range_seg_start, range_seg_end};
+    overlaps_.Insert(key_ref, {range_ref, key_seg, range_seg});
   }
 
   in_file.close();
@@ -162,13 +158,7 @@ void Dna::CreateIndex() {
       auto min_hash = hashes.top();
       if (min_hash.second != prev_min_hash.second) {
         Range range_ref{min_hash.second, min_hash.second + config.hash_size};
-        range_index_.insert({
-            min_hash.first,
-            {
-                key_ref,
-                range_ref,
-            },
-        });
+        range_index_.insert({min_hash.first, {key_ref, range_ref}});
         prev_min_hash = min_hash;
       }
     }
@@ -211,12 +201,7 @@ bool Dna::FindOverlaps(const Dna& ref) {
         Range range_seg{i, i + config.hash_size};
         for (auto j = entry_ref_range.first; j != entry_ref_range.second; ++j) {
           const auto& [key_ref, range_ref] = j->second;
-          overlaps += {
-              key_ref,
-              range_ref,
-              key_seg,
-              range_seg,
-          };
+          overlaps.Insert(key_ref, {range_ref, key_seg, range_seg});
         }
       }
     }
@@ -249,8 +234,6 @@ bool Dna::FindOverlaps(const Dna& ref) {
       logger.Debug("Dna::FindOverlaps", to_string(progress) + " %");
     }
   }
-
-  overlaps_.Sort();
   return true;
 }
 
