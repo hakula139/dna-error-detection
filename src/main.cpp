@@ -18,8 +18,12 @@ int main(int argc, char** argv) {
     return EXIT_FAILURE;
   }
 
-  Dna ref(config.path + config.ref_filename);
-  Dna sv;
+  Dna ref, sv, segments;
+
+  // Read reference data
+  if (!ref.Import(config.path + config.ref_filename)) {
+    return EXIT_FAILURE;
+  }
 
   // Create an index of reference data
   if (arg_flags['i']) {
@@ -32,19 +36,23 @@ int main(int argc, char** argv) {
     if (!ref.ImportIndex(config.path + config.index_filename)) {
       return EXIT_FAILURE;
     }
-    if (!sv.ImportOverlaps(config.path + config.overlaps_filename)) {
-      Dna segments(config.path + config.seg_filename);
+    if (!segments.ImportOverlaps(config.path + config.overlaps_filename)) {
+      if (!segments.Import(config.path + config.seg_filename)) {
+        return EXIT_FAILURE;
+      }
       segments.FindOverlaps(ref);
       segments.PrintOverlaps(config.path + config.overlaps_filename);
-      sv.ImportOverlaps(segments);
     }
 
+    sv.CreateSvChain(ref, segments);
     sv.Print(config.path + config.sv_filename);
   }
 
   // Main process
   if (arg_flags['s']) {
-    if (!sv.size()) sv.Import(config.path + config.sv_filename);
+    if (!sv.size() || !sv.Import(config.path + config.sv_filename)) {
+      return EXIT_FAILURE;
+    }
     ref.FindDeltas(sv, config.chunk_size);
     ref.ProcessDeltas();
     ref.PrintDeltas(config.path + config.deltas_filename);

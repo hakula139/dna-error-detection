@@ -26,7 +26,6 @@ class Dna {
   bool PrintIndex(const std::string& filename) const;
 
   bool ImportOverlaps(const std::string& filename);
-  void ImportOverlaps(const Dna& segments) { overlaps_ = segments.overlaps_; }
   bool FindOverlaps(const Dna& ref);
   bool PrintOverlaps(const std::string& filename) const;
 
@@ -55,6 +54,7 @@ class Dna {
   std::unordered_map<std::string, std::string> data_;
 
   std::unordered_multimap<uint64_t, std::pair<std::string, Range>> range_index_;
+
   DnaOverlap overlaps_;
 
   DnaDelta ins_deltas_{"INS"};
