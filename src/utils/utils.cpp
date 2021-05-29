@@ -99,6 +99,11 @@ void Concat(string* base_p, const string* str_p) {
   auto str_len = str_p->length();
   auto max_overlap_len = min(base_len, str_len);
 
+  if (!base_len) {
+    *base_p = *str_p;
+    return;
+  }
+
   size_t replace_start = base_len - max_overlap_len;
   string replace_str;
   auto base_suffix_str = base_p->substr(replace_start);

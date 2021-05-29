@@ -276,7 +276,8 @@ void Dna::CreateSvChain(const Dna& ref, const Dna& segments) {
     priority_queue<KeyRange> merged_overlaps_heap;
     for (const auto& [key_seg, entry_ref] : merged_overlaps) {
       const auto& [merged_range, count] = entry_ref;
-      if (count >= Config::MINIMIZER_MIN_COUNT) {
+      if (count >= Config::MINIMIZER_MIN_COUNT &&
+          merged_range.size() >= Config::OVERLAP_MIN_LEN) {
         merged_overlaps_heap.emplace(key_seg, merged_range);
       }
     }
@@ -289,6 +290,9 @@ void Dna::CreateSvChain(const Dna& ref, const Dna& segments) {
     while (merged_overlaps_heap.size()) {
       const auto& [key_seg, range_seg] = merged_overlaps_heap.top();
       merged_overlaps_heap.pop();
+      Logger::Debug(
+          "Dna::CreateSvChain",
+          key_ref + ": merged overlap: " + range_seg.Stringify(key_seg));
 
       const auto& value_seg = segments.data_.at(key_seg);
       Concat(&value_sv, &value_seg);
