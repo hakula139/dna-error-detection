@@ -1,12 +1,12 @@
 #include "logger.h"
 
-#include <cstdlib>
 #include <iostream>
 #include <string>
 
 #include "config.h"
 
 using std::cout;
+using std::flush;
 using std::string;
 
 void Logger::Trace(const string& context, const string& message, bool endl) {
@@ -52,5 +52,5 @@ void Logger::Fatal(const string& context, const string& message, bool endl) {
 }
 
 void Logger::Log(const string& context, const string& message, bool endl) {
-  cout << context << ": " << message + (endl ? "\n" : "");
+  cout << context << ": " << message + (endl ? "\n" : "") << flush;
 }

@@ -1,23 +1,23 @@
 #include "progress.h"
 
-#include <iostream>
 #include <string>
 
 #include "logger.h"
 
-using std::cout;
-using std::flush;
 using std::to_string;
 
 Progress& Progress::operator++() {
   if (cur_ < total_) ++cur_;
 
-  if (cur_ % 100 == 0 || cur_ == total_) Print();
+  if (cur_ % 100 == 0) {
+    Print();
+  } else if (cur_ == total_) {
+    Print(true);
+  }
   return *this;
 }
 
-void Progress::Print() const {
+void Progress::Print(bool endl) const {
   Logger::Debug(
-      name_, to_string(cur_) + " / " + to_string(total_) + "\r", false);
-  cout << flush;
+      name_, to_string(cur_) + " / " + to_string(total_) + "\r", endl);
 }
