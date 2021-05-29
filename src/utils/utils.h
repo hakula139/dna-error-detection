@@ -3,13 +3,25 @@
 
 #include <string>
 #include <unordered_map>
+#include <utility>
+#include <vector>
+
+#include "range.h"
+
+std::pair<Range, Range> LongestCommonSubstring(
+    const std::string& str1, const std::string& str2);
 
 size_t LongestCommonSubstringLength(
     const std::string& str1, const std::string& str2);
+
 size_t LongestCommonSubsequenceLength(
-    const std::string& str1, const std::string& str2);
+    const std::string& str1,
+    const std::string& str2,
+    std::vector<std::vector<int>>* dp_p = nullptr);
+
 std::string ShortestCommonSupersequence(
     const std::string& str1, const std::string& str2);
+
 void Concat(std::string* base_p, const std::string* str_p);
 
 bool FuzzyCompare(int num1, int num2);

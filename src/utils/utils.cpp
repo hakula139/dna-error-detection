@@ -10,6 +10,7 @@
 
 #include "config.h"
 #include "logger.h"
+#include "range.h"
 
 using std::ceil;
 using std::cout;
@@ -20,29 +21,46 @@ using std::string;
 using std::unordered_map;
 using std::vector;
 
-size_t LongestCommonSubstringLength(const string& str1, const string& str2) {
+std::pair<Range, Range> LongestCommonSubstring(
+    const string& str1, const string& str2) {
   auto len1 = str1.length();
   auto len2 = str2.length();
   auto dp = vector<vector<int>>(len1 + 1, vector<int>(len2 + 1));
 
-  auto common_len = 0;
+  auto substr_len = 0;
+  Range str1_substr, str2_substr;
   for (auto i = 1; i <= len1; ++i) {
     for (auto j = 1; j <= len2; ++j) {
       if (str1[i - 1] == str2[j - 1]) {
         dp[i][j] = dp[i - 1][j - 1] + 1;
-        common_len = max(common_len, dp[i][j]);
+        if (dp[i][j] > substr_len) {
+          substr_len = dp[i][j];
+          str1_substr.end_ = i;
+          str2_substr.end_ = j;
+        }
       } else {
         dp[i][j] = 0;
       }
     }
   }
-  return common_len;
+
+  str1_substr.start_ = str1_substr.end_ - substr_len;
+  str2_substr.start_ = str2_substr.end_ - substr_len;
+  str1_substr.value_ = str1.substr(str1_substr.start_, substr_len);
+  str2_substr.value_ = str1_substr.value_;
+  return {str1_substr, str2_substr};
 }
 
-size_t LongestCommonSubsequenceLength(const string& str1, const string& str2) {
+size_t LongestCommonSubstringLength(const string& str1, const string& str2) {
+  return LongestCommonSubstring(str1, str2).first.value_.length();
+}
+
+size_t LongestCommonSubsequenceLength(
+    const string& str1, const string& str2, vector<vector<int>>* dp_p) {
   auto len1 = str1.length();
   auto len2 = str2.length();
-  auto dp = vector<vector<int>>(len1 + 1, vector<int>(len2 + 1));
+  auto&& dp = dp_p ? *dp_p
+                   : vector<vector<int>>(len1 + 1, vector<int>(len2 + 1));
 
   for (auto i = 1; i <= len1; ++i) {
     for (auto j = 1; j <= len2; ++j) {
@@ -59,38 +77,19 @@ size_t LongestCommonSubsequenceLength(const string& str1, const string& str2) {
 string ShortestCommonSupersequence(const string& str1, const string& str2) {
   auto len1 = str1.length();
   auto len2 = str2.length();
-  if (!len1) return str2;
-  if (!len2) return str1;
-
   auto dp = vector<vector<int>>(len1 + 1, vector<int>(len2 + 1));
-
-  for (auto i = 1; i <= len1; ++i) {
-    for (auto j = 1; j <= len2; ++j) {
-      if (str1[i - 1] == str2[j - 1]) {
-        dp[i][j] = dp[i - 1][j - 1] + 1;
-      } else {
-        dp[i][j] = max(dp[i - 1][j], dp[i][j - 1]);
-      }
-    }
-  }
+  LongestCommonSubsequenceLength(str1, str2, &dp);
 
   string result;
-  try {
-    for (int i = len1, j = len2; i > 0 || j > 0;) {
-      if (i > 0 && dp[i][j] == dp[i - 1][j]) {
-        result = str1[--i] + result;
-      } else if (j > 0 && dp[i][j] == dp[i][j - 1]) {
-        result = str2[--j] + result;
-      } else {
-        result = str1[--i] + result;
-        --j;
-      }
+  for (int i = len1, j = len2; i > 0 || j > 0;) {
+    if (i > 0 && dp[i][j] == dp[i - 1][j]) {
+      result = str1[--i] + result;
+    } else if (j > 0 && dp[i][j] == dp[i][j - 1]) {
+      result = str2[--j] + result;
+    } else {
+      result = str1[--i] + result;
+      --j;
     }
-  } catch (const out_of_range& error) {
-    Logger::Fatal(
-        "ShortestCommonSupersequence",
-        "Unexpected branch, error: " + string(error.what()));
-    throw;
   }
   return result;
 }
@@ -99,11 +98,20 @@ void Concat(string* base_p, const string* str_p) {
   auto base_len = base_p->length();
   auto str_len = str_p->length();
   auto max_overlap_len = min(base_len, str_len);
-  auto base_sub_start = base_len - max_overlap_len;
-  auto combined_str = ShortestCommonSupersequence(
-      base_p->substr(base_sub_start), *str_p);
-  base_p->erase(base_p->begin() + base_sub_start, base_p->end());
-  *base_p += *str_p;
+
+  size_t replace_start = base_len - max_overlap_len;
+  string replace_str;
+  auto base_suffix_str = base_p->substr(replace_start);
+  auto common_str = LongestCommonSubstring(base_suffix_str, *str_p);
+  if (common_str.first.value_.length() >= Config::OVERLAP_MIN_LEN) {
+    replace_start += common_str.first.end_;
+    replace_str = str_p->substr(common_str.second.end_);
+  } else {
+    replace_str = ShortestCommonSupersequence(base_suffix_str, *str_p);
+  }
+
+  base_p->erase(base_p->begin() + replace_start, base_p->end());
+  *base_p += replace_str;
 }
 
 bool FuzzyCompare(int num1, int num2) {

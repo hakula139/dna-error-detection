@@ -18,6 +18,5 @@ Progress& Progress::operator++() {
 }
 
 void Progress::Print(bool endl) const {
-  Logger::Debug(
-      name_, to_string(cur_) + " / " + to_string(total_) + "\r", endl);
+  Logger::Info(name_, to_string(cur_) + " / " + to_string(total_) + "\r", endl);
 }

@@ -13,11 +13,11 @@ string Range::Stringify() const {
 }
 
 string Range::Stringify(const string& key) const {
-  return key.length() ? key + " " + Stringify() : Stringify();
+  return (key.length() ? key + " " : "") + Stringify();
 }
 
 bool Range::operator<(const Range& that) const {
-  return start_ < that.start_ || (start_ == that.start_ && end_ < that.end_);
+  return end_ < that.end_ || (end_ == that.end_ && start_ < that.start_);
 }
 
 bool FuzzyCompare(const Range& range1, const Range& range2) {

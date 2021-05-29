@@ -28,7 +28,9 @@ struct Config {
   inline static const size_t SNAKE_MIN_LEN = 30;
   inline static const size_t GAP_MAX_DIFF = 100;
   inline static const size_t DELTA_MAX_LEN = 1000;
-  inline static const double STRICT_EQUAL_RATE = 0.3;
+  inline static const size_t OVERLAP_MIN_LEN = 30;
+  inline static const size_t MINIMIZER_MIN_COUNT = 5;
+  inline static const double STRICT_EQUAL_RATE = 0.4;
   inline static const double FUZZY_EQUAL_RATE = 0.8;
 };
 

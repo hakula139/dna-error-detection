@@ -132,6 +132,16 @@ uint64_t Dna::NextHash(uint64_t hash, char next_base) {
   return ((hash << 2) & mask) | dna_base_map.at(next_base);
 }
 
+struct HashPos {
+  HashPos() {}
+  HashPos(uint64_t hash, size_t pos) : hash_(hash), pos_(pos) {}
+
+  bool operator<(const HashPos& that) const { return hash_ > that.hash_; }
+
+  uint64_t hash_ = 0;
+  size_t pos_ = 0;
+};
+
 void Dna::CreateIndex() {
   assert(Config::HASH_SIZE > 0 && Config::HASH_SIZE <= 30);
 
@@ -141,23 +151,18 @@ void Dna::CreateIndex() {
       hash = NextHash(hash, value_ref[i]);
     }
 
-    using HashPos = pair<uint64_t, size_t>;
-    auto compare = [](const HashPos& h1, const HashPos& h2) {
-      return h1.first > h2.first;
-    };
-    priority_queue<HashPos, vector<HashPos>, decltype(compare)> hashes{compare};
-
+    priority_queue<HashPos> hashes;
     HashPos prev_min_hash;
     for (size_t i = 0; i <= value_ref.length() - Config::HASH_SIZE; ++i) {
-      while (hashes.size() && hashes.top().second + Config::WINDOW_SIZE <= i) {
+      while (hashes.size() && hashes.top().pos_ + Config::WINDOW_SIZE <= i) {
         hashes.pop();
       }
       hash = NextHash(hash, value_ref[i + Config::HASH_SIZE - 1]);
-      hashes.push({hash, i});
+      hashes.emplace(hash, i);
       auto min_hash = hashes.top();
-      if (min_hash.second != prev_min_hash.second) {
-        Range range_ref{min_hash.second, min_hash.second + Config::HASH_SIZE};
-        range_index_.insert({min_hash.first, {key_ref, range_ref}});
+      if (min_hash.pos_ != prev_min_hash.pos_) {
+        Range range_ref{min_hash.pos_, min_hash.pos_ + Config::HASH_SIZE};
+        range_index_.insert({min_hash.hash_, {key_ref, range_ref}});
         prev_min_hash = min_hash;
       }
     }
@@ -238,17 +243,47 @@ bool Dna::PrintOverlaps(const string& filename) const {
   return true;
 }
 
+struct KeyRange {
+  explicit KeyRange(const string& key, const Range& range)
+      : key_(key), range_(range) {}
+
+  bool operator<(const KeyRange& that) const { return that.range_ < range_; }
+
+  string key_;
+  Range range_;
+};
+
 void Dna::CreateSvChain(const Dna& ref, const Dna& segments) {
   for (const auto& [key_ref, value_ref] : ref.data_) {
     auto& value_sv = data_[key_ref];
     value_sv.clear();
 
     const auto& entries = segments.overlaps_.data_.at(key_ref);
-    Progress progress{"Dna::CreateSvChain " + key_ref, entries.size()};
-    for (const auto& [range_ref_, key_seg_, range_seg_] : entries) {
-      const auto& value_seg = segments.data_.at(key_seg_);
-      Concat(&value_sv, &value_seg);
 
+    unordered_map<string, pair<Range, size_t>> merged_overlaps;
+    for (const auto& [range_ref, key_seg, range_seg] : entries) {
+      auto&& [merged_range, count] = merged_overlaps[key_seg];
+      auto&& [start, end, value] = merged_range;
+      start = start ? min(start, range_ref.start_) : range_ref.start_;
+      end = max(end, range_ref.end_);
+      ++count;
+    }
+
+    priority_queue<KeyRange> merged_overlaps_heap;
+    for (const auto& [key_seg, entry_ref] : merged_overlaps) {
+      const auto& [merged_range, count] = entry_ref;
+      if (count >= Config::MINIMIZER_MIN_COUNT) {
+        merged_overlaps_heap.emplace(key_seg, merged_range);
+      }
+    }
+
+    Progress progress{"Dna::CreateSvChain " + key_ref, merged_overlaps.size()};
+    while (merged_overlaps_heap.size()) {
+      const auto& [key_seg, range_seg] = merged_overlaps_heap.top();
+      merged_overlaps_heap.pop();
+
+      const auto& value_seg = segments.data_.at(key_seg);
+      Concat(&value_sv, &value_seg);
       ++progress;
     }
   }
