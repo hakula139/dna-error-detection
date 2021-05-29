@@ -23,6 +23,7 @@ using std::ifstream;
 using std::max;
 using std::min;
 using std::ofstream;
+using std::out_of_range;
 using std::pair;
 using std::priority_queue;
 using std::string;
@@ -31,13 +32,10 @@ using std::tuple;
 using std::unordered_map;
 using std::vector;
 
-extern Config config;
-extern Logger logger;
-
 bool Dna::Import(const string& filename) {
   ifstream in_file(filename);
   if (!in_file) {
-    logger.Error("Dna::Import", "Input file " + filename + " not found");
+    Logger::Error("Dna::Import", "Input file " + filename + " not found");
     return false;
   }
 
@@ -55,7 +53,7 @@ bool Dna::Import(const string& filename) {
 bool Dna::ImportIndex(const string& filename) {
   ifstream in_file(filename);
   if (!in_file) {
-    logger.Error("Dna::ImportIndex", "Input file " + filename + " not found");
+    Logger::Error("Dna::ImportIndex", "Input file " + filename + " not found");
     return false;
   }
 
@@ -100,7 +98,7 @@ bool Dna::get(const string& key, string* value) const {
   try {
     *value = data_.at(key);
     return true;
-  } catch (std::out_of_range error) {
+  } catch (const out_of_range& error) {
     *value = "";
     return false;
   }
@@ -109,7 +107,7 @@ bool Dna::get(const string& key, string* value) const {
 bool Dna::Print(const string& filename) const {
   ofstream out_file(filename);
   if (!out_file) {
-    logger.Error("Dna::Print", "Cannot create output file " + filename);
+    Logger::Error("Dna::Print", "Cannot create output file " + filename);
     return false;
   }
 
@@ -129,16 +127,16 @@ uint64_t Dna::NextHash(uint64_t hash, char next_base) {
       {'G', 3},
       {'N', 0},
   };
-  const uint64_t mask = ~(UINT64_MAX << (config.hash_size << 1));
+  const uint64_t mask = ~(UINT64_MAX << (Config::HASH_SIZE << 1));
   return ((hash << 2) & mask) | dna_base_map.at(next_base);
 }
 
 void Dna::CreateIndex() {
-  assert(config.hash_size > 0 && config.hash_size <= 30);
+  assert(Config::HASH_SIZE > 0 && Config::HASH_SIZE <= 30);
 
   for (const auto& [key_ref, value_ref] : data_) {
     uint64_t hash = 0;
-    for (auto i = 0; i < config.hash_size - 1; ++i) {
+    for (auto i = 0; i < Config::HASH_SIZE - 1; ++i) {
       hash = NextHash(hash, value_ref[i]);
     }
 
@@ -149,15 +147,15 @@ void Dna::CreateIndex() {
     priority_queue<HashPos, vector<HashPos>, decltype(compare)> hashes{compare};
 
     HashPos prev_min_hash;
-    for (size_t i = 0; i <= value_ref.length() - config.hash_size; ++i) {
-      while (hashes.size() && hashes.top().second + config.window_size <= i) {
+    for (size_t i = 0; i <= value_ref.length() - Config::HASH_SIZE; ++i) {
+      while (hashes.size() && hashes.top().second + Config::WINDOW_SIZE <= i) {
         hashes.pop();
       }
-      hash = NextHash(hash, value_ref[i + config.hash_size - 1]);
+      hash = NextHash(hash, value_ref[i + Config::HASH_SIZE - 1]);
       hashes.push({hash, i});
       auto min_hash = hashes.top();
       if (min_hash.second != prev_min_hash.second) {
-        Range range_ref{min_hash.second, min_hash.second + config.hash_size};
+        Range range_ref{min_hash.second, min_hash.second + Config::HASH_SIZE};
         range_index_.insert({min_hash.first, {key_ref, range_ref}});
         prev_min_hash = min_hash;
       }
@@ -168,7 +166,7 @@ void Dna::CreateIndex() {
 bool Dna::PrintIndex(const string& filename) const {
   ofstream out_file(filename);
   if (!out_file) {
-    logger.Error("Dna::PrintIndex", "Cannot create output file " + filename);
+    Logger::Error("Dna::PrintIndex", "Cannot create output file " + filename);
     return false;
   }
 
@@ -182,23 +180,23 @@ bool Dna::PrintIndex(const string& filename) const {
 
 bool Dna::FindOverlaps(const Dna& ref) {
   if (!ref.range_index_.size()) {
-    logger.Warn("Dna::FindOverlaps", "No index found in reference data");
+    Logger::Warn("Dna::FindOverlaps", "No index found in reference data");
     return false;
   }
-  assert(config.hash_size > 0 && config.hash_size <= 30);
+  assert(Config::HASH_SIZE > 0 && Config::HASH_SIZE <= 30);
 
   auto find_overlaps = [&](const string& key_seg, const string& chain_seg) {
     uint64_t hash = 0;
-    for (auto i = 0; i < config.hash_size - 1; ++i) {
+    for (auto i = 0; i < Config::HASH_SIZE - 1; ++i) {
       hash = NextHash(hash, chain_seg[i]);
     }
 
     DnaOverlap overlaps;
-    for (size_t i = 0; i <= chain_seg.length() - config.hash_size; ++i) {
-      hash = NextHash(hash, chain_seg[i + config.hash_size - 1]);
+    for (size_t i = 0; i <= chain_seg.length() - Config::HASH_SIZE; ++i) {
+      hash = NextHash(hash, chain_seg[i + Config::HASH_SIZE - 1]);
       if (ref.range_index_.count(hash)) {
         const auto& entry_ref_range = ref.range_index_.equal_range(hash);
-        Range range_seg{i, i + config.hash_size};
+        Range range_seg{i, i + Config::HASH_SIZE};
         for (auto j = entry_ref_range.first; j != entry_ref_range.second; ++j) {
           const auto& [key_ref, range_ref] = j->second;
           overlaps.Insert(key_ref, {range_ref, key_seg, range_seg});
@@ -209,7 +207,7 @@ bool Dna::FindOverlaps(const Dna& ref) {
   };
 
   auto is_valid = [](uint64_t overlap_size, uint64_t chain_size) {
-    return overlap_size >= config.strict_equal_rate * chain_size;
+    return overlap_size >= Config::STRICT_EQUAL_RATE * chain_size;
   };
 
   auto i = 0;
@@ -231,7 +229,7 @@ bool Dna::FindOverlaps(const Dna& ref) {
 
     if (++i % chunk_size == 0) {
       auto progress = (i / chunk_size) * 5;
-      logger.Debug("Dna::FindOverlaps", to_string(progress) + " %");
+      Logger::Debug("Dna::FindOverlaps", to_string(progress) + " %");
     }
   }
   return true;
@@ -240,7 +238,8 @@ bool Dna::FindOverlaps(const Dna& ref) {
 bool Dna::PrintOverlaps(const string& filename) const {
   ofstream out_file(filename);
   if (!out_file) {
-    logger.Error("Dna::PrintOverlaps", "Cannot create output file " + filename);
+    Logger::Error(
+        "Dna::PrintOverlaps", "Cannot create output file " + filename);
     return false;
   }
 
@@ -254,12 +253,11 @@ void Dna::FindDeltas(const Dna& sv, size_t chunk_size) {
   for (const auto& [key, value_ref] : data_) {
     string value_sv;
     if (!sv.get(key, &value_sv)) {
-      logger.Warn("Dna::FindDeltas", "key " + key + " not found in sv chain");
+      Logger::Warn("Dna::FindDeltas", "key " + key + " not found in sv chain");
       continue;
     }
 
-    for (auto [i, j] = tuple{0, 0};
-         i < value_ref.length() || j < value_sv.length();) {
+    for (int i = 0, j = 0; i < value_ref.length() || j < value_sv.length();) {
       auto m = min(value_ref.length() - i, chunk_size);
       auto n = min(value_sv.length() - j, chunk_size);
       auto reach_end = m < chunk_size || n < chunk_size;
@@ -268,7 +266,7 @@ void Dna::FindDeltas(const Dna& sv, size_t chunk_size) {
       i += next_chunk_start.x_;
       j += next_chunk_start.y_;
 
-      logger.Info(
+      Logger::Debug(
           "Dna::FindDeltas",
           key + ": " + to_string(i) + " / " + to_string(value_ref.length()));
     }
@@ -335,7 +333,7 @@ Point Dna::FindDeltasChunk(
         auto sv_char = (*sv_p)[sv_start + end.y_];
         if (ref_char != sv_char && ref_char != 'N' && sv_char != 'N') break;
       }
-      if (snake < config.snake_min_len) end = mid;
+      if (snake < Config::SNAKE_MIN_LEN) end = mid;
 
       end_xs[k + padding] = end.x_;
 
@@ -369,7 +367,7 @@ Point Dna::FindDeltasChunk(
     auto mid_x = from_up ? start.x_ : start.x_ + 1;
     auto mid = Point(mid_x, mid_x - k);
 
-    logger.Trace(
+    Logger::Trace(
         "Dna::FindDeltasChunk",
         start.Stringify() + " " + mid.Stringify() + " " + end.Stringify());
     assert(mid.x_ <= end.x_ && mid.y_ <= end.y_);
@@ -548,7 +546,7 @@ void Dna::ProcessDeltas() {
 bool Dna::PrintDeltas(const string& filename) const {
   ofstream out_file(filename);
   if (!out_file) {
-    logger.Error("Dna::PrintDeltas", "Cannot create output file " + filename);
+    Logger::Error("Dna::PrintDeltas", "Cannot create output file " + filename);
     return false;
   }
 

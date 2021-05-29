@@ -13,23 +13,23 @@ struct Config {
     FATAL,
   };
 
-  std::string path;
-  std::string ref_filename;
-  std::string sv_filename;
-  std::string seg_filename;
-  std::string index_filename;
-  std::string overlaps_filename;
-  std::string deltas_filename;
+  inline static const std::string PATH = "tests/test_2_demo/";
+  inline static const std::string REF_FILENAME = "ref.fasta";
+  inline static const std::string SV_FILENAME = "sv.fasta";
+  inline static const std::string SEG_FILENAME = "long.fasta";
+  inline static const std::string INDEX_FILENAME = "index.txt";
+  inline static const std::string OVERLAPS_FILENAME = "overlaps.txt";
+  inline static const std::string DELTAS_FILENAME = "sv.bed";
 
-  int log_level;
-  size_t hash_size;
-  size_t window_size;
-  size_t chunk_size;
-  size_t snake_min_len;
-  size_t gap_max_diff;
-  size_t delta_max_len;
-  double strict_equal_rate;
-  double fuzzy_equal_rate;
+  inline static const int LOG_LEVEL = Config::Level::DEBUG;
+  inline static const size_t HASH_SIZE = 30;
+  inline static const size_t WINDOW_SIZE = 20;
+  inline static const size_t CHUNK_SIZE = 50000;
+  inline static const size_t SNAKE_MIN_LEN = 30;
+  inline static const size_t GAP_MAX_DIFF = 100;
+  inline static const size_t DELTA_MAX_LEN = 1000;
+  inline static const double STRICT_EQUAL_RATE = 0.3;
+  inline static const double FUZZY_EQUAL_RATE = 0.8;
 };
 
 #endif  // SRC_UTILS_CONFIG_H_

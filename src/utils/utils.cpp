@@ -14,12 +14,11 @@
 using std::ceil;
 using std::cout;
 using std::max;
+using std::min;
+using std::out_of_range;
 using std::string;
 using std::unordered_map;
 using std::vector;
-
-extern Config config;
-extern Logger logger;
 
 size_t LongestCommonSubstringLength(const string& str1, const string& str2) {
   auto len1 = str1.length();
@@ -60,6 +59,9 @@ size_t LongestCommonSubsequenceLength(const string& str1, const string& str2) {
 string ShortestCommonSupersequence(const string& str1, const string& str2) {
   auto len1 = str1.length();
   auto len2 = str2.length();
+  if (!len1) return str2;
+  if (!len2) return str1;
+
   auto dp = vector<vector<int>>(len1 + 1, vector<int>(len2 + 1));
 
   for (auto i = 1; i <= len1; ++i) {
@@ -84,8 +86,8 @@ string ShortestCommonSupersequence(const string& str1, const string& str2) {
         --j;
       }
     }
-  } catch (const std::out_of_range& error) {
-    logger.Fatal(
+  } catch (const out_of_range& error) {
+    Logger::Fatal(
         "ShortestCommonSupersequence",
         "Unexpected branch, error: " + string(error.what()));
     throw;
@@ -94,15 +96,15 @@ string ShortestCommonSupersequence(const string& str1, const string& str2) {
 }
 
 bool FuzzyCompare(int num1, int num2) {
-  return abs(num1 - num2) <= config.gap_max_diff;
+  return abs(num1 - num2) <= Config::GAP_MAX_DIFF;
 }
 
 bool FuzzyCompare(const string& str1, const string& str2) {
   auto max_len = max(str1.length(), str2.length());
   return LongestCommonSubstringLength(str1, str2) >=
-             max_len * config.strict_equal_rate ||
+             max_len * Config::STRICT_EQUAL_RATE ||
          LongestCommonSubsequenceLength(str1, str2) >=
-             max_len * config.fuzzy_equal_rate;
+             max_len * Config::FUZZY_EQUAL_RATE;
 }
 
 void ShowManual() {
@@ -133,7 +135,7 @@ bool ReadArgs(unordered_map<char, bool>* arg_flags, int argc, char** argv) {
             (*arg_flags)[arg] = true;
             break;
           default:
-            logger.Warn("ReadArgs", "Invalid argument: " + string(1, arg));
+            Logger::Warn("ReadArgs", "Invalid argument: " + string(1, arg));
             return false;
         }
       }

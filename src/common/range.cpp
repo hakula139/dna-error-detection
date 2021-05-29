@@ -5,8 +5,6 @@
 #include "config.h"
 #include "utils.h"
 
-extern Config config;
-
 using std::string;
 using std::to_string;
 
@@ -24,6 +22,6 @@ bool Range::operator<(const Range& that) const {
 
 bool FuzzyCompare(const Range& range1, const Range& range2) {
   return FuzzyCompare(range1.size(), range2.size()) &&
-         range1.end_ + config.gap_max_diff >= range2.start_ &&
-         range2.end_ + config.gap_max_diff >= range1.start_;
+         range1.end_ + Config::GAP_MAX_DIFF >= range2.start_ &&
+         range2.end_ + Config::GAP_MAX_DIFF >= range1.start_;
 }

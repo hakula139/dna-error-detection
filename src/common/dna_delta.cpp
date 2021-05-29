@@ -18,9 +18,6 @@ using std::pair;
 using std::prev;
 using std::string;
 
-extern Logger logger;
-extern Config config;
-
 void DnaDelta::Print(ofstream& out_file) const {
   for (const auto& [key, ranges] : data_) {
     for (const auto& range : ranges) {
@@ -40,14 +37,15 @@ void DnaDelta::Set(const string& key, const Range& range) {
   if (!ranges.size() || !exist(range)) {
     ranges.push_back(range);
   }
-  logger.Debug("DnaDelta::Set", "Saved: " + type_ + " " + range.Stringify(key));
+  Logger::Debug(
+      "DnaDelta::Set", "Saved: " + type_ + " " + range.Stringify(key));
 }
 
 bool DnaDelta::Combine(Range* base_p, const Range* range_p) const {
   if (FuzzyCompare(*range_p, *base_p)) {
     auto new_start = min(base_p->start_, range_p->start_);
     auto new_end = max(base_p->end_, range_p->end_);
-    if (new_end > new_start + config.delta_max_len) return false;
+    if (new_end > new_start + Config::DELTA_MAX_LEN) return false;
     base_p->start_ = new_start;
     base_p->end_ = new_end;
     return true;
@@ -83,7 +81,7 @@ void DnaMultiDelta::Set(
     };
     if (!ranges.size() || !exist(range)) {
       ranges.push_back(range);
-      logger.Debug(
+      Logger::Debug(
           "DnaDelta::Set",
           "Saved: " + type_ + " " + range1.Stringify(key1) + " " +
               range2.Stringify(key2));

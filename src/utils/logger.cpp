@@ -8,45 +8,43 @@
 
 using std::string;
 
-extern Config config;
-
 void Logger::Trace(const string& context, const string& message) {
-  if (config.log_level <= Config::Level::TRACE) {
+  if (Config::LOG_LEVEL <= Config::Level::TRACE) {
     printf("[TRACE] ");
     Log(context, message);
   }
 }
 
 void Logger::Debug(const string& context, const string& message) {
-  if (config.log_level <= Config::Level::DEBUG) {
+  if (Config::LOG_LEVEL <= Config::Level::DEBUG) {
     printf("[DEBUG] ");
     Log(context, message);
   }
 }
 
 void Logger::Info(const string& context, const string& message) {
-  if (config.log_level <= Config::Level::INFO) {
+  if (Config::LOG_LEVEL <= Config::Level::INFO) {
     printf("[INFO ] ");
     Log(context, message);
   }
 }
 
 void Logger::Warn(const string& context, const string& message) {
-  if (config.log_level <= Config::Level::WARN) {
+  if (Config::LOG_LEVEL <= Config::Level::WARN) {
     printf("[WARN ] ");
     Log(context, message);
   }
 }
 
 void Logger::Error(const string& context, const string& message) {
-  if (config.log_level <= Config::Level::ERROR) {
+  if (Config::LOG_LEVEL <= Config::Level::ERROR) {
     printf("[ERROR] ");
     Log(context, message);
   }
 }
 
 void Logger::Fatal(const string& context, const string& message) {
-  if (config.log_level <= Config::Level::FATAL) {
+  if (Config::LOG_LEVEL <= Config::Level::FATAL) {
     printf("[FATAL] ");
     Log(context, message);
   }
@@ -55,5 +53,3 @@ void Logger::Fatal(const string& context, const string& message) {
 void Logger::Log(const string& context, const string& message) {
   printf("%s: %s\n", context.c_str(), message.c_str());
 }
-
-Logger logger;
