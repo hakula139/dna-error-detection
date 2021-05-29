@@ -12,9 +12,8 @@ void DnaOverlap::Insert(const string& key_ref, const Minimizer& entry) {
 
 void DnaOverlap::Print(ofstream& out_file) const {
   for (const auto& [key_ref, entries] : data_) {
-    for (const auto& [range_ref, key_seg, range_seg] : entries) {
-      out_file << range_ref.Stringify(key_ref) << " "
-               << range_seg.Stringify(key_seg) << "\n";
+    for (const auto& entry : entries) {
+      out_file << entry.Stringify() << "\n";
     }
   }
 }

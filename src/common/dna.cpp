@@ -14,6 +14,7 @@
 #include "config.h"
 #include "dna_overlap.h"
 #include "logger.h"
+#include "minimizer.h"
 #include "point.h"
 #include "progress.h"
 #include "range.h"
@@ -247,16 +248,6 @@ bool Dna::PrintOverlaps(const string& filename) const {
   return true;
 }
 
-struct KeyRange {
-  explicit KeyRange(const string& key, const Range& range)
-      : key_(key), range_(range) {}
-
-  bool operator<(const KeyRange& that) const { return that.range_ < range_; }
-
-  string key_;
-  Range range_;
-};
-
 void Dna::CreateSvChain(const Dna& ref, const Dna& segments) {
   for (const auto& [key_ref, value_ref] : ref.data_) {
     auto& value_sv = data_[key_ref];
@@ -264,37 +255,37 @@ void Dna::CreateSvChain(const Dna& ref, const Dna& segments) {
 
     const auto& entries = segments.overlaps_.data_.at(key_ref);
 
-    unordered_map<string, pair<Range, size_t>> merged_overlaps;
+    unordered_map<string, tuple<Range, Range, size_t>> merged_overlaps;
+    auto merge = [](Range& base, const Range& range) {
+      base.start_ = base.start_ ? min(base.start_, range.start_) : range.start_;
+      base.end_ = max(base.end_, range.end_);
+    };
     for (const auto& [range_ref, key_seg, range_seg] : entries) {
-      auto&& [merged_range, count] = merged_overlaps[key_seg];
-      auto&& [start, end, value] = merged_range;
-      start = start ? min(start, range_ref.start_) : range_ref.start_;
-      end = max(end, range_ref.end_);
+      auto&& [merged_ref, merged_seg, count] = merged_overlaps[key_seg];
+      merge(merged_ref, range_ref);
+      merge(merged_seg, range_seg);
       ++count;
     }
 
-    priority_queue<KeyRange> merged_overlaps_heap;
-    for (const auto& [key_seg, entry_ref] : merged_overlaps) {
-      const auto& [merged_range, count] = entry_ref;
+    priority_queue<Minimizer> minimizers;
+    for (const auto& [key_seg, entry] : merged_overlaps) {
+      const auto& [merged_ref, merged_seg, count] = entry;
       if (count >= Config::MINIMIZER_MIN_COUNT &&
-          merged_range.size() >= Config::OVERLAP_MIN_LEN) {
-        merged_overlaps_heap.emplace(key_seg, merged_range);
+          merged_ref.size() >= Config::OVERLAP_MIN_LEN &&
+          merged_seg.size() >= Config::OVERLAP_MIN_LEN) {
+        minimizers.emplace(merged_ref, key_seg, merged_seg);
       }
     }
 
-    Progress progress{
-        "Dna::CreateSvChain " + key_ref,
-        merged_overlaps.size(),
-        10,
-    };
-    while (merged_overlaps_heap.size()) {
-      const auto& [key_seg, range_seg] = merged_overlaps_heap.top();
-      merged_overlaps_heap.pop();
+    Progress progress{"Dna::CreateSvChain " + key_ref, minimizers.size(), 10};
+    while (minimizers.size()) {
+      const auto& minimizer = minimizers.top();
+      minimizers.pop();
       Logger::Debug(
           "Dna::CreateSvChain",
-          key_ref + ": merged overlap: " + range_seg.Stringify(key_seg));
+          key_ref + ": merging minimizer: " + minimizer.Stringify());
 
-      const auto& value_seg = segments.data_.at(key_seg);
+      const auto& value_seg = segments.data_.at(minimizer.key_seg_);
       Concat(&value_sv, &value_seg);
       ++progress;
     }
