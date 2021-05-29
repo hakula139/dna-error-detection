@@ -8,7 +8,9 @@ using std::to_string;
 
 void Progress::Set(size_t cur) {
   cur_ = cur < total_ ? cur : total_;
-  Print(cur_ == total_);
+  if (cur_ % step_ == 0 || cur_ == total_) {
+    Print(cur_ == total_);
+  }
 }
 
 void Progress::Print(bool endl) const {

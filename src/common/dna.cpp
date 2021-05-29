@@ -153,7 +153,9 @@ void Dna::CreateIndex() {
 
     priority_queue<HashPos> hashes;
     HashPos prev_min_hash;
-    for (size_t i = 0; i <= value_ref.length() - Config::HASH_SIZE; ++i) {
+    auto i_end = value_ref.length() - Config::HASH_SIZE + 1;
+    Progress progress{"Dna::CreateIndex " + key_ref, i_end, 10000};
+    for (size_t i = 0; i < i_end; ++i) {
       while (hashes.size() && hashes.top().pos_ + Config::WINDOW_SIZE <= i) {
         hashes.pop();
       }
@@ -165,6 +167,8 @@ void Dna::CreateIndex() {
         range_index_.insert({min_hash.hash_, {key_ref, range_ref}});
         prev_min_hash = min_hash;
       }
+
+      ++progress;
     }
   }
 }
@@ -212,7 +216,7 @@ bool Dna::FindOverlaps(const Dna& ref) {
     return overlaps;
   };
 
-  Progress progress{"Dna::FindOverlaps", data_.size()};
+  Progress progress{"Dna::FindOverlaps", data_.size(), 100};
   for (auto&& [key_seg, value_seg] : data_) {
     auto overlaps = find_overlaps(key_seg, value_seg);
     auto inverted_value_seg = Invert(value_seg);
@@ -277,7 +281,11 @@ void Dna::CreateSvChain(const Dna& ref, const Dna& segments) {
       }
     }
 
-    Progress progress{"Dna::CreateSvChain " + key_ref, merged_overlaps.size()};
+    Progress progress{
+        "Dna::CreateSvChain " + key_ref,
+        merged_overlaps.size(),
+        10,
+    };
     while (merged_overlaps_heap.size()) {
       const auto& [key_seg, range_seg] = merged_overlaps_heap.top();
       merged_overlaps_heap.pop();
