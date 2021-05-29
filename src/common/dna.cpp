@@ -4,6 +4,7 @@
 #include <cassert>
 #include <exception>
 #include <fstream>
+#include <functional>
 #include <queue>
 #include <string>
 #include <tuple>
@@ -21,6 +22,7 @@
 #include "utils.h"
 
 using std::endl;
+using std::greater;
 using std::ifstream;
 using std::max;
 using std::min;
@@ -257,8 +259,12 @@ void Dna::CreateSvChain(const Dna& ref, const Dna& segments) {
 
     unordered_map<string, tuple<Range, Range, size_t>> merged_overlaps;
     auto merge = [](Range& base, const Range& range) {
-      base.start_ = base.start_ ? min(base.start_, range.start_) : range.start_;
-      base.end_ = max(base.end_, range.end_);
+      if (base == Range()) {
+        base = range;
+      } else if (FuzzyOverlap(base, range)) {
+        base.start_ = min(base.start_, range.start_);
+        base.end_ = max(base.end_, range.end_);
+      }
     };
     for (const auto& [range_ref, key_seg, range_seg] : entries) {
       auto&& [merged_ref, merged_seg, count] = merged_overlaps[key_seg];
@@ -267,7 +273,7 @@ void Dna::CreateSvChain(const Dna& ref, const Dna& segments) {
       ++count;
     }
 
-    priority_queue<Minimizer> minimizers;
+    priority_queue<Minimizer, vector<Minimizer>, greater<Minimizer>> minimizers;
     for (const auto& [key_seg, entry] : merged_overlaps) {
       const auto& [merged_ref, merged_seg, count] = entry;
       if (count >= Config::MINIMIZER_MIN_COUNT &&

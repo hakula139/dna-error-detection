@@ -16,6 +16,7 @@ struct Minimizer {
   std::string Stringify() const;
 
   bool operator<(const Minimizer& that) const;
+  bool operator>(const Minimizer& that) const;
 
   Range range_ref_;
   std::string key_seg_;

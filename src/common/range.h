@@ -13,6 +13,8 @@ struct Range {
   std::string Stringify(const std::string& key) const;
 
   bool operator<(const Range& that) const;
+  bool operator==(const Range& that) const;
+  bool operator!=(const Range& that) const;
 
   size_t start_ = 0;
   size_t end_ = 0;
@@ -20,5 +22,6 @@ struct Range {
 };
 
 bool FuzzyCompare(const Range& range1, const Range& range2);
+bool FuzzyOverlap(const Range& range1, const Range& range2);
 
 #endif  // SRC_COMMON_RANGE_H_
