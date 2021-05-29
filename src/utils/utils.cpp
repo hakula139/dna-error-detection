@@ -111,8 +111,11 @@ void Concat(string* base_p, const string* str_p) {
   if (common_str.first.value_.length() >= Config::OVERLAP_MIN_LEN) {
     replace_start += common_str.first.end_;
     replace_str = str_p->substr(common_str.second.end_);
-  } else {
+  } else if (FuzzyCompare(base_suffix_str, *str_p)) {
     replace_str = ShortestCommonSupersequence(base_suffix_str, *str_p);
+  } else {
+    *base_p += *str_p;
+    return;
   }
 
   base_p->erase(base_p->begin() + replace_start, base_p->end());

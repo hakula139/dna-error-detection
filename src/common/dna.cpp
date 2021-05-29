@@ -224,9 +224,12 @@ bool Dna::FindOverlaps(const Dna& ref) {
     auto overlaps = find_overlaps(key_seg, value_seg);
     auto inverted_value_seg = Invert(value_seg);
     auto overlaps_invert = find_overlaps(key_seg, inverted_value_seg);
-    if (overlaps.size() >= overlaps_invert.size()) {
+    if (overlaps.size() >= Config::MINIMIZER_MIN_COUNT &&
+        overlaps.size() >= overlaps_invert.size()) {
       overlaps_ += overlaps;
-    } else {
+    } else if (
+        overlaps_invert.size() >= Config::MINIMIZER_MIN_COUNT &&
+        overlaps.size() < overlaps_invert.size()) {
       value_seg = inverted_value_seg;
       overlaps_ += overlaps_invert;
     }
