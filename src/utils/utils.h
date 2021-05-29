@@ -10,6 +10,7 @@ size_t LongestCommonSubsequenceLength(
     const std::string& str1, const std::string& str2);
 std::string ShortestCommonSupersequence(
     const std::string& str1, const std::string& str2);
+void Concat(std::string* base_p, const std::string* str_p);
 
 bool FuzzyCompare(int num1, int num2);
 bool FuzzyCompare(const std::string& str1, const std::string& str2);

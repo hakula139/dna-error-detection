@@ -95,6 +95,17 @@ string ShortestCommonSupersequence(const string& str1, const string& str2) {
   return result;
 }
 
+void Concat(string* base_p, const string* str_p) {
+  auto base_len = base_p->length();
+  auto str_len = str_p->length();
+  auto max_overlap_len = min(base_len, str_len);
+  auto base_sub_start = base_len - max_overlap_len;
+  auto combined_str = ShortestCommonSupersequence(
+      base_p->substr(base_sub_start), *str_p);
+  base_p->erase(base_p->begin() + base_sub_start, base_p->end());
+  *base_p += *str_p;
+}
+
 bool FuzzyCompare(int num1, int num2) {
   return abs(num1 - num2) <= Config::GAP_MAX_DIFF;
 }

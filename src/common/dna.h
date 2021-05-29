@@ -29,6 +29,8 @@ class Dna {
   bool FindOverlaps(const Dna& ref);
   bool PrintOverlaps(const std::string& filename) const;
 
+  void CreateSvChain(const Dna& ref, const Dna& segments);
+
   void FindDeltas(const Dna& sv, size_t chunk_size = 10000);
   void FindDupDeltas();
   void FindInvDeltas();

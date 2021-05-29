@@ -246,6 +246,22 @@ bool Dna::PrintOverlaps(const string& filename) const {
   return true;
 }
 
+void Dna::CreateSvChain(const Dna& ref, const Dna& segments) {
+  for (const auto& [key_ref, value_ref] : ref.data_) {
+    auto& value_sv = data_[key_ref];
+    value_sv.clear();
+
+    const auto& entries = segments.overlaps_.data_.at(key_ref);
+    Progress progress{"Dna::CreateSvChain " + key_ref, entries.size()};
+    for (const auto& [range_ref_, key_seg_, range_seg_] : entries) {
+      const auto& value_seg = segments.data_.at(key_seg_);
+      Concat(&value_sv, &value_seg);
+
+      ++progress;
+    }
+  }
+}
+
 void Dna::FindDeltas(const Dna& sv, size_t chunk_size) {
   for (const auto& [key, value_ref] : data_) {
     string value_sv;
