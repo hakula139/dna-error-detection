@@ -35,7 +35,7 @@ void DnaDelta::Set(const string& key, const Range& range) {
     return false;
   };
   if (!ranges.size() || !exist(range)) {
-    ranges.push_back(range);
+    ranges.emplace_back(range);
   }
   Logger::Debug(
       "DnaDelta::Set", "Saved: " + type_ + " " + range.Stringify(key));
@@ -80,7 +80,7 @@ void DnaMultiDelta::Set(
       return false;
     };
     if (!ranges.size() || !exist(range)) {
-      ranges.push_back(range);
+      ranges.emplace_back(range);
       Logger::Debug(
           "DnaDelta::Set",
           "Saved: " + type_ + " " + range1.Stringify(key1) + " " +

@@ -347,7 +347,7 @@ Point Dna::FindDeltasChunk(
         break;
       }
     }
-    end_xss.push_back(end_xs);
+    end_xss.emplace_back(end_xs);
     if (solution_found) break;
   }
 
@@ -500,8 +500,8 @@ void Dna::FindTraDeltas() {
         for (auto range_j = ranges_del.begin(); range_j < ranges_del.end();
              ++range_j) {
           if (FuzzyCompare(range_i->size(), range_j->size())) {
-            ins_cache.push_back({key, *range_i});
-            del_cache.push_back({key, *range_j});
+            ins_cache.emplace_back(key, *range_i);
+            del_cache.emplace_back(key, *range_j);
             range_i = ranges_ins.erase(range_i);
             range_j = ranges_del.erase(range_j);
             erased = true;
@@ -532,12 +532,12 @@ void Dna::FindTraDeltas() {
 
   for (const auto& [key, range] : ins_cache) {
     auto& ranges_ins = ins_deltas_.data_[key];
-    ranges_ins.push_back(range);
+    ranges_ins.emplace_back(range);
   }
 
   for (const auto& [key, range] : del_cache) {
     auto& ranges_del = del_deltas_.data_[key];
-    ranges_del.push_back(range);
+    ranges_del.emplace_back(range);
   }
 }
 
