@@ -15,6 +15,7 @@
 #include "dna_overlap.h"
 #include "logger.h"
 #include "point.h"
+#include "progress.h"
 #include "range.h"
 #include "utils.h"
 
@@ -210,8 +211,7 @@ bool Dna::FindOverlaps(const Dna& ref) {
     return overlap_size >= Config::STRICT_EQUAL_RATE * chain_size;
   };
 
-  auto i = 0;
-  auto chunk_size = data_.size() / 20;
+  Progress progress{"Dna::FindOverlaps", data_.size()};
   for (auto&& [key_seg, value_seg] : data_) {
     auto overlaps = find_overlaps(key_seg, value_seg);
     if (is_valid(overlaps.size(), value_seg.length())) {
@@ -227,10 +227,7 @@ bool Dna::FindOverlaps(const Dna& ref) {
       }
     }
 
-    if (++i % chunk_size == 0) {
-      auto progress = (i / chunk_size) * 5;
-      Logger::Debug("Dna::FindOverlaps", to_string(progress) + " %");
-    }
+    ++progress;
   }
   return true;
 }
@@ -257,6 +254,7 @@ void Dna::FindDeltas(const Dna& sv, size_t chunk_size) {
       continue;
     }
 
+    Progress progress{"Dna::FindDeltas " + key, value_ref.length()};
     for (int i = 0, j = 0; i < value_ref.length() || j < value_sv.length();) {
       auto m = min(value_ref.length() - i, chunk_size);
       auto n = min(value_sv.length() - j, chunk_size);
@@ -266,9 +264,7 @@ void Dna::FindDeltas(const Dna& sv, size_t chunk_size) {
       i += next_chunk_start.x_;
       j += next_chunk_start.y_;
 
-      Logger::Debug(
-          "Dna::FindDeltas",
-          key + ": " + to_string(i) + " / " + to_string(value_ref.length()));
+      ++progress;
     }
   }
 }
