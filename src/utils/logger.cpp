@@ -1,55 +1,56 @@
 #include "logger.h"
 
-#include <cstdio>
 #include <cstdlib>
+#include <iostream>
 #include <string>
 
 #include "config.h"
 
+using std::cout;
 using std::string;
 
-void Logger::Trace(const string& context, const string& message) {
+void Logger::Trace(const string& context, const string& message, bool endl) {
   if (Config::LOG_LEVEL <= Config::Level::TRACE) {
-    printf("[TRACE] ");
-    Log(context, message);
+    cout << "[TRACE] ";
+    Log(context, message, endl);
   }
 }
 
-void Logger::Debug(const string& context, const string& message) {
+void Logger::Debug(const string& context, const string& message, bool endl) {
   if (Config::LOG_LEVEL <= Config::Level::DEBUG) {
-    printf("[DEBUG] ");
-    Log(context, message);
+    cout << "[DEBUG] ";
+    Log(context, message, endl);
   }
 }
 
-void Logger::Info(const string& context, const string& message) {
+void Logger::Info(const string& context, const string& message, bool endl) {
   if (Config::LOG_LEVEL <= Config::Level::INFO) {
-    printf("[INFO ] ");
-    Log(context, message);
+    cout << "[INFO ] ";
+    Log(context, message, endl);
   }
 }
 
-void Logger::Warn(const string& context, const string& message) {
+void Logger::Warn(const string& context, const string& message, bool endl) {
   if (Config::LOG_LEVEL <= Config::Level::WARN) {
-    printf("[WARN ] ");
-    Log(context, message);
+    cout << "[WARN ] ";
+    Log(context, message, endl);
   }
 }
 
-void Logger::Error(const string& context, const string& message) {
+void Logger::Error(const string& context, const string& message, bool endl) {
   if (Config::LOG_LEVEL <= Config::Level::ERROR) {
-    printf("[ERROR] ");
-    Log(context, message);
+    cout << "[ERROR] ";
+    Log(context, message, endl);
   }
 }
 
-void Logger::Fatal(const string& context, const string& message) {
+void Logger::Fatal(const string& context, const string& message, bool endl) {
   if (Config::LOG_LEVEL <= Config::Level::FATAL) {
-    printf("[FATAL] ");
-    Log(context, message);
+    cout << "[FATAL] ";
+    Log(context, message, endl);
   }
 }
 
-void Logger::Log(const string& context, const string& message) {
-  printf("%s: %s\n", context.c_str(), message.c_str());
+void Logger::Log(const string& context, const string& message, bool endl) {
+  cout << context << ": " << message + (endl ? "\n" : "");
 }
