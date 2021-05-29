@@ -207,24 +207,16 @@ bool Dna::FindOverlaps(const Dna& ref) {
     return overlaps;
   };
 
-  auto is_valid = [](uint64_t overlap_size, uint64_t chain_size) {
-    return overlap_size >= Config::STRICT_EQUAL_RATE * chain_size;
-  };
-
   Progress progress{"Dna::FindOverlaps", data_.size()};
   for (auto&& [key_seg, value_seg] : data_) {
     auto overlaps = find_overlaps(key_seg, value_seg);
-    if (is_valid(overlaps.size(), value_seg.length())) {
+    auto inverted_value_seg = Invert(value_seg);
+    auto overlaps_invert = find_overlaps(key_seg, inverted_value_seg);
+    if (overlaps.size() >= overlaps_invert.size()) {
       overlaps_ += overlaps;
     } else {
-      auto inverted_value_seg = Invert(value_seg);
-      auto overlaps_invert = find_overlaps(key_seg, inverted_value_seg);
-      if (overlaps.size() >= overlaps_invert.size()) {
-        overlaps_ += overlaps;
-      } else {
-        value_seg = inverted_value_seg;
-        overlaps_ += overlaps_invert;
-      }
+      value_seg = inverted_value_seg;
+      overlaps_ += overlaps_invert;
     }
 
     ++progress;
