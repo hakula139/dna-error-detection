@@ -6,17 +6,21 @@
 
 using std::to_string;
 
-Progress& Progress::operator++() {
-  if (cur_ < total_) ++cur_;
-
-  if (cur_ % 100 == 0) {
-    Print();
-  } else if (cur_ == total_) {
-    Print(true);
-  }
-  return *this;
+void Progress::Set(size_t cur) {
+  cur_ = cur < total_ ? cur : total_;
+  Print(cur_ == total_);
 }
 
 void Progress::Print(bool endl) const {
   Logger::Info(name_, to_string(cur_) + " / " + to_string(total_) + "\r", endl);
+}
+
+Progress& Progress::operator++() {
+  Set(cur_ + 1);
+  return *this;
+}
+
+Progress& Progress::operator+=(size_t step) {
+  Set(cur_ + step);
+  return *this;
 }

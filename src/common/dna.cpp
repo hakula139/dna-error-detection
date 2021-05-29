@@ -307,7 +307,7 @@ void Dna::FindDeltas(const Dna& sv, size_t chunk_size) {
       i += next_chunk_start.x_;
       j += next_chunk_start.y_;
 
-      ++progress;
+      progress.Set(i);
     }
   }
 }
