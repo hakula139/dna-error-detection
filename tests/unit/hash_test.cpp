@@ -1,33 +1,28 @@
-#include <cstdlib>
-#include <iostream>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "dna.h"
 #include "logger.h"
 #include "test.h"
 
-using std::cerr;
+using std::pair;
 using std::string;
 using std::to_string;
-
-template <class T>
-void Test::Expect(const string& context, const T& expected, const T& got) {
-  if (expected != got) {
-    Logger::Error(
-        context, "expected " + to_string(expected) + ", got " + to_string(got));
-    exit(EXIT_SUCCESS);
-  }
-}
+using std::vector;
 
 void Test::HashTest() {
-  string str = "GCTANATCG";
-  uint64_t hash = 0;
-  for (auto base : str) {
-    hash = Dna::NextHash(hash, base);
-  }
+  auto tests = vector<pair<string, uint64_t>>{
+      {"GCTANATCG", 233499},
+  };
 
-  uint64_t expected = 233499;
-  Test::Expect(__func__, expected, hash);
+  for (const auto& [str, expected] : tests) {
+    uint64_t hash = 0;
+    for (auto base : str) {
+      hash = Dna::NextHash(hash, base);
+    }
+    Test::Expect(__func__, expected, hash);
+  }
 
   Logger::Info(__func__, "Passed");
 }
