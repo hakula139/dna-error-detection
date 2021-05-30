@@ -21,7 +21,7 @@ struct Config {
   inline static const std::string OVERLAPS_FILENAME = "overlaps.txt";
   inline static const std::string DELTAS_FILENAME = "sv.bed";
 
-  inline static const int LOG_LEVEL = Config::Level::INFO;
+  inline static const int LOG_LEVEL = Config::Level::DEBUG;
   inline static const size_t HASH_SIZE = 15;
   inline static const size_t WINDOW_SIZE = 10;
   inline static const size_t CHUNK_SIZE = 20000;

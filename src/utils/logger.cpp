@@ -52,5 +52,8 @@ void Logger::Fatal(const string& context, const string& message, bool endl) {
 }
 
 void Logger::Log(const string& context, const string& message, bool endl) {
-  cout << context << ": " << message + (endl ? "\n" : "") << flush;
+  if (context.length()) cout << context << ": ";
+  cout << message;
+  if (endl) cout << "\n";
+  cout << flush;
 }

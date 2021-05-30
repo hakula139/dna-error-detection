@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <iostream>
 #include <unordered_map>
 
 #include "config.h"
@@ -6,9 +7,12 @@
 #include "logger.h"
 #include "utils.h"
 
+using std::ios;
 using std::unordered_map;
 
 int main(int argc, char** argv) {
+  ios::sync_with_stdio(false);
+
   unordered_map<char, bool> arg_flags;
   if (!ReadArgs(&arg_flags, argc, argv)) {
     ShowManual();

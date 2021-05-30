@@ -309,22 +309,23 @@ void Dna::FindDeltasFromSegments(const Dna& segments) {
           10,
       };
       for (const auto& minimizer : entries) {
-        Logger::Trace(
-            "Dna::FindDeltasFromSegments",
-            key + ": using minimizer: " + minimizer.Stringify());
-
         const auto& [range_ref, key_seg, range_seg] = minimizer;
         const auto& value_seg = segments.data_.at(key_seg);
         assert(range_ref.start_ >= range_seg.start_);
+        const auto ref_start = range_ref.start_ - range_seg.start_;
         FindDeltasChunk(
             key,
             &value_ref,
-            range_ref.start_ - range_seg.start_,
+            ref_start,
             value_seg.size(),
             &value_seg,
             0,
             value_seg.size(),
             true);
+
+        Logger::Debug("Dna::FindDeltasFromSegments", key + ": Now comparing:");
+        Logger::Debug("", "Reference: \t" + value_ref.substr(ref_start, 100));
+        Logger::Debug("", "Segment: \t" + value_seg.substr(0, 100));
 
         ++progress;
       }
@@ -429,9 +430,9 @@ Point Dna::FindDeltasChunk(
     auto mid_x = from_up ? start.x_ : start.x_ + 1;
     auto mid = Point(mid_x, mid_x - k);
 
-    Logger::Trace(
-        "Dna::FindDeltasChunk",
-        start.Stringify() + " " + mid.Stringify() + " " + end.Stringify());
+    // Logger::Trace(
+    //     "Dna::FindDeltasChunk",
+    //     start.Stringify() + " " + mid.Stringify() + " " + end.Stringify());
     assert(mid.x_ <= end.x_ && mid.y_ <= end.y_);
 
     auto insert_delta = [&](const Point& start, const Point& end) {
