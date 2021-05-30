@@ -58,8 +58,8 @@ void DnaOverlap::Merge() {
     for (const auto& [key_seg, entry] : merged_overlaps) {
       const auto& [merged_ref, merged_seg, count] = entry;
       if (count >= Config::MINIMIZER_MIN_COUNT &&
-          merged_ref.size() >= Config::OVERLAP_MIN_LEN &&
-          merged_seg.size() >= Config::OVERLAP_MIN_LEN) {
+          merged_ref.size() >= Config::MINIMIZER_MIN_LEN &&
+          merged_seg.size() >= Config::MINIMIZER_MIN_LEN) {
         entries.emplace(merged_ref, key_seg, merged_seg);
       }
     }
@@ -69,7 +69,7 @@ void DnaOverlap::Merge() {
 void DnaOverlap::Print(ofstream& out_file) const {
   for (const auto& [key_ref, entries] : data_) {
     for (const auto& entry : entries) {
-      out_file << entry.Stringify() << "\n";
+      out_file << entry.Stringify(key_ref) << "\n";
     }
   }
 }

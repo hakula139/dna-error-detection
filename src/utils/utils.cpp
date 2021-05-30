@@ -18,6 +18,7 @@ using std::max;
 using std::min;
 using std::out_of_range;
 using std::string;
+using std::to_string;
 using std::unordered_map;
 using std::vector;
 
@@ -108,14 +109,21 @@ void Concat(string* base_p, const string* str_p) {
   string replace_str;
   auto base_suffix_str = base_p->substr(replace_start);
   auto common_str = LongestCommonSubstring(base_suffix_str, *str_p);
-  if (common_str.first.value_.length() >= Config::OVERLAP_MIN_LEN) {
+  auto common_str_len = common_str.first.value_.length();
+  if (common_str_len >= Config::OVERLAP_MIN_LEN) {
     replace_start += common_str.first.end_;
     replace_str = str_p->substr(common_str.second.end_);
-  } else if (FuzzyCompare(base_suffix_str, *str_p)) {
-    replace_str = ShortestCommonSupersequence(base_suffix_str, *str_p);
+
+    Logger::Trace(
+        "Concat",
+        "Common substring length: " + to_string(common_str_len) + " \tused");
   } else {
-    *base_p += *str_p;
-    return;
+    replace_str = ShortestCommonSupersequence(base_suffix_str, *str_p);
+
+    Logger::Trace(
+        "Concat",
+        "Common substring length: " + to_string(common_str_len) +
+            " \tnot used, finding common supersequence");
   }
 
   base_p->erase(base_p->begin() + replace_start, base_p->end());

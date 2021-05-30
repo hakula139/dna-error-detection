@@ -82,12 +82,10 @@ bool Dna::ImportOverlaps(const string& filename) {
 
   while (!in_file.eof()) {
     string key_ref, key_seg;
-    size_t range_ref_start, range_ref_end, range_seg_start, range_seg_end;
-    in_file >> key_ref >> range_ref_start >> range_ref_end;
-    in_file >> key_seg >> range_seg_start >> range_seg_end;
+    Range range_ref, range_seg;
+    in_file >> key_ref >> range_ref.start_ >> range_ref.end_;
+    in_file >> key_seg >> range_seg.start_ >> range_seg.end_;
     if (!key_ref.length() || !key_seg.length()) break;
-    Range range_ref{range_ref_start, range_ref_end};
-    Range range_seg{range_seg_start, range_seg_end};
     overlaps_.Insert(key_ref, {range_ref, key_seg, range_seg});
   }
 
@@ -288,7 +286,7 @@ void Dna::CreateSvChain(const Dna& ref, const Dna& segments) {
 
     Progress progress{"Dna::CreateSvChain " + key_ref, entries.size(), 10};
     for (const auto& minimizer : entries) {
-      Logger::Debug(
+      Logger::Trace(
           "Dna::CreateSvChain",
           key_ref + ": using minimizer: " + minimizer.Stringify());
 
