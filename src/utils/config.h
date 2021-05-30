@@ -15,7 +15,7 @@ struct Config {
 
   inline static const std::string PATH = "tests/test_2_demo/";
   inline static const std::string REF_FILENAME = "ref.fasta";
-  inline static const std::string SV_FILENAME = "task2_sv.fasta";
+  inline static const std::string SV_FILENAME = "sv.fasta";
   inline static const std::string SEG_FILENAME = "long.fasta";
   inline static const std::string INDEX_FILENAME = "index.txt";
   inline static const std::string OVERLAPS_FILENAME = "overlaps.txt";
@@ -31,7 +31,7 @@ struct Config {
   inline static const size_t OVERLAP_MIN_LEN = 30;
   inline static const size_t MINIMIZER_MIN_COUNT = 20;
   inline static const size_t MINIMIZER_MIN_LEN = 100;
-  inline static const int DP_PENALTY = 2;
+  inline static const int DP_PENALTY = 4;
   inline static const double STRICT_EQUAL_RATE = 0.4;
   inline static const double FUZZY_EQUAL_RATE = 0.8;
 };

@@ -284,14 +284,24 @@ void Dna::CreateSvChain(const Dna& ref, const Dna& segments) {
     auto& value_sv = data_[key_ref];
     value_sv.clear();
 
+    auto prev_ref_end = 0;
     Progress progress{"Dna::CreateSvChain " + key_ref, entries.size(), 10};
     for (const auto& minimizer : entries) {
+      const auto& [range_ref, key_seg, range_seg] = minimizer;
+      if (range_seg.start_ > prev_ref_end) {
+        auto value_ref_gap = value_ref.substr(
+            prev_ref_end, range_seg.start_ - prev_ref_end);
+        Concat(&value_sv, &value_ref_gap);
+      }
+
       Logger::Trace(
           "Dna::CreateSvChain",
           key_ref + ": using minimizer: " + minimizer.Stringify());
 
-      const auto& value_seg = segments.data_.at(minimizer.key_seg_);
+      const auto& value_seg = segments.data_.at(key_seg);
       Concat(&value_sv, &value_seg);
+      prev_ref_end = range_seg.end_;
+
       ++progress;
     }
   }
