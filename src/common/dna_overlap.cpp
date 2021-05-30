@@ -7,7 +7,7 @@ using std::ofstream;
 using std::string;
 
 void DnaOverlap::Insert(const string& key_ref, const Minimizer& entry) {
-  data_[key_ref].insert(entry);
+  data_[key_ref].emplace(entry);
 }
 
 void DnaOverlap::Print(ofstream& out_file) const {

@@ -13,7 +13,11 @@ using std::vector;
 
 void Test::HashTest() {
   auto tests = vector<pair<string, uint64_t>>{
-      {"GCTANATCG", 233499},
+      {"TACGGTGCGCACCGG", 318224559},
+      {"ACGGCCGACCATTCG", 199960667},
+      {"CCAGACGGCCGACCA", 684452648},
+      {"ATCGGGGACGGCATA", 117387140},
+      {"AACACGACCCCATGG", 36481567},
   };
 
   for (const auto& [str, expected] : tests) {
