@@ -36,21 +36,24 @@ int main(int argc, char** argv) {
     if (!segments.Import(Config::PATH + Config::SEG_FILENAME)) {
       return EXIT_FAILURE;
     }
-    if (!segments.ImportOverlaps(Config::PATH + Config::OVERLAPS_FILENAME)) {
-      segments.FindOverlaps(ref);
-      segments.PrintOverlaps(Config::PATH + Config::OVERLAPS_FILENAME);
-    }
-
-    sv.CreateSvChain(ref, segments);
-    sv.Print(Config::PATH + Config::SV_FILENAME);
+    segments.FindOverlaps(ref);
+    segments.PrintOverlaps(Config::PATH + Config::OVERLAPS_FILENAME);
   }
 
   // Main process
   if (arg_flags['s']) {
     if (!sv.size() && !sv.Import(Config::PATH + Config::SV_FILENAME)) {
-      return EXIT_FAILURE;
+      if (!segments.size() &&
+          !segments.Import(Config::PATH + Config::SEG_FILENAME)) {
+        return EXIT_FAILURE;
+      }
+      if (!segments.ImportOverlaps(Config::PATH + Config::OVERLAPS_FILENAME)) {
+        return EXIT_FAILURE;
+      }
+      ref.FindDeltasFromSegments(segments);
+    } else {
+      ref.FindDeltas(sv, Config::CHUNK_SIZE);
     }
-    ref.FindDeltas(sv, Config::CHUNK_SIZE);
     ref.ProcessDeltas();
     ref.PrintDeltas(Config::PATH + Config::DELTAS_FILENAME);
   }

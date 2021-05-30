@@ -39,7 +39,6 @@ using std::vector;
 bool Dna::Import(const string& filename) {
   ifstream in_file(filename);
   if (!in_file) {
-    Logger::Error("Dna::Import", "Input file " + filename + " not found");
     return false;
   }
 
@@ -277,36 +276,6 @@ bool Dna::PrintOverlaps(const string& filename) const {
   return true;
 }
 
-void Dna::CreateSvChain(const Dna& ref, const Dna& segments) {
-  for (const auto& [key_ref, value_ref] : ref.data_) {
-    const auto& entries = segments.overlaps_.data_.at(key_ref);
-
-    auto& value_sv = data_[key_ref];
-    value_sv.clear();
-
-    auto prev_ref_end = 0;
-    Progress progress{"Dna::CreateSvChain " + key_ref, entries.size(), 10};
-    for (const auto& minimizer : entries) {
-      const auto& [range_ref, key_seg, range_seg] = minimizer;
-      if (range_seg.start_ > prev_ref_end) {
-        auto value_ref_gap = value_ref.substr(
-            prev_ref_end, range_seg.start_ - prev_ref_end);
-        Concat(&value_sv, &value_ref_gap);
-      }
-
-      Logger::Trace(
-          "Dna::CreateSvChain",
-          key_ref + ": using minimizer: " + minimizer.Stringify());
-
-      const auto& value_seg = segments.data_.at(key_seg);
-      Concat(&value_sv, &value_seg);
-      prev_ref_end = range_seg.end_;
-
-      ++progress;
-    }
-  }
-}
-
 void Dna::FindDeltas(const Dna& sv, size_t chunk_size) {
   for (const auto& [key, value_ref] : data_) {
     string value_sv;
@@ -326,6 +295,42 @@ void Dna::FindDeltas(const Dna& sv, size_t chunk_size) {
       j += next_chunk_start.y_;
 
       progress.Set(i);
+    }
+  }
+}
+
+void Dna::FindDeltasFromSegments(const Dna& segments) {
+  for (const auto& [key, value_ref] : data_) {
+    try {
+      const auto& entries = segments.overlaps_.data_.at(key);
+      Progress progress{
+          "Dna::FindDeltasFromSegments " + key,
+          entries.size(),
+          10,
+      };
+      for (const auto& minimizer : entries) {
+        Logger::Trace(
+            "Dna::FindDeltasFromSegments",
+            key + ": using minimizer: " + minimizer.Stringify());
+
+        const auto& [range_ref, key_seg, range_seg] = minimizer;
+        const auto& value_seg = segments.data_.at(key_seg);
+        assert(range_ref.start_ >= range_seg.start_);
+        FindDeltasChunk(
+            key,
+            &value_ref,
+            range_ref.start_ - range_seg.start_,
+            value_seg.size(),
+            &value_seg,
+            0,
+            value_seg.size(),
+            true);
+
+        ++progress;
+      }
+    } catch (const out_of_range& error) {
+      Logger::Warn("Dna::FindDeltasFromSegments", error.what());
+      continue;
     }
   }
 }
