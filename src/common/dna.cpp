@@ -260,6 +260,8 @@ bool Dna::FindOverlaps(const Dna& ref) {
 
     ++progress;
   }
+
+  overlaps_.Merge();
   return true;
 }
 
@@ -279,44 +281,16 @@ bool Dna::PrintOverlaps(const string& filename) const {
 
 void Dna::CreateSvChain(const Dna& ref, const Dna& segments) {
   for (const auto& [key_ref, value_ref] : ref.data_) {
+    const auto& entries = segments.overlaps_.data_.at(key_ref);
+
     auto& value_sv = data_[key_ref];
     value_sv.clear();
 
-    const auto& entries = segments.overlaps_.data_.at(key_ref);
-
-    unordered_map<string, tuple<Range, Range, size_t>> merged_overlaps;
-    auto merge = [](Range& base, const Range& range) {
-      if (base == Range()) {
-        base = range;
-      } else if (FuzzyOverlap(base, range)) {
-        base.start_ = min(base.start_, range.start_);
-        base.end_ = max(base.end_, range.end_);
-      }
-    };
-    for (const auto& [range_ref, key_seg, range_seg] : entries) {
-      auto&& [merged_ref, merged_seg, count] = merged_overlaps[key_seg];
-      merge(merged_ref, range_ref);
-      merge(merged_seg, range_seg);
-      ++count;
-    }
-
-    priority_queue<Minimizer, vector<Minimizer>, greater<Minimizer>> minimizers;
-    for (const auto& [key_seg, entry] : merged_overlaps) {
-      const auto& [merged_ref, merged_seg, count] = entry;
-      if (count >= Config::MINIMIZER_MIN_COUNT &&
-          merged_ref.size() >= Config::OVERLAP_MIN_LEN &&
-          merged_seg.size() >= Config::OVERLAP_MIN_LEN) {
-        minimizers.emplace(merged_ref, key_seg, merged_seg);
-      }
-    }
-
-    Progress progress{"Dna::CreateSvChain " + key_ref, minimizers.size(), 10};
-    while (minimizers.size()) {
-      const auto& minimizer = minimizers.top();
-      minimizers.pop();
+    Progress progress{"Dna::CreateSvChain " + key_ref, entries.size(), 10};
+    for (const auto& minimizer : entries) {
       Logger::Debug(
           "Dna::CreateSvChain",
-          key_ref + ": merging minimizer: " + minimizer.Stringify());
+          key_ref + ": using minimizer: " + minimizer.Stringify());
 
       const auto& value_seg = segments.data_.at(minimizer.key_seg_);
       Concat(&value_sv, &value_seg);
