@@ -213,7 +213,7 @@ bool Dna::FindOverlaps(const Dna& ref) {
     }
 
     DnaOverlap overlaps;
-    for (size_t i = 0; i <= chain_seg.length() - Config::HASH_SIZE; ++i) {
+    for (size_t i = 0; i < chain_seg.length() - Config::HASH_SIZE + 1; ++i) {
       hash = NextHash(hash, chain_seg[i + Config::HASH_SIZE - 1]);
       if (ref.range_index_.count(hash)) {
         const auto& entry_ref_range = ref.range_index_.equal_range(hash);
@@ -240,7 +240,7 @@ bool Dna::FindOverlaps(const Dna& ref) {
       Logger::Trace(
           "Dna::FindOverlaps",
           key_seg + ": " + to_string(overlaps.size()) + " > " +
-              to_string(overlaps_invert.size()) + ", not inverted");
+              to_string(overlaps_invert.size()) + " \tnot inverted");
     } else if (
         overlaps_invert.size() >= Config::MINIMIZER_MIN_COUNT &&
         overlaps.size() < overlaps_invert.size()) {
@@ -250,12 +250,12 @@ bool Dna::FindOverlaps(const Dna& ref) {
       Logger::Trace(
           "Dna::FindOverlaps",
           key_seg + ": " + to_string(overlaps.size()) + " < " +
-              to_string(overlaps_invert.size()) + ", inverted");
+              to_string(overlaps_invert.size()) + " \tinverted");
     } else {
-      // Logger::Trace(
-      //     "Dna::FindOverlaps",
-      //     key_seg + ": " + to_string(overlaps.size()) + " & " +
-      //         to_string(overlaps_invert.size()) + ", not used");
+      Logger::Trace(
+          "Dna::FindOverlaps",
+          key_seg + ": " + to_string(overlaps.size()) + " & " +
+              to_string(overlaps_invert.size()) + " \tnot used");
     }
 
     ++progress;
