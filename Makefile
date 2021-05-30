@@ -1,14 +1,20 @@
 TARGET    := solution
+TEST      := test
 
 BIN_DIR   := bin
 BUILD_DIR := build
-SRC_DIRS  := src
+SRC_DIR   := src
+TEST_DIR  := tests/unit
 
-SRCS      := $(shell find $(SRC_DIRS) -name *.cpp)
+SRCS      := $(shell find $(SRC_DIR) -name *.cpp)
 OBJS      := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS      := $(OBJS:.o=.d)
 
-INC_DIRS  := $(shell find $(SRC_DIRS) -type d)
+TEST_SRCS := $(shell find $(TEST_DIR) -name *.cpp)
+TEST_OBJS := $(TEST_SRCS:%=$(BUILD_DIR)/%.o)
+TEST_OBJS += $(filter-out $(BUILD_DIR)/$(SRC_DIR)/main.cpp.o, $(OBJS))
+
+INC_DIRS  := $(shell find $(SRC_DIR) $(TEST_DIR) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 CXX       := clang++
@@ -16,9 +22,12 @@ CXXFLAGS  := -g -Wall -O3 -std=c++17 -stdlib=libc++ $(INC_FLAGS) -MMD -MP
 MKDIR     := mkdir -p
 RM        := rm -rf
 
-.PHONY: all run index merge start clean
+.PHONY: all test run index merge start clean
 
 all: $(BIN_DIR)/$(TARGET)
+
+test: $(BIN_DIR)/$(TEST)
+	@$<
 
 run: $(BIN_DIR)/$(TARGET)
 	@$< -a
@@ -39,6 +48,11 @@ $(BIN_DIR)/$(TARGET): $(OBJS)
 	@echo + $@
 	@$(MKDIR) $(dir $@)
 	@$(CXX) $(CXXFLAGS) -o $@ $(OBJS)
+
+$(BIN_DIR)/$(TEST): $(TEST_OBJS)
+	@echo + $@
+	@$(MKDIR) $(dir $@)
+	@$(CXX) $(CXXFLAGS) -o $@ $(TEST_OBJS)
 
 $(BUILD_DIR)/%.cpp.o: %.cpp
 	@echo + $@

@@ -38,6 +38,8 @@ class Dna {
   void ProcessDeltas();
   bool PrintDeltas(const std::string& filename) const;
 
+  friend class Test;
+
  protected:
   static uint64_t NextHash(uint64_t hash, char next_base);
   static std::string Invert(const std::string& chain);
