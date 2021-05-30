@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "config.h"
@@ -17,6 +18,7 @@ using std::cout;
 using std::max;
 using std::min;
 using std::out_of_range;
+using std::pair;
 using std::string;
 using std::to_string;
 using std::unordered_map;
@@ -26,7 +28,7 @@ std::pair<Range, Range> LongestCommonSubstring(
     const string& str1, const string& str2) {
   auto len1 = str1.length();
   auto len2 = str2.length();
-  auto dp = vector<vector<int>>(len1 + 1, vector<int>(len2 + 1));
+  vector<vector<int>> dp(len1 + 1, vector<int>(len2 + 1));
 
   auto substr_len = 0;
   Range str1_substr, str2_substr;
@@ -40,7 +42,7 @@ std::pair<Range, Range> LongestCommonSubstring(
           str2_substr.end_ = j;
         }
       } else {
-        dp[i][j] = 0;
+        dp[i][j] = max(dp[i - 1][j - 1] - Config::DP_PENALTY, 0);
       }
     }
   }
@@ -56,50 +58,42 @@ size_t LongestCommonSubstringLength(const string& str1, const string& str2) {
   return LongestCommonSubstring(str1, str2).first.value_.length();
 }
 
-size_t LongestCommonSubsequenceLength(
-    const string& str1, const string& str2, vector<vector<int>>* dp_p) {
+size_t LongestCommonSubsequenceLength(const string& str1, const string& str2) {
   auto len1 = str1.length();
   auto len2 = str2.length();
-  auto&& dp = dp_p ? *dp_p
-                   : vector<vector<int>>(len1 + 1, vector<int>(len2 + 1));
+  vector<vector<pair<int, char>>> dp{
+      len1 + 1,
+      vector<pair<int, char>>{len2 + 1, {0, -1}},
+  };
 
   for (auto i = 1; i <= len1; ++i) {
     for (auto j = 1; j <= len2; ++j) {
+      auto& max_cur = dp[i][j];
+      auto get_cur = [&](const pair<int, char>& prev, char from_up) {
+        const auto& [prev_len, prev_from_up] = prev;
+        auto cur = prev_len + (from_up == -1);
+        if (prev_from_up != from_up) cur = max(cur - Config::DP_PENALTY, 0);
+        if (cur > max_cur.first) max_cur = {cur, from_up};
+      };
+
       if (str1[i - 1] == str2[j - 1]) {
-        dp[i][j] = dp[i - 1][j - 1] + 1;
-      } else {
-        dp[i][j] = max(dp[i - 1][j], dp[i][j - 1]);
+        get_cur(dp[i - 1][j - 1], -1);
+      }
+      if (dp[i - 1][j] > dp[i][j - 1]) {
+        get_cur(dp[i - 1][j], 0);
+      }
+      if (dp[i - 1][j] <= dp[i][j - 1]) {
+        get_cur(dp[i][j - 1], 1);
       }
     }
   }
-  return dp[len1][len2];
-}
-
-string ShortestCommonSupersequence(const string& str1, const string& str2) {
-  auto len1 = str1.length();
-  auto len2 = str2.length();
-  auto dp = vector<vector<int>>(len1 + 1, vector<int>(len2 + 1));
-  LongestCommonSubsequenceLength(str1, str2, &dp);
-
-  string result;
-  for (int i = len1, j = len2; i > 0 || j > 0;) {
-    if (i > 0 && dp[i][j] == dp[i - 1][j]) {
-      result = str1[--i] + result;
-    } else if (j > 0 && dp[i][j] == dp[i][j - 1]) {
-      result = str2[--j] + result;
-    } else {
-      result = str1[--i] + result;
-      --j;
-    }
-  }
-  return result;
+  return dp[len1][len2].first;
 }
 
 void Concat(string* base_p, const string* str_p) {
   auto base_len = base_p->length();
   auto str_len = str_p->length();
   auto max_overlap_len = min(base_len, str_len);
-
   if (!base_len) {
     *base_p = *str_p;
     return;
@@ -108,22 +102,24 @@ void Concat(string* base_p, const string* str_p) {
   size_t replace_start = base_len - max_overlap_len;
   string replace_str;
   auto base_suffix_str = base_p->substr(replace_start);
+
   auto common_str = LongestCommonSubstring(base_suffix_str, *str_p);
   auto common_str_len = common_str.first.value_.length();
   if (common_str_len >= Config::OVERLAP_MIN_LEN) {
-    replace_start += common_str.first.end_;
-    replace_str = str_p->substr(common_str.second.end_);
-
     Logger::Trace(
         "Concat",
         "Common substring length: " + to_string(common_str_len) + " \tused");
-  } else {
-    replace_str = ShortestCommonSupersequence(base_suffix_str, *str_p);
 
+    replace_start += common_str.first.end_;
+    replace_str = str_p->substr(common_str.second.end_);
+  } else {
     Logger::Trace(
         "Concat",
         "Common substring length: " + to_string(common_str_len) +
-            " \tnot used, finding common supersequence");
+            " \tnot used, concatenate directly");
+
+    *base_p += *str_p;
+    return;
   }
 
   base_p->erase(base_p->begin() + replace_start, base_p->end());

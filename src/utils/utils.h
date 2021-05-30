@@ -15,11 +15,6 @@ size_t LongestCommonSubstringLength(
     const std::string& str1, const std::string& str2);
 
 size_t LongestCommonSubsequenceLength(
-    const std::string& str1,
-    const std::string& str2,
-    std::vector<std::vector<int>>* dp_p = nullptr);
-
-std::string ShortestCommonSupersequence(
     const std::string& str1, const std::string& str2);
 
 void Concat(std::string* base_p, const std::string* str_p);
