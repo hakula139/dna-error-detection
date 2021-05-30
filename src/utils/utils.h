@@ -14,6 +14,9 @@ std::pair<Range, Range> LongestCommonSubstring(
 size_t LongestCommonSubstringLength(
     const std::string& str1, const std::string& str2);
 
+std::vector<std::vector<std::pair<int, char>>> LongestCommonSubsequence(
+    const std::string& str1, const std::string& str2);
+
 size_t LongestCommonSubsequenceLength(
     const std::string& str1, const std::string& str2);
 

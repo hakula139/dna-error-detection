@@ -58,7 +58,8 @@ size_t LongestCommonSubstringLength(const string& str1, const string& str2) {
   return LongestCommonSubstring(str1, str2).first.value_.length();
 }
 
-size_t LongestCommonSubsequenceLength(const string& str1, const string& str2) {
+vector<vector<pair<int, char>>> LongestCommonSubsequence(
+    const string& str1, const string& str2) {
   auto len1 = str1.length();
   auto len2 = str2.length();
   vector<vector<pair<int, char>>> dp{
@@ -87,6 +88,13 @@ size_t LongestCommonSubsequenceLength(const string& str1, const string& str2) {
       }
     }
   }
+  return dp;
+}
+
+size_t LongestCommonSubsequenceLength(const string& str1, const string& str2) {
+  auto len1 = str1.length();
+  auto len2 = str2.length();
+  auto dp = LongestCommonSubsequence(str1, str2);
   return dp[len1][len2].first;
 }
 
