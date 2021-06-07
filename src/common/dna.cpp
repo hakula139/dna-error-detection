@@ -313,15 +313,22 @@ void Dna::FindDeltasFromSegments(const Dna& segments) {
         const auto& value_seg = segments.data_.at(key_seg);
         assert(range_ref.start_ >= range_seg.start_);
         const auto ref_start = range_ref.start_ - range_seg.start_;
-        FindDeltasChunk(
-            key,
-            &value_ref,
-            ref_start,
-            value_seg.size(),
-            &value_seg,
-            0,
-            value_seg.size(),
-            true);
+
+        auto seg_size = value_seg.size();
+        auto dp = LongestCommonSubsequence(
+            value_ref.substr(ref_start, seg_size), value_seg);
+
+        auto prev_from_up = -1;
+        for (int i = seg_size, j = seg_size; i > 0 || j > 0;) {
+          auto from_up = dp[i][j].second;
+          if (from_up == 0) {
+            --i;
+          } else if (from_up == 1) {
+            --j;
+          } else {
+            --i, --j;
+          }
+        }
 
         Logger::Debug("Dna::FindDeltasFromSegments", key + ": Now comparing:");
         Logger::Debug("", "Reference: \t" + value_ref.substr(ref_start, 100));
