@@ -1,7 +1,6 @@
 ## Customized
 
 .DS_STORE
-.vscode/
 bin/
 build/
 tests/*demo/

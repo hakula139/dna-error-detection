@@ -1,0 +1,25 @@
+{
+  "configurations": [
+    {
+      "name": "Linux",
+      "includePath": [
+        "${workspaceFolder}/**"
+      ],
+      "defines": [],
+      "compilerPath": "/usr/bin/clang++",
+      "cStandard": "c17",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "linux-clang-x64",
+      "compilerArgs": [
+        "${file}",
+        "-o",
+        "bin/${fileBasenameNoExtension}",
+        "-g",
+        "-Wall",
+        "-O3",
+        "-fcolor-diagnostics"
+      ]
+    }
+  ],
+  "version": 4
+}
