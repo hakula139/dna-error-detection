@@ -18,7 +18,7 @@ INC_DIRS  := $(shell find $(SRC_DIR) $(TEST_DIR) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 CXX       := clang++
-CXXFLAGS  := -g -Wall -O3 -std=c++17 -stdlib=libc++ $(INC_FLAGS) -MMD -MP
+CXXFLAGS  := -g -Wall -O3 -std=c++17 $(INC_FLAGS) -MMD -MP
 MKDIR     := mkdir -p
 RM        := rm -rf
 
