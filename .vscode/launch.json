@@ -5,7 +5,53 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "(gdb) Launch",
+      "name": "(gdb) index",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/bin/solution",
+      "args": [
+        "-i"
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "Build all files using Make"
+    },
+    {
+      "name": "(gdb) merge",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/bin/solution",
+      "args": [
+        "-m"
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "Build all files using Make"
+    },
+    {
+      "name": "(gdb) start",
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/bin/solution",
