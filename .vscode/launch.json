@@ -10,7 +10,7 @@
       "request": "launch",
       "program": "${workspaceFolder}/bin/solution",
       "args": [
-        "-m"
+        "-s"
       ],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
