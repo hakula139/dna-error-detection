@@ -33,6 +33,7 @@ class Dna {
 
   void FindDeltas(const Dna& sv, size_t chunk_size = 10000);
   void FindDeltasFromSegments(const Dna& segments);
+  void IgnoreSmallDeltas();
   void FindDupDeltas();
   void FindInvDeltas();
   void FindTraDeltas();
@@ -47,10 +48,10 @@ class Dna {
 
   Point FindDeltasChunk(
       const std::string& key,
-      const std::string* ref_p,
+      const std::string& ref,
       size_t ref_start,
       size_t m,
-      const std::string* sv_p,
+      const std::string& sv,
       size_t sv_start,
       size_t n,
       bool reach_end = false);

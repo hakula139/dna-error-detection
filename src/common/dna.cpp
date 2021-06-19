@@ -290,7 +290,7 @@ void Dna::FindDeltas(const Dna& sv, size_t chunk_size) {
       auto n = min(value_sv.length() - j, chunk_size);
       auto reach_end = m < chunk_size || n < chunk_size;
       auto next_chunk_start = FindDeltasChunk(
-          key, &value_ref, i, m, &value_sv, j, n, reach_end);
+          key, value_ref, i, m, value_sv, j, n, reach_end);
       i += next_chunk_start.x_;
       j += next_chunk_start.y_;
 
@@ -314,25 +314,14 @@ void Dna::FindDeltasFromSegments(const Dna& segments) {
         assert(range_ref.start_ >= range_seg.start_);
         const auto ref_start = range_ref.start_ - range_seg.start_;
 
-        auto seg_size = value_seg.size();
-        auto dp = LongestCommonSubsequence(
-            value_ref.substr(ref_start, seg_size), value_seg);
-
-        auto prev_from_up = -1;
-        for (int i = seg_size, j = seg_size; i > 0 || j > 0;) {
-          auto from_up = dp[i][j].second;
-          if (from_up == 0) {
-            --i;
-          } else if (from_up == 1) {
-            --j;
-          } else {
-            --i, --j;
-          }
-        }
-
+        auto show_size = 100;
         Logger::Debug("Dna::FindDeltasFromSegments", key + ": Now comparing:");
-        Logger::Debug("", "Reference: \t" + value_ref.substr(ref_start, 100));
-        Logger::Debug("", "Segment: \t" + value_seg.substr(0, 100));
+        Logger::Debug("", "REF: \t" + value_ref.substr(ref_start, show_size));
+        Logger::Debug("", "SEG: \t" + value_seg.substr(0, show_size));
+
+        auto seg_size = value_seg.size();
+        FindDeltasChunk(
+            key, value_ref, ref_start, seg_size, value_seg, 0, seg_size, true);
 
         ++progress;
       }
@@ -346,10 +335,10 @@ void Dna::FindDeltasFromSegments(const Dna& segments) {
 // Myers' diff algorithm implementation
 Point Dna::FindDeltasChunk(
     const string& key,
-    const string* ref_p,
+    const string& ref,
     size_t ref_start,
     size_t m,
-    const string* sv_p,
+    const string& sv,
     size_t sv_start,
     size_t n,
     bool reach_end) {
@@ -398,10 +387,24 @@ Point Dna::FindDeltasChunk(
 
       auto end = mid;
       auto snake = 0;
-      for (; end.x_ < m && end.y_ < n; ++end.x_, ++end.y_, ++snake) {
-        auto ref_char = (*ref_p)[ref_start + end.x_];
-        auto sv_char = (*sv_p)[sv_start + end.y_];
-        if (ref_char != sv_char && ref_char != 'N' && sv_char != 'N') break;
+      for (int error_len = 0, error_score = 0; end.x_ < m && end.y_ < n;
+           ++end.x_, ++end.y_, ++snake) {
+        auto ref_char = ref[ref_start + end.x_];
+        auto sv_char = sv[sv_start + end.y_];
+        if (ref_char != sv_char && ref_char != 'N' && sv_char != 'N') {
+          ++error_len;
+          ++error_score;
+          if (error_score > Config::ERROR_MAX_LEN) {
+            --error_len;
+            end.x_ -= error_len;
+            end.y_ -= error_len;
+            snake -= error_len;
+            break;
+          }
+        } else {
+          error_score = max(error_score - Config::DP_PENALTY, 0);
+          if (!error_score) error_len = 0;
+        }
       }
       if (snake < Config::SNAKE_MIN_LEN) end = mid;
 
@@ -449,7 +452,7 @@ Point Dna::FindDeltasChunk(
           {
               ref_start + start.x_,
               ref_start + start.x_ + size,
-              sv_p->substr(sv_start + start.y_, size),
+              sv.substr(sv_start + start.y_, size),
           });
     };
 
@@ -460,7 +463,7 @@ Point Dna::FindDeltasChunk(
           {
               ref_start + start.x_,
               ref_start + end.x_,
-              ref_p->substr(ref_start + start.x_, size),
+              ref.substr(ref_start + start.x_, size),
           });
     };
 
@@ -493,6 +496,23 @@ Point Dna::FindDeltasChunk(
   }
 
   return next_chunk_start;
+}
+
+void Dna::IgnoreSmallDeltas() {
+  auto ignore_small_deltas = [](DnaDelta* deltas_p) {
+    for (auto&& [key, ranges] : deltas_p->data_) {
+      for (auto range_i = ranges.begin(); range_i < ranges.end();) {
+        if (range_i->size() < Config::OVERLAP_MIN_LEN) {
+          range_i = ranges.erase(range_i);
+        } else {
+          ++range_i;
+        }
+      }
+    }
+  };
+
+  ignore_small_deltas(&ins_deltas_);
+  ignore_small_deltas(&del_deltas_);
 }
 
 void Dna::FindDupDeltas() {
@@ -608,6 +628,7 @@ void Dna::FindTraDeltas() {
 }
 
 void Dna::ProcessDeltas() {
+  IgnoreSmallDeltas();
   FindDupDeltas();
   FindInvDeltas();
   FindTraDeltas();
