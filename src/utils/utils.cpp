@@ -49,13 +49,13 @@ std::pair<Range, Range> LongestCommonSubstring(
 
   str1_substr.start_ = str1_substr.end_ - substr_len;
   str2_substr.start_ = str2_substr.end_ - substr_len;
-  str1_substr.value_ = str1.substr(str1_substr.start_, substr_len);
-  str2_substr.value_ = str1_substr.value_;
+  str1_substr.value_p_ = &str1;
+  str2_substr.value_p_ = &str2;
   return {str1_substr, str2_substr};
 }
 
 size_t LongestCommonSubstringLength(const string& str1, const string& str2) {
-  return LongestCommonSubstring(str1, str2).first.value_.length();
+  return LongestCommonSubstring(str1, str2).first.get().length();
 }
 
 vector<vector<pair<int, char>>> LongestCommonSubsequence(
@@ -112,7 +112,7 @@ void Concat(string* base_p, const string* str_p) {
   auto base_suffix_str = base_p->substr(replace_start);
 
   auto common_str = LongestCommonSubstring(base_suffix_str, *str_p);
-  auto common_str_len = common_str.first.value_.length();
+  auto common_str_len = common_str.first.get().length();
   if (common_str_len >= Config::OVERLAP_MIN_LEN) {
     Logger::Trace(
         "Concat",

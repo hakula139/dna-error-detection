@@ -39,7 +39,8 @@ void DnaDelta::Set(const string& key, const Minimizer& value) {
     deltas.emplace_back(value);
   }
   Logger::Debug(
-      "DnaDelta::Set", "Saved: " + type_ + " " + value.Stringify(key));
+      "DnaDelta::Set",
+      "Saved: " + type_ + " " + value.range_ref_.Stringify(key));
 }
 
 bool DnaDelta::Combine(Minimizer* base_p, const Minimizer* value_p) const {
