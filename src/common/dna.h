@@ -25,7 +25,7 @@ class Dna {
   void CreateIndex();
   bool PrintIndex(const std::string& filename) const;
 
-  bool ImportOverlaps(const std::string& filename);
+  bool ImportOverlaps(const Dna& segments, const std::string& filename);
   bool FindOverlaps(const Dna& ref);
   bool PrintOverlaps(const std::string& filename) const;
 

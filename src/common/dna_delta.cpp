@@ -8,6 +8,7 @@
 
 #include "config.h"
 #include "logger.h"
+#include "minimizer.h"
 #include "range.h"
 #include "utils.h"
 
@@ -19,35 +20,45 @@ using std::prev;
 using std::string;
 
 void DnaDelta::Print(ofstream& out_file) const {
-  for (const auto& [key, ranges] : data_) {
-    for (const auto& range : ranges) {
-      out_file << type_ << " " << range.Stringify(key) << "\n";
+  for (const auto& [key_ref, deltas] : data_) {
+    for (const auto& [range_ref, key_seg, range_seg] : deltas) {
+      out_file << type_ << " " << range_ref.Stringify(key_ref) << "\n";
     }
   }
 }
 
-void DnaDelta::Set(const string& key, const Range& range) {
-  auto& ranges = data_[key];
-  auto exist = [&](const Range& range) {
-    for (auto&& prev : ranges) {
-      if (Combine(&prev, &range)) return true;
+void DnaDelta::Set(const string& key, const Minimizer& value) {
+  auto& deltas = data_[key];
+  auto exist = [&](const Minimizer& delta) {
+    for (auto&& prev : deltas) {
+      if (Combine(&prev, &delta)) return true;
     }
     return false;
   };
-  if (!ranges.size() || !exist(range)) {
-    ranges.emplace_back(range);
+  if (!deltas.size() || !exist(value)) {
+    deltas.emplace_back(value);
   }
   Logger::Debug(
-      "DnaDelta::Set", "Saved: " + type_ + " " + range.Stringify(key));
+      "DnaDelta::Set", "Saved: " + type_ + " " + value.Stringify(key));
 }
 
-bool DnaDelta::Combine(Range* base_p, const Range* range_p) const {
-  if (FuzzyOverlap(*range_p, *base_p)) {
-    auto new_start = min(base_p->start_, range_p->start_);
-    auto new_end = max(base_p->end_, range_p->end_);
-    if (new_end > new_start + Config::DELTA_MAX_LEN) return false;
-    base_p->start_ = new_start;
-    base_p->end_ = new_end;
+bool DnaDelta::Combine(Minimizer* base_p, const Minimizer* value_p) const {
+  auto&& [base_range_ref, base_key_seg, base_range_seg] = *base_p;
+  const auto& [range_ref, key_seg, range_seg] = *value_p;
+
+  if (base_range_ref.value_p_ == base_range_seg.value_p_ &&
+      FuzzyOverlap(base_range_ref, range_ref)) {
+    auto new_ref_start = min(base_range_ref.start_, range_ref.start_);
+    auto new_ref_end = max(base_range_ref.end_, range_ref.end_);
+    if (new_ref_end > new_ref_start + Config::DELTA_MAX_LEN) return false;
+    auto new_seg_start = min(base_range_seg.start_, range_seg.start_);
+    auto new_seg_end = max(base_range_seg.end_, range_seg.end_);
+
+    *base_p = {
+        {new_ref_start, new_ref_end, base_range_ref.value_p_},
+        base_key_seg,
+        {new_seg_start, new_seg_end, base_range_seg.value_p_},
+    };
     return true;
   }
   return false;

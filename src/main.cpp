@@ -51,7 +51,8 @@ int main(int argc, char** argv) {
           !segments.Import(Config::PATH + Config::SEG_FILENAME)) {
         return EXIT_FAILURE;
       }
-      if (!segments.ImportOverlaps(Config::PATH + Config::OVERLAPS_FILENAME)) {
+      if (!ref.ImportOverlaps(
+              segments, Config::PATH + Config::OVERLAPS_FILENAME)) {
         return EXIT_FAILURE;
       }
       ref.FindDeltasFromSegments(segments);

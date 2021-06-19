@@ -8,6 +8,10 @@
 using std::string;
 using std::to_string;
 
+string Range::get() const {
+  return value_p_ ? value_p_->substr(start_, size()) : "";
+}
+
 string Range::Stringify() const {
   return to_string(start_) + " " + to_string(end_);
 }

@@ -64,8 +64,9 @@ bool Dna::ImportIndex(const string& filename) {
     uint64_t hash = 0;
     string key;
     Range range;
-    in_file >> hash >> key >> range.start_ >> range.end_ >> range.value_;
+    in_file >> hash >> key >> range.start_ >> range.end_;
     if (!hash || !key.length()) break;
+    range.value_p_ = &data_.at(key);
     range_index_.emplace(hash, pair{key, range});
   }
 
@@ -73,7 +74,7 @@ bool Dna::ImportIndex(const string& filename) {
   return true;
 }
 
-bool Dna::ImportOverlaps(const string& filename) {
+bool Dna::ImportOverlaps(const Dna& segments, const string& filename) {
   ifstream in_file(filename);
   if (!in_file) {
     return false;
@@ -85,6 +86,8 @@ bool Dna::ImportOverlaps(const string& filename) {
     in_file >> key_ref >> range_ref.start_ >> range_ref.end_;
     in_file >> key_seg >> range_seg.start_ >> range_seg.end_;
     if (!key_ref.length() || !key_seg.length()) break;
+    range_ref.value_p_ = &(this->data_.at(key_ref));
+    range_seg.value_p_ = &(segments.data_.at(key_seg));
     overlaps_.Insert(key_ref, {range_ref, key_seg, range_seg});
   }
 
@@ -164,14 +167,14 @@ void Dna::CreateIndex() {
         Range range_ref{
             min_hash.pos_,
             min_hash.pos_ + Config::HASH_SIZE,
-            value_ref.substr(min_hash.pos_, Config::HASH_SIZE),
+            &value_ref,
         };
         range_index_.emplace(min_hash.hash_, pair{key_ref, range_ref});
         prev_min_hash = min_hash;
 
         Logger::Trace(
             "Dna::CreateIndex",
-            "Saved " + range_ref.value_ + " " + to_string(min_hash.hash_));
+            "Saved " + range_ref.get() + " " + to_string(min_hash.hash_));
       }
 
       ++progress;
@@ -189,7 +192,7 @@ bool Dna::PrintIndex(const string& filename) const {
   for (const auto& [hash, entry] : range_index_) {
     const auto& [key_ref, range_ref] = entry;
     out_file << hash << " " << range_ref.Stringify(key_ref) << " "
-             << range_ref.value_ << "\n";
+             << range_ref.get() << "\n";
   }
 
   out_file.close();
@@ -214,7 +217,7 @@ bool Dna::FindOverlaps(const Dna& ref) {
       hash = NextHash(hash, chain_seg[i + Config::HASH_SIZE - 1]);
       if (ref.range_index_.count(hash)) {
         const auto& entry_ref_range = ref.range_index_.equal_range(hash);
-        Range range_seg{i, i + Config::HASH_SIZE};
+        Range range_seg{i, i + Config::HASH_SIZE, &chain_seg};
         for (auto j = entry_ref_range.first; j != entry_ref_range.second; ++j) {
           const auto& [key_ref, range_ref] = j->second;
           overlaps.Insert(key_ref, {range_ref, key_seg, range_seg});
@@ -392,12 +395,10 @@ Point Dna::FindDeltasChunk(
         auto ref_char = ref[ref_start + end.x_];
         auto sv_char = sv[sv_start + end.y_];
         if (ref_char != sv_char && ref_char != 'N' && sv_char != 'N') {
-          ++error_len;
-          ++error_score;
+          ++error_len, ++error_score;
           if (error_score > Config::ERROR_MAX_LEN) {
             --error_len;
-            end.x_ -= error_len;
-            end.y_ -= error_len;
+            end = {end.x_ - error_len, end.y_ - error_len};
             snake -= error_len;
             break;
           }
@@ -440,30 +441,33 @@ Point Dna::FindDeltasChunk(
     auto mid_x = from_up ? start.x_ : start.x_ + 1;
     auto mid = Point(mid_x, mid_x - k);
 
-    // Logger::Trace(
-    //     "Dna::FindDeltasChunk",
-    //     start.Stringify() + " " + mid.Stringify() + " " + end.Stringify());
+    Logger::Trace(
+        "Dna::FindDeltasChunk",
+        start.Stringify() + " " + mid.Stringify() + " " + end.Stringify());
+    assert(start.x_ <= mid.x_ && start.y_ <= mid.y_);
     assert(mid.x_ <= end.x_ && mid.y_ <= end.y_);
 
     auto insert_delta = [&](const Point& start, const Point& end) {
       auto size = end.y_ - start.y_;
+      assert(size > 0);
       ins_deltas_.Set(
           key,
           {
-              ref_start + start.x_,
-              ref_start + start.x_ + size,
-              sv.substr(sv_start + start.y_, size),
+              {ref_start + start.x_, ref_start + start.x_ + size, &ref},
+              "",
+              {sv_start + start.y_, sv_start + end.y_, &sv},
           });
     };
 
     auto delete_delta = [&](const Point& start, const Point& end) {
       auto size = end.x_ - start.x_;
+      assert(size > 0);
       del_deltas_.Set(
           key,
           {
-              ref_start + start.x_,
-              ref_start + end.x_,
-              ref.substr(ref_start + start.x_, size),
+              {ref_start + start.x_, ref_start + end.x_, &ref},
+              "",
+              {ref_start + start.x_, ref_start + end.x_, &ref},
           });
     };
 
@@ -500,12 +504,12 @@ Point Dna::FindDeltasChunk(
 
 void Dna::IgnoreSmallDeltas() {
   auto ignore_small_deltas = [](DnaDelta* deltas_p) {
-    for (auto&& [key, ranges] : deltas_p->data_) {
-      for (auto range_i = ranges.begin(); range_i < ranges.end();) {
-        if (range_i->size() < Config::OVERLAP_MIN_LEN) {
-          range_i = ranges.erase(range_i);
+    for (auto&& [key, deltas] : deltas_p->data_) {
+      for (auto delta_i = deltas.begin(); delta_i < deltas.end();) {
+        if (delta_i->range_ref_.size() < Config::OVERLAP_MIN_LEN) {
+          delta_i = deltas.erase(delta_i);
         } else {
-          ++range_i;
+          ++delta_i;
         }
       }
     }
@@ -516,17 +520,28 @@ void Dna::IgnoreSmallDeltas() {
 }
 
 void Dna::FindDupDeltas() {
-  for (auto&& [key, ranges] : ins_deltas_.data_) {
-    for (auto range_i = ranges.begin(); range_i < ranges.end();) {
-      auto size = range_i->size();
-      auto prev_start = range_i->start_ - size;
+  for (auto&& [key_ref, deltas] : ins_deltas_.data_) {
+    for (auto delta_i = deltas.begin(); delta_i < deltas.end();) {
+      auto&& [range_ref, key_seg, range_seg] = *delta_i;
+      auto size = range_ref.size();
+      auto cur_start = range_ref.start_;
+      auto prev_start = cur_start - size;
       if (prev_start < 0) continue;
-      auto prev_value = data_[key].substr(prev_start, size);
-      if (FuzzyCompare(range_i->value_, prev_value)) {
-        dup_deltas_.Set(key, {prev_start, range_i->start_, prev_value});
-        range_i = ranges.erase(range_i);
+
+      auto cur_value = range_seg.get();
+      auto prev_value = range_seg.value_p_->substr(prev_start, size);
+
+      if (FuzzyCompare(cur_value, prev_value)) {
+        dup_deltas_.Set(
+            key_ref,
+            {
+                {prev_start, cur_start, range_ref.value_p_},
+                key_seg,
+                range_seg,
+            });
+        delta_i = deltas.erase(delta_i);
       } else {
-        ++range_i;
+        ++delta_i;
       }
     }
   }
@@ -548,82 +563,100 @@ string Dna::Invert(const string& chain) {
 }
 
 void Dna::FindInvDeltas() {
-  for (auto&& [key, ranges_ins] : ins_deltas_.data_) {
-    for (auto range_i = ranges_ins.begin(); range_i < ranges_ins.end();) {
+  for (auto&& [key_ref, deltas_ins] : ins_deltas_.data_) {
+    for (auto delta_i = deltas_ins.begin(); delta_i < deltas_ins.end();) {
+      auto&& [range_ref_i, key_seg_i, range_seg_i] = *delta_i;
       auto erased = false;
-      if (del_deltas_.data_.count(key)) {
-        auto& ranges_del = del_deltas_.data_[key];
-        for (auto range_j = ranges_del.begin(); range_j < ranges_del.end();
-             ++range_j) {
-          if (FuzzyCompare(*range_i, *range_j)) {
-            auto size = range_i->size();
-            range_i->start_ = range_j->start_;
-            range_i->end_ = range_j->start_ + size;
-            if (FuzzyCompare(range_i->value_, Invert(range_j->value_))) {
-              inv_deltas_.Set(key, *range_j);
-              range_i = ranges_ins.erase(range_i);
-              range_j = ranges_del.erase(range_j);
+
+      if (del_deltas_.data_.count(key_ref)) {
+        auto& deltas_del = del_deltas_.data_[key_ref];
+
+        for (auto delta_j = deltas_del.begin(); delta_j < deltas_del.end();
+             ++delta_j) {
+          auto&& [range_ref_j, key_seg_j, range_seg_j] = *delta_j;
+
+          if (FuzzyCompare(range_ref_i, range_ref_j)) {
+            auto size = range_ref_i.size();
+            range_ref_i.start_ = range_ref_j.start_;
+            range_ref_i.end_ = range_ref_j.start_ + size;
+
+            if (FuzzyCompare(range_seg_i.get(), Invert(range_seg_j.get()))) {
+              inv_deltas_.Set(key_ref, *delta_j);
+              delta_i = deltas_ins.erase(delta_i);
+              delta_j = deltas_del.erase(delta_j);
               erased = true;
               break;
             }
           }
         }
       }
-      if (!erased) ++range_i;
+
+      if (!erased) ++delta_i;
     }
   }
 }
 
 void Dna::FindTraDeltas() {
-  auto ins_cache = vector<tuple<string, Range>>{};
-  auto del_cache = vector<tuple<string, Range>>{};
+  vector<tuple<string, Minimizer>> ins_cache;
+  vector<tuple<string, Minimizer>> del_cache;
 
-  for (auto&& [key, ranges_ins] : ins_deltas_.data_) {
-    for (auto range_i = ranges_ins.begin(); range_i < ranges_ins.end();) {
+  for (auto&& [key, deltas_ins] : ins_deltas_.data_) {
+    for (auto delta_i = deltas_ins.begin(); delta_i < deltas_ins.end();) {
+      auto&& [range_ref_i, key_seg_i, range_seg_i] = *delta_i;
       auto erased = false;
+
       if (del_deltas_.data_.count(key)) {
-        auto& ranges_del = del_deltas_.data_[key];
-        for (auto range_j = ranges_del.begin(); range_j < ranges_del.end();
-             ++range_j) {
-          if (FuzzyCompare(range_i->size(), range_j->size())) {
-            ins_cache.emplace_back(key, *range_i);
-            del_cache.emplace_back(key, *range_j);
-            range_i = ranges_ins.erase(range_i);
-            range_j = ranges_del.erase(range_j);
+        auto& deltas_del = del_deltas_.data_[key];
+
+        for (auto delta_j = deltas_del.begin(); delta_j < deltas_del.end();
+             ++delta_j) {
+          auto&& [range_ref_j, key_seg_j, range_seg_j] = *delta_j;
+
+          if (FuzzyCompare(range_ref_i.size(), range_ref_j.size())) {
+            ins_cache.emplace_back(key, *delta_i);
+            del_cache.emplace_back(key, *delta_j);
+            delta_i = deltas_ins.erase(delta_i);
+            delta_j = deltas_del.erase(delta_j);
             erased = true;
             break;
           }
         }
       }
-      if (!erased) ++range_i;
+
+      if (!erased) ++delta_i;
     }
   }
 
   for (auto entry_i = ins_cache.begin(); entry_i < ins_cache.end();) {
+    auto [key_ins, delta_ins] = *entry_i;
+    auto&& [range_ref_i, key_seg_i, range_seg_i] = delta_ins;
     auto erased = false;
-    auto [key_ins, range_ins] = *entry_i;
+
     for (auto entry_j = del_cache.begin(); entry_j < del_cache.end();
          ++entry_j) {
-      auto [key_del, range_del] = *entry_j;
-      if (FuzzyCompare(range_ins.value_, range_del.value_)) {
-        tra_deltas_.Set(key_ins, range_ins, key_del, range_del);
+      auto [key_del, delta_del] = *entry_j;
+      auto&& [range_ref_j, key_seg_j, range_seg_j] = delta_del;
+
+      if (FuzzyCompare(range_seg_i.get(), range_seg_j.get())) {
+        tra_deltas_.Set(key_ins, range_ref_i, key_del, range_ref_j);
         entry_i = ins_cache.erase(entry_i);
         entry_j = del_cache.erase(entry_j);
         erased = true;
         break;
       }
     }
+
     if (!erased) ++entry_i;
   }
 
-  for (const auto& [key, range] : ins_cache) {
-    auto& ranges_ins = ins_deltas_.data_[key];
-    ranges_ins.emplace_back(range);
+  for (const auto& [key, delta] : ins_cache) {
+    auto& deltas_ins = ins_deltas_.data_[key];
+    deltas_ins.emplace_back(delta);
   }
 
-  for (const auto& [key, range] : del_cache) {
-    auto& ranges_del = del_deltas_.data_[key];
-    ranges_del.emplace_back(range);
+  for (const auto& [key, delta] : del_cache) {
+    auto& deltas_del = del_deltas_.data_[key];
+    deltas_del.emplace_back(delta);
   }
 }
 

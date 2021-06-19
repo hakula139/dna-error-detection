@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "minimizer.h"
 #include "range.h"
 
 class DnaDeltaBase {
@@ -22,15 +23,15 @@ class DnaDelta : public DnaDeltaBase {
  public:
   explicit DnaDelta(const std::string& type) : DnaDeltaBase{type} {}
   void Print(std::ofstream& out_file) const override;
-  void Set(const std::string& key, const Range& value);
+  void Set(const std::string& key, const Minimizer& value);
 
   friend class Dna;
 
  protected:
-  bool Combine(Range* base_p, const Range* range_p) const;
+  bool Combine(Minimizer* base_p, const Minimizer* value_p) const;
 
  private:
-  std::unordered_map<std::string, std::vector<Range>> data_;
+  std::unordered_map<std::string, std::vector<Minimizer>> data_;
 };
 
 class DnaMultiDelta : public DnaDeltaBase {
