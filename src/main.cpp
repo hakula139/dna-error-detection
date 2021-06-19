@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
               segments, Config::PATH + Config::OVERLAPS_FILENAME)) {
         return EXIT_FAILURE;
       }
-      ref.FindDeltasFromSegments(segments);
+      ref.FindDeltasFromSegments();
     } else {
       ref.FindDeltas(sv, Config::CHUNK_SIZE);
     }

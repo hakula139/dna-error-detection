@@ -32,7 +32,7 @@ class Dna {
   void CreateSvChain(const Dna& ref, const Dna& segments);
 
   void FindDeltas(const Dna& sv, size_t chunk_size = 10000);
-  void FindDeltasFromSegments(const Dna& segments);
+  void FindDeltasFromSegments();
   void IgnoreSmallDeltas();
   void FindDupDeltas();
   void FindInvDeltas();

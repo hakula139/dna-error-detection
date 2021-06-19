@@ -66,7 +66,7 @@ bool Dna::ImportIndex(const string& filename) {
     Range range;
     in_file >> hash >> key >> range.start_ >> range.end_;
     if (!hash || !key.length()) break;
-    range.value_p_ = &data_.at(key);
+    range.value_p_ = &(this->data_.at(key));
     range_index_.emplace(hash, pair{key, range});
   }
 
@@ -302,18 +302,19 @@ void Dna::FindDeltas(const Dna& sv, size_t chunk_size) {
   }
 }
 
-void Dna::FindDeltasFromSegments(const Dna& segments) {
+void Dna::FindDeltasFromSegments() {
   for (const auto& [key, value_ref] : data_) {
     try {
-      const auto& entries = segments.overlaps_.data_.at(key);
+      const auto& entries = overlaps_.data_.at(key);
       Progress progress{
           "Dna::FindDeltasFromSegments " + key,
           entries.size(),
           10,
       };
+
       for (const auto& minimizer : entries) {
         const auto& [range_ref, key_seg, range_seg] = minimizer;
-        const auto& value_seg = segments.data_.at(key_seg);
+        const auto& value_seg = *(range_seg.value_p_);
         assert(range_ref.start_ >= range_seg.start_);
         const auto ref_start = range_ref.start_ - range_seg.start_;
 
