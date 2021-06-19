@@ -552,7 +552,7 @@ void Dna::FindDupDeltas() {
       if (prev_start < 0) continue;
 
       auto cur_value = range_seg.get();
-      auto prev_value = range_seg.value_p_->substr(prev_start, size);
+      auto prev_value = range_ref.value_p_->substr(prev_start, size);
 
       if (FuzzyCompare(cur_value, prev_value)) {
         dup_deltas_.Set(
@@ -684,10 +684,10 @@ void Dna::FindTraDeltas() {
 }
 
 void Dna::ProcessDeltas() {
-  // IgnoreSmallDeltas();
-  // FindDupDeltas();
-  // FindInvDeltas();
-  // FindTraDeltas();
+  IgnoreSmallDeltas();
+  FindDupDeltas();
+  FindInvDeltas();
+  FindTraDeltas();
 }
 
 bool Dna::PrintDeltas(const string& filename) const {
