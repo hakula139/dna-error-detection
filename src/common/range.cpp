@@ -13,7 +13,11 @@ string Range::get() const {
 }
 
 string Range::Stringify() const {
-  return to_string(start_) + " " + to_string(end_);
+  if (inverted_) {
+    return to_string(end_) + " " + to_string(start_);
+  } else {
+    return to_string(start_) + " " + to_string(end_);
+  }
 }
 
 string Range::Stringify(const string& key) const {

@@ -31,6 +31,7 @@ using std::out_of_range;
 using std::pair;
 using std::priority_queue;
 using std::string;
+using std::swap;
 using std::to_string;
 using std::tuple;
 using std::unordered_map;
@@ -44,8 +45,10 @@ bool Dna::Import(const string& filename) {
 
   while (!in_file.eof()) {
     string key, value;
+
     in_file >> key >> value;
     if (!key.length()) break;
+
     data_[key.substr(1)] = value;
   }
 
@@ -63,10 +66,12 @@ bool Dna::ImportIndex(const string& filename) {
   while (!in_file.eof()) {
     uint64_t hash = 0;
     string key;
-    Range range;
-    in_file >> hash >> key >> range.start_ >> range.end_;
+    size_t start, end;
+
+    in_file >> hash >> key >> start >> end;
     if (!hash || !key.length()) break;
-    range.value_p_ = &(this->data_.at(key));
+
+    Range range{start, end, &(this->data_.at(key))};
     range_index_.emplace(hash, pair{key, range});
   }
 
@@ -74,7 +79,7 @@ bool Dna::ImportIndex(const string& filename) {
   return true;
 }
 
-bool Dna::ImportOverlaps(const Dna& segments, const string& filename) {
+bool Dna::ImportOverlaps(Dna* segments_p, const string& filename) {
   ifstream in_file(filename);
   if (!in_file) {
     return false;
@@ -82,13 +87,27 @@ bool Dna::ImportOverlaps(const Dna& segments, const string& filename) {
 
   while (!in_file.eof()) {
     string key_ref, key_seg;
-    Range range_ref, range_seg;
-    in_file >> key_ref >> range_ref.start_ >> range_ref.end_;
-    in_file >> key_seg >> range_seg.start_ >> range_seg.end_;
+    size_t start_ref, end_ref;
+    size_t start_seg, end_seg;
+
+    in_file >> key_ref >> start_ref >> end_ref;
+    in_file >> key_seg >> start_seg >> end_seg;
     if (!key_ref.length() || !key_seg.length()) break;
-    range_ref.value_p_ = &(this->data_.at(key_ref));
-    range_seg.value_p_ = &(segments.data_.at(key_seg));
+
+    // Invert the segment chain if marked inverted.
+    auto&& value_seg = segments_p->data_[key_seg];
+    if (start_seg > end_seg) {
+      swap(start_seg, end_seg);
+      value_seg = Invert(value_seg);
+    }
+
+    Range range_ref{start_ref, end_ref, &(this->data_.at(key_ref))};
+    Range range_seg{start_seg, end_seg, &value_seg};
     overlaps_.Insert(key_ref, {range_ref, key_seg, range_seg});
+
+    Logger::Trace("Dna::ImportOverlaps", key_ref + ": \tSaved minimizer:");
+    Logger::Trace("", "REF: \t" + range_ref.get());
+    Logger::Trace("", "SEG: \t" + range_seg.get());
   }
 
   in_file.close();
@@ -191,8 +210,7 @@ bool Dna::PrintIndex(const string& filename) const {
 
   for (const auto& [hash, entry] : range_index_) {
     const auto& [key_ref, range_ref] = entry;
-    out_file << hash << " " << range_ref.Stringify(key_ref) << " "
-             << range_ref.get() << "\n";
+    out_file << hash << " " << range_ref.Stringify(key_ref) << "\n";
   }
 
   out_file.close();
@@ -206,7 +224,9 @@ bool Dna::FindOverlaps(const Dna& ref) {
   }
   assert(Config::HASH_SIZE > 0 && Config::HASH_SIZE <= 30);
 
-  auto find_overlaps = [&](const string& key_seg, const string& chain_seg) {
+  auto find_overlaps = [&](const string& key_seg,
+                           const string& chain_seg,
+                           bool inverted) {
     uint64_t hash = 0;
     for (auto i = 0; i < Config::HASH_SIZE - 1; ++i) {
       hash = NextHash(hash, chain_seg[i]);
@@ -217,10 +237,14 @@ bool Dna::FindOverlaps(const Dna& ref) {
       hash = NextHash(hash, chain_seg[i + Config::HASH_SIZE - 1]);
       if (ref.range_index_.count(hash)) {
         const auto& entry_ref_range = ref.range_index_.equal_range(hash);
-        Range range_seg{i, i + Config::HASH_SIZE, &chain_seg};
+        Range range_seg{i, i + Config::HASH_SIZE, &chain_seg, inverted};
         for (auto j = entry_ref_range.first; j != entry_ref_range.second; ++j) {
           const auto& [key_ref, range_ref] = j->second;
           overlaps.Insert(key_ref, {range_ref, key_seg, range_seg});
+
+          Logger::Trace("Dna::FindOverlaps", key_ref + ": \tSaved minimizer:");
+          Logger::Trace("", "REF: \t" + range_ref.get());
+          Logger::Trace("", "SEG: \t" + range_seg.get());
         }
       }
     }
@@ -229,9 +253,9 @@ bool Dna::FindOverlaps(const Dna& ref) {
 
   Progress progress{"Dna::FindOverlaps", data_.size(), 100};
   for (auto&& [key_seg, value_seg] : data_) {
-    auto overlaps = find_overlaps(key_seg, value_seg);
     auto inverted_value_seg = Invert(value_seg);
-    auto overlaps_invert = find_overlaps(key_seg, inverted_value_seg);
+    auto overlaps = find_overlaps(key_seg, value_seg, false);
+    auto overlaps_invert = find_overlaps(key_seg, inverted_value_seg, true);
 
     if (overlaps.size() >= Config::MINIMIZER_MIN_COUNT &&
         overlaps.size() >= overlaps_invert.size()) {
@@ -319,7 +343,7 @@ void Dna::FindDeltasFromSegments() {
         const auto ref_start = range_ref.start_ - range_seg.start_;
 
         auto show_size = 100;
-        Logger::Debug("Dna::FindDeltasFromSegments", key + ": Now comparing:");
+        Logger::Debug("Dna::FindDeltasFromSegments", key + ": \tComparing:");
         Logger::Debug("", "REF: \t" + value_ref.substr(ref_start, show_size));
         Logger::Debug("", "SEG: \t" + value_seg.substr(0, show_size));
 
@@ -662,10 +686,10 @@ void Dna::FindTraDeltas() {
 }
 
 void Dna::ProcessDeltas() {
-  IgnoreSmallDeltas();
-  FindDupDeltas();
-  FindInvDeltas();
-  FindTraDeltas();
+  // IgnoreSmallDeltas();
+  // FindDupDeltas();
+  // FindInvDeltas();
+  // FindTraDeltas();
 }
 
 bool Dna::PrintDeltas(const string& filename) const {
