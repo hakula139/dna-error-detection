@@ -24,8 +24,8 @@ struct Config {
   inline static const int LOG_LEVEL = Config::Level::DEBUG;
   inline static const size_t HASH_SIZE = 15;
   inline static const size_t WINDOW_SIZE = 10;
-  inline static const size_t CHUNK_SIZE = 20000;
-  inline static const size_t SNAKE_MIN_LEN = 10;
+  inline static const size_t CHUNK_SIZE = 50000;
+  inline static const size_t SNAKE_MIN_LEN = 30;
   inline static const size_t ERROR_MAX_LEN = 0;
   inline static const size_t GAP_MAX_DIFF = 100;
   inline static const size_t DELTA_MAX_LEN = 1000;
