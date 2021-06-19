@@ -123,16 +123,6 @@ bool Dna::ImportOverlaps(Dna* segments_p, const string& filename) {
   return true;
 }
 
-bool Dna::get(const string& key, string* value) const {
-  try {
-    *value = data_.at(key);
-    return true;
-  } catch (const out_of_range& error) {
-    *value = "";
-    return false;
-  }
-}
-
 bool Dna::Print(const string& filename) const {
   ofstream out_file(filename);
   if (!out_file) {
@@ -317,13 +307,9 @@ bool Dna::PrintOverlaps(const string& filename) const {
 
 void Dna::FindDeltas(const Dna& sv, size_t chunk_size) {
   for (const auto& [key, value_ref] : data_) {
-    string value_sv;
-    if (!sv.get(key, &value_sv)) {
-      Logger::Warn("Dna::FindDeltas", "key " + key + " not found in sv chain");
-      continue;
-    }
-
+    const auto& value_sv = sv.data_.at(key);
     Progress progress{"Dna::FindDeltas " + key, value_ref.length()};
+
     for (int i = 0, j = 0; i < value_ref.length() || j < value_sv.length();) {
       auto m = min(value_ref.length() - i, chunk_size);
       auto n = min(value_sv.length() - j, chunk_size);
@@ -512,7 +498,7 @@ Point Dna::FindDeltasChunk(
     if (mid != end || from_up != prev_from_up) {
       if (prev_from_up == 1 && end.y_ < prev_end.y_) {
         insert_delta(end, prev_end);
-      } else if (!prev_from_up && end.x_ < prev_end.x_) {
+      } else if (prev_from_up == 0 && end.x_ < prev_end.x_) {
         delete_delta(end, prev_end);
       }
       prev_end = mid;

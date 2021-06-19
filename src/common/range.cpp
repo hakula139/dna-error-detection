@@ -1,15 +1,19 @@
 #include "range.h"
 
+#include <algorithm>
 #include <string>
 
 #include "config.h"
+#include "logger.h"
 #include "utils.h"
 
+using std::min;
 using std::string;
 using std::to_string;
 
 string Range::get() const {
-  return value_p_ ? value_p_->substr(start_, size()) : "";
+  auto size = min(this->size(), value_p_->size() - start_);
+  return value_p_ ? value_p_->substr(start_, size) : "";
 }
 
 string Range::Stringify() const {

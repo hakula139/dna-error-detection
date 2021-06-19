@@ -17,7 +17,6 @@ class Dna {
   explicit Dna(const std::string& filename) { Import(filename); }
 
   bool Import(const std::string& filename);
-  bool get(const std::string& key, std::string* value) const;
   size_t size() const { return data_.size(); }
   bool Print(const std::string& filename) const;
 
