@@ -9,6 +9,7 @@
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -35,6 +36,7 @@ using std::swap;
 using std::to_string;
 using std::tuple;
 using std::unordered_map;
+using std::unordered_set;
 using std::vector;
 
 bool Dna::Import(const string& filename) {
@@ -85,6 +87,8 @@ bool Dna::ImportOverlaps(Dna* segments_p, const string& filename) {
     return false;
   }
 
+  unordered_set<string> inverted_segs;
+
   while (!in_file.eof()) {
     string key_ref, key_seg;
     size_t start_ref, end_ref;
@@ -97,15 +101,20 @@ bool Dna::ImportOverlaps(Dna* segments_p, const string& filename) {
     // Invert the segment chain if marked inverted.
     auto&& value_seg = segments_p->data_[key_seg];
     if (start_seg > end_seg) {
+      if (!inverted_segs.count(key_seg)) {
+        value_seg = Invert(value_seg);
+        inverted_segs.emplace(key_seg);
+      }
       swap(start_seg, end_seg);
-      value_seg = Invert(value_seg);
+    } else {
+      assert(!inverted_segs.count(key_seg));
     }
 
     Range range_ref{start_ref, end_ref, &(this->data_.at(key_ref))};
     Range range_seg{start_seg, end_seg, &value_seg};
     overlaps_.Insert(key_ref, {range_ref, key_seg, range_seg});
 
-    Logger::Trace("Dna::ImportOverlaps", key_ref + ": \tSaved minimizer:");
+    Logger::Trace("Dna::ImportOverlaps", key_ref + ": \tMinimizer:");
     Logger::Trace("", "REF: \t" + range_ref.get());
     Logger::Trace("", "SEG: \t" + range_seg.get());
   }
@@ -225,8 +234,10 @@ bool Dna::FindOverlaps(const Dna& ref) {
   assert(Config::HASH_SIZE > 0 && Config::HASH_SIZE <= 30);
 
   auto find_overlaps = [&](const string& key_seg,
-                           const string& chain_seg,
+                           const string& raw_chain_seg,
                            bool inverted) {
+    auto chain_seg = inverted ? Invert(raw_chain_seg) : raw_chain_seg;
+
     uint64_t hash = 0;
     for (auto i = 0; i < Config::HASH_SIZE - 1; ++i) {
       hash = NextHash(hash, chain_seg[i]);
@@ -235,16 +246,18 @@ bool Dna::FindOverlaps(const Dna& ref) {
     DnaOverlap overlaps;
     for (size_t i = 0; i < chain_seg.length() - Config::HASH_SIZE + 1; ++i) {
       hash = NextHash(hash, chain_seg[i + Config::HASH_SIZE - 1]);
+
       if (ref.range_index_.count(hash)) {
         const auto& entry_ref_range = ref.range_index_.equal_range(hash);
-        Range range_seg{i, i + Config::HASH_SIZE, &chain_seg, inverted};
+        Range range_seg{i, i + Config::HASH_SIZE, &raw_chain_seg, inverted};
+
         for (auto j = entry_ref_range.first; j != entry_ref_range.second; ++j) {
           const auto& [key_ref, range_ref] = j->second;
           overlaps.Insert(key_ref, {range_ref, key_seg, range_seg});
 
-          Logger::Trace("Dna::FindOverlaps", key_ref + ": \tSaved minimizer:");
-          Logger::Trace("", "REF: \t" + range_ref.get());
-          Logger::Trace("", "SEG: \t" + range_seg.get());
+          // Logger::Trace("Dna::FindOverlaps", key_ref + ": \tMinimizer:");
+          // Logger::Trace("", "REF: \t" + range_ref.get());
+          // Logger::Trace("", "SEG: \t" + range_seg.get());
         }
       }
     }
@@ -253,9 +266,8 @@ bool Dna::FindOverlaps(const Dna& ref) {
 
   Progress progress{"Dna::FindOverlaps", data_.size(), 100};
   for (auto&& [key_seg, value_seg] : data_) {
-    auto inverted_value_seg = Invert(value_seg);
     auto overlaps = find_overlaps(key_seg, value_seg, false);
-    auto overlaps_invert = find_overlaps(key_seg, inverted_value_seg, true);
+    auto overlaps_invert = find_overlaps(key_seg, value_seg, true);
 
     if (overlaps.size() >= Config::MINIMIZER_MIN_COUNT &&
         overlaps.size() >= overlaps_invert.size()) {
@@ -268,7 +280,7 @@ bool Dna::FindOverlaps(const Dna& ref) {
     } else if (
         overlaps_invert.size() >= Config::MINIMIZER_MIN_COUNT &&
         overlaps.size() < overlaps_invert.size()) {
-      value_seg = inverted_value_seg;
+      value_seg = Invert(value_seg);
       overlaps_ += overlaps_invert;
 
       Logger::Trace(
