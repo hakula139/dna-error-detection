@@ -35,9 +35,10 @@ void DnaDelta::Set(const string& key, const Minimizer& value) {
   };
 
   auto exist = [&](const Minimizer& delta) {
-    for (auto&& prev : deltas) {
-      if (Combine(&prev, &delta)) {
-        Logger::Debug("DnaDelta::Set", "Merged: \t" + delta_str(prev));
+    for (auto prev_i = deltas.rbegin(); prev_i < deltas.rend(); ++prev_i) {
+      if (prev_i->key_seg_ != delta.key_seg_) break;
+      if (Combine(&*prev_i, &delta)) {
+        Logger::Trace("DnaDelta::Set", "Merged: \t" + delta_str(*prev_i));
         return true;
       }
     }
@@ -45,9 +46,9 @@ void DnaDelta::Set(const string& key, const Minimizer& value) {
   };
 
   if (deltas.empty() || !exist(value)) {
-    if (value.range_ref_.size() >= Config::DELTA_MIN_LEN) {
+    if (value.range_ref_.size() > Config::DELTA_IGNORE_LEN) {
       deltas.emplace_back(value);
-      Logger::Debug("DnaDelta::Set", "Saved: \t" + delta_str(value));
+      Logger::Trace("DnaDelta::Set", "Saved: \t" + delta_str(value));
     } else {
       Logger::Trace("DnaDelta::Set", "Ignored: \t" + delta_str(value));
     }

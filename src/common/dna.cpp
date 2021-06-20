@@ -27,6 +27,7 @@ using std::greater;
 using std::ifstream;
 using std::max;
 using std::min;
+using std::move;
 using std::ofstream;
 using std::out_of_range;
 using std::pair;
@@ -350,13 +351,15 @@ void Dna::FindDeltasFromSegments() {
       ref_start = max(ref_start, 0);
 
       auto show_size = min(static_cast<size_t>(100), ref_size);
-      Logger::Debug("Dna::FindDeltasFromSegments", key + ": \tComparing:");
-      Logger::Debug("", "REF: \t" + value_ref.substr(ref_start, show_size));
-      Logger::Debug("", "SEG: \t" + value_seg.substr(0, show_size));
+      Logger::Trace("Dna::FindDeltasFromSegments", key + ": \tComparing:");
+      Logger::Trace("", "REF: \t" + value_ref.substr(ref_start, show_size));
+      Logger::Trace("", "SEG: \t" + value_seg.substr(0, show_size));
 
       FindDeltasChunk(
-          key, value_ref, ref_start, ref_size, value_seg, 0, seg_size, true);
+          key, value_ref, ref_start, ref_size, value_seg, 0, seg_size, false);
 
+      // Clear the delta fragments before switching to another minimizer.
+      IgnoreSmallDeltas();
       ++progress;
     }
   }
@@ -424,7 +427,7 @@ Point Dna::FindDeltasChunk(
         auto sv_char = sv[sv_start + end.y_];
         if (ref_char != sv_char && ref_char != 'N' && sv_char != 'N') {
           ++error_len, ++error_score;
-          if (error_score > Config::ERROR_MAX_LEN) {
+          if (error_score > Config::ERROR_MAX_SCORE) {
             --error_len;
             end = {end.x_ - error_len, end.y_ - error_len};
             snake -= error_len;
@@ -432,7 +435,7 @@ Point Dna::FindDeltasChunk(
           }
         } else {
           error_score = max(error_score - Config::MYERS_PENALTY, 0.0);
-          if (error_score <= 0.0) error_len = 0;
+          if (!error_score) error_len = 0;
         }
       }
       if (snake < Config::SNAKE_MIN_LEN) end = mid;
@@ -443,7 +446,7 @@ Point Dna::FindDeltasChunk(
       auto y_reach_end = end.y_ >= static_cast<int>(n);
       if (reach_end ? x_reach_end && y_reach_end : x_reach_end || y_reach_end) {
         solution_found = true;
-        next_chunk_start = Point(end.x_, end.y_);
+        next_chunk_start = end;
         break;
       }
     }
@@ -537,20 +540,25 @@ Point Dna::FindDeltasChunk(
 }
 
 void Dna::IgnoreSmallDeltas() {
-  auto ignore_small_deltas = [](DnaDelta* deltas_p) {
-    for (auto&& [key, deltas] : deltas_p->data_) {
-      for (auto delta_i = deltas.begin(); delta_i < deltas.end();) {
-        if (delta_i->range_ref_.size() < Config::DELTA_MIN_LEN) {
-          delta_i = deltas.erase(delta_i);
-        } else {
-          ++delta_i;
+  auto ignore_small_deltas = [](DnaDelta& all_deltas) {
+    for (auto&& [key, deltas] : all_deltas.data_) {
+      vector<Minimizer> saved_deltas;
+      for (auto&& delta : deltas) {
+        if (delta.range_ref_.size() >= Config::DELTA_MIN_LEN) {
+          Logger::Debug(
+              "DnaDelta::IgnoreSmallDeltas",
+              "Saved: \t" + all_deltas.type_ + " " +
+                  delta.range_ref_.Stringify(key));
+
+          saved_deltas.emplace_back(move(delta));
         }
       }
+      deltas = saved_deltas;
     }
   };
 
-  ignore_small_deltas(&ins_deltas_);
-  ignore_small_deltas(&del_deltas_);
+  ignore_small_deltas(ins_deltas_);
+  ignore_small_deltas(del_deltas_);
 }
 
 void Dna::FindDupDeltas() {
