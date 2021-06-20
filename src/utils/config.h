@@ -26,7 +26,7 @@ struct Config {
   inline static const size_t WINDOW_SIZE = 10;
   inline static const size_t CHUNK_SIZE = 50000;
   inline static const size_t SNAKE_MIN_LEN = 30;
-  inline static const size_t ERROR_MAX_LEN = 5;
+  inline static const size_t ERROR_MAX_LEN = 4;
   inline static const size_t GAP_MIN_DIFF = 5;
   inline static const size_t GAP_MAX_DIFF = 50;
   inline static const size_t DELTA_MIN_LEN = 100;
@@ -34,8 +34,10 @@ struct Config {
   inline static const size_t DELTA_MAX_SIZE = 1000;
   inline static const size_t OVERLAP_MIN_COUNT = 30;
   inline static const size_t OVERLAP_MIN_LEN = 30;
+  inline static const size_t MINIMIZER_MIN_COUNT = 4;
   inline static const size_t MINIMIZER_MIN_LEN = 100;
-  inline static const int DP_PENALTY = 1;
+  inline static const double MYERS_PENALTY = 0.25;
+  inline static const int DP_PENALTY = 2;
   inline static const double STRICT_EQUAL_RATE = 0.5;
   inline static const double FUZZY_EQUAL_RATE = 0.8;
 };

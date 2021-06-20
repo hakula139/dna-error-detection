@@ -70,7 +70,8 @@ void DnaOverlap::Merge() {
     entries.clear();
     for (const auto& [key_seg, entry] : merged_overlaps) {
       for (const auto& [merged_ref, merged_seg, count] : entry) {
-        auto used = merged_ref.size() >= Config::MINIMIZER_MIN_LEN &&
+        auto used = count >= Config::MINIMIZER_MIN_COUNT &&
+                    merged_ref.size() >= Config::MINIMIZER_MIN_LEN &&
                     merged_seg.size() >= Config::MINIMIZER_MIN_LEN;
 
         if (used) {

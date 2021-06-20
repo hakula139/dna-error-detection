@@ -416,7 +416,8 @@ Point Dna::FindDeltasChunk(
 
       auto end = mid;
       auto snake = 0;
-      for (int error_len = 0, error_score = 0; end.x_ < m && end.y_ < n;
+      for (auto [error_len, error_score] = tuple{0, 0.0};
+           end.x_ < m && end.y_ < n;
            ++end.x_, ++end.y_, ++snake) {
         auto ref_char = ref[ref_start + end.x_];
         auto sv_char = sv[sv_start + end.y_];
@@ -429,8 +430,8 @@ Point Dna::FindDeltasChunk(
             break;
           }
         } else {
-          error_score = max(error_score - Config::DP_PENALTY, 0);
-          if (!error_score) error_len = 0;
+          error_score = max(error_score - Config::MYERS_PENALTY, 0.0);
+          if (error_score <= 0.0) error_len = 0;
         }
       }
       if (snake < Config::SNAKE_MIN_LEN) end = mid;
