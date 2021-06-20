@@ -29,25 +29,36 @@ void DnaDelta::Print(ofstream& out_file) const {
 
 void DnaDelta::Set(const string& key, const Minimizer& value) {
   auto& deltas = data_[key];
+
+  auto delta_str = [&](const Minimizer& delta) {
+    return type_ + " " + delta.range_ref_.Stringify(key);
+  };
+
   auto exist = [&](const Minimizer& delta) {
     for (auto&& prev : deltas) {
-      if (Combine(&prev, &delta)) return true;
+      if (Combine(&prev, &delta)) {
+        Logger::Debug("DnaDelta::Set", "Merged: \t" + delta_str(prev));
+        return true;
+      }
     }
     return false;
   };
+
   if (!deltas.size() || !exist(value)) {
-    deltas.emplace_back(value);
+    if (value.range_ref_.size() >= Config::DELTA_MIN_LEN) {
+      deltas.emplace_back(value);
+      Logger::Debug("DnaDelta::Set", "Saved: \t" + delta_str(value));
+    } else {
+      Logger::Trace("DnaDelta::Set", "Ignored: \t" + delta_str(value));
+    }
   }
-  Logger::Debug(
-      "DnaDelta::Set",
-      "Saved: " + type_ + " " + value.range_ref_.Stringify(key));
 }
 
 bool DnaDelta::Combine(Minimizer* base_p, const Minimizer* value_p) const {
   auto&& [base_range_ref, base_key_seg, base_range_seg] = *base_p;
   const auto& [range_ref, key_seg, range_seg] = *value_p;
 
-  if (base_range_ref.value_p_ == base_range_seg.value_p_ &&
+  if (base_range_seg.value_p_ == range_seg.value_p_ &&
       FuzzyOverlap(base_range_ref, range_ref)) {
     auto new_ref_start = min(base_range_ref.start_, range_ref.start_);
     auto new_ref_end = max(base_range_ref.end_, range_ref.end_);
