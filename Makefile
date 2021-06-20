@@ -17,7 +17,7 @@ TEST_OBJS += $(filter-out $(BUILD_DIR)/$(SRC_DIR)/main.cpp.o, $(OBJS))
 INC_DIRS  := $(shell find $(SRC_DIR) $(TEST_DIR) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-CXX       := clang++
+CXX       := g++
 CXXFLAGS  := -g -Wall -O3 -std=c++17 $(INC_FLAGS) -MMD -MP
 MKDIR     := mkdir -p
 RM        := rm -rf
