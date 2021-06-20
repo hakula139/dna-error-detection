@@ -325,6 +325,8 @@ void Dna::FindDeltas(const Dna& sv, size_t chunk_size) {
 }
 
 void Dna::FindDeltasFromSegments() {
+  unordered_set<string> used_segs;
+
   for (const auto& [key, value_ref] : data_) {
     try {
       const auto& entries = overlaps_.data_.at(key);
@@ -336,18 +338,22 @@ void Dna::FindDeltasFromSegments() {
 
       for (const auto& minimizer : entries) {
         const auto& [range_ref, key_seg, range_seg] = minimizer;
-        const auto& value_seg = *(range_seg.value_p_);
-        assert(range_ref.start_ >= range_seg.start_);
-        const auto ref_start = range_ref.start_ - range_seg.start_;
+        if (used_segs.count(key_seg)) continue;
+        used_segs.insert(key_seg);
 
-        auto show_size = 100;
+        const auto& value_seg = *(range_seg.value_p_);
+        auto seg_size = value_seg.size();
+        int ref_start = range_ref.start_ - range_seg.start_;
+        auto ref_size = seg_size + min(ref_start, 0);
+        ref_start = max(ref_start, 0);
+
+        auto show_size = min(static_cast<size_t>(100), ref_size);
         Logger::Debug("Dna::FindDeltasFromSegments", key + ": \tComparing:");
         Logger::Debug("", "REF: \t" + value_ref.substr(ref_start, show_size));
         Logger::Debug("", "SEG: \t" + value_seg.substr(0, show_size));
 
-        auto seg_size = value_seg.size();
         FindDeltasChunk(
-            key, value_ref, ref_start, seg_size, value_seg, 0, seg_size, true);
+            key, value_ref, ref_start, ref_size, value_seg, 0, seg_size, true);
 
         ++progress;
       }
@@ -533,7 +539,7 @@ void Dna::IgnoreSmallDeltas() {
   auto ignore_small_deltas = [](DnaDelta* deltas_p) {
     for (auto&& [key, deltas] : deltas_p->data_) {
       for (auto delta_i = deltas.begin(); delta_i < deltas.end();) {
-        if (delta_i->range_ref_.size() < Config::OVERLAP_MIN_LEN) {
+        if (delta_i->range_ref_.size() < Config::DELTA_MIN_LEN) {
           delta_i = deltas.erase(delta_i);
         } else {
           ++delta_i;

@@ -47,3 +47,8 @@ bool FuzzyOverlap(const Range& range1, const Range& range2) {
   return range1.end_ + Config::GAP_MAX_DIFF >= range2.start_ &&
          range2.end_ + Config::GAP_MAX_DIFF >= range1.start_;
 }
+
+bool StrictOverlap(const Range& range1, const Range& range2) {
+  return range1.end_ + Config::GAP_MIN_DIFF >= range2.start_ &&
+         range2.end_ + Config::GAP_MIN_DIFF >= range1.start_;
+}

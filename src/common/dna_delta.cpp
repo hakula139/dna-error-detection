@@ -45,12 +45,8 @@ void DnaDelta::Set(const string& key, const Minimizer& value) {
   };
 
   if (!deltas.size() || !exist(value)) {
-    if (value.range_ref_.size() >= Config::DELTA_MIN_LEN) {
-      deltas.emplace_back(value);
-      Logger::Debug("DnaDelta::Set", "Saved: \t" + delta_str(value));
-    } else {
-      Logger::Trace("DnaDelta::Set", "Ignored: \t" + delta_str(value));
-    }
+    deltas.emplace_back(value);
+    Logger::Debug("DnaDelta::Set", "Saved: \t" + delta_str(value));
   }
 }
 
@@ -59,7 +55,7 @@ bool DnaDelta::Combine(Minimizer* base_p, const Minimizer* value_p) const {
   const auto& [range_ref, key_seg, range_seg] = *value_p;
 
   if (base_range_seg.value_p_ == range_seg.value_p_ &&
-      FuzzyOverlap(base_range_ref, range_ref)) {
+      StrictOverlap(base_range_ref, range_ref)) {
     auto new_ref_start = min(base_range_ref.start_, range_ref.start_);
     auto new_ref_end = max(base_range_ref.end_, range_ref.end_);
     if (new_ref_end > new_ref_start + Config::DELTA_MAX_LEN) return false;

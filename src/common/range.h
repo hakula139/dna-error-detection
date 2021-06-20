@@ -29,5 +29,6 @@ struct Range {
 
 bool FuzzyCompare(const Range& range1, const Range& range2);
 bool FuzzyOverlap(const Range& range1, const Range& range2);
+bool StrictOverlap(const Range& range1, const Range& range2);
 
 #endif  // SRC_COMMON_RANGE_H_
