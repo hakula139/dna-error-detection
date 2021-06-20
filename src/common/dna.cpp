@@ -580,6 +580,8 @@ void Dna::FindDupDeltas() {
       }
     }
   }
+
+  Logger::Info("Dna::FindDupDeltas", "Done");
 }
 
 string Dna::Invert(const string& chain) {
@@ -629,6 +631,8 @@ void Dna::FindInvDeltas() {
       if (!erased) ++delta_i;
     }
   }
+
+  Logger::Info("Dna::FindInvDeltas", "Done");
 }
 
 void Dna::FindTraDeltas() {
@@ -693,6 +697,8 @@ void Dna::FindTraDeltas() {
     auto& deltas_del = del_deltas_.data_[key];
     deltas_del.emplace_back(delta);
   }
+
+  Logger::Info("Dna::FindTraDeltas", "Done");
 }
 
 void Dna::ProcessDeltas() {
