@@ -504,13 +504,17 @@ Point Dna::FindDeltasChunk(
       prev_end = mid;
     }
 
-    // If we meet the start point, we should store all unsaved deltas before the
-    // loop terminates.
+    /**
+     * If we meet the start point, we should store all unsaved deltas before the
+     * loop terminates.
+     */
     auto reach_start = start.x_ <= 0 && start.y_ <= 0;
     if (reach_start && prev_end != Point() && end != Point()) {
-      // The unsaved deltas must have the same type as current delta, because
-      // the direction must be unchanged. Otherwise, it will be handled by
-      // previous procedures.
+      /**
+       * The unsaved deltas must have the same type as current delta, because
+       * the direction must be unchanged. Otherwise, it will be handled by
+       * previous procedures.
+       */
       if (from_up) {
         insert_delta({}, prev_end);
       } else {
