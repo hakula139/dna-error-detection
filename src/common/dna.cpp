@@ -259,7 +259,7 @@ bool Dna::FindOverlaps(const Dna& ref) {
     auto overlaps = find_overlaps(key_seg, value_seg, false);
     auto overlaps_invert = find_overlaps(key_seg, value_seg, true);
 
-    if (overlaps.size() >= Config::MINIMIZER_MIN_COUNT &&
+    if (overlaps.size() >= Config::OVERLAP_MIN_COUNT &&
         overlaps.size() >= overlaps_invert.size()) {
       overlaps_ += overlaps;
 
@@ -268,7 +268,7 @@ bool Dna::FindOverlaps(const Dna& ref) {
           key_seg + ": " + to_string(overlaps.size()) + " > " +
               to_string(overlaps_invert.size()) + " \tnot inverted");
     } else if (
-        overlaps_invert.size() >= Config::MINIMIZER_MIN_COUNT &&
+        overlaps_invert.size() >= Config::OVERLAP_MIN_COUNT &&
         overlaps.size() < overlaps_invert.size()) {
       value_seg = Invert(value_seg);
       overlaps_ += overlaps_invert;
@@ -325,11 +325,10 @@ void Dna::FindDeltas(const Dna& sv, size_t chunk_size) {
 }
 
 void Dna::FindDeltasFromSegments() {
-  unordered_set<string> used_segs;
-
   for (const auto& [key, value_ref] : data_) {
     try {
       const auto& entries = overlaps_.data_.at(key);
+      unordered_set<string> used_segs;
       Progress progress{
           "Dna::FindDeltasFromSegments " + key,
           entries.size(),
