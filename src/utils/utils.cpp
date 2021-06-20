@@ -32,8 +32,8 @@ std::pair<Range, Range> LongestCommonSubstring(
 
   auto substr_len = 0;
   Range str1_substr, str2_substr;
-  for (auto i = 1; i <= len1; ++i) {
-    for (auto j = 1; j <= len2; ++j) {
+  for (size_t i = 1; i <= len1; ++i) {
+    for (size_t j = 1; j <= len2; ++j) {
       if (str1[i - 1] == str2[j - 1]) {
         dp[i][j] = dp[i - 1][j - 1] + 1;
         if (dp[i][j] > substr_len) {
@@ -67,8 +67,8 @@ vector<vector<pair<int, char>>> LongestCommonSubsequence(
       vector<pair<int, char>>{len2 + 1, {0, -1}},
   };
 
-  for (auto i = 1; i <= len1; ++i) {
-    for (auto j = 1; j <= len2; ++j) {
+  for (size_t i = 1; i <= len1; ++i) {
+    for (size_t j = 1; j <= len2; ++j) {
       auto& max_cur = dp[i][j];
       auto get_cur = [&](const pair<int, char>& prev, char from_up) {
         const auto& [prev_len, prev_from_up] = prev;

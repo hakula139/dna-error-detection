@@ -165,7 +165,7 @@ void Dna::CreateIndex() {
 
   for (const auto& [key_ref, value_ref] : data_) {
     uint64_t hash = 0;
-    for (auto i = 0; i < Config::HASH_SIZE - 1; ++i) {
+    for (size_t i = 0; i < Config::HASH_SIZE - 1; ++i) {
       hash = NextHash(hash, value_ref[i]);
     }
 
@@ -229,7 +229,7 @@ bool Dna::FindOverlaps(const Dna& ref) {
     auto chain_seg = inverted ? Invert(raw_chain_seg) : raw_chain_seg;
 
     uint64_t hash = 0;
-    for (auto i = 0; i < Config::HASH_SIZE - 1; ++i) {
+    for (size_t i = 0; i < Config::HASH_SIZE - 1; ++i) {
       hash = NextHash(hash, chain_seg[i]);
     }
 
@@ -310,7 +310,8 @@ void Dna::FindDeltas(const Dna& sv, size_t chunk_size) {
     const auto& value_sv = sv.data_.at(key);
     Progress progress{"Dna::FindDeltas " + key, value_ref.length()};
 
-    for (int i = 0, j = 0; i < value_ref.length() || j < value_sv.length();) {
+    for (size_t i = 0, j = 0;
+         i < value_ref.length() || j < value_sv.length();) {
       auto m = min(value_ref.length() - i, chunk_size);
       auto n = min(value_sv.length() - j, chunk_size);
       auto reach_end = m < chunk_size || n < chunk_size;
@@ -399,7 +400,7 @@ Point Dna::FindDeltasChunk(
     return end_xs[k + 1 + padding] > end_xs[k - 1 + padding];
   };
 
-  for (auto step = 0; step <= max_steps; ++step) {
+  for (size_t step = 0; step <= max_steps; ++step) {
     /**
      * At each step, we can only reach the k-line ranged from -step to step.
      * Notice that we can only reach odd (even) k-lines after odd (even) steps,
@@ -415,9 +416,9 @@ Point Dna::FindDeltasChunk(
       auto mid = Point(mid_x, mid_x - k);
 
       auto end = mid;
-      auto snake = 0;
+      size_t snake = 0;
       for (auto [error_len, error_score] = tuple{0, 0.0};
-           end.x_ < m && end.y_ < n;
+           end.x_ < static_cast<int>(m) && end.y_ < static_cast<int>(n);
            ++end.x_, ++end.y_, ++snake) {
         auto ref_char = ref[ref_start + end.x_];
         auto sv_char = sv[sv_start + end.y_];
@@ -438,7 +439,9 @@ Point Dna::FindDeltasChunk(
 
       end_xs[k + padding] = end.x_;
 
-      if (reach_end ? end.x_ >= m && end.y_ >= n : end.x_ >= m || end.y_ >= n) {
+      auto x_reach_end = end.x_ >= static_cast<int>(m);
+      auto y_reach_end = end.y_ >= static_cast<int>(n);
+      if (reach_end ? x_reach_end && y_reach_end : x_reach_end || y_reach_end) {
         solution_found = true;
         next_chunk_start = Point(end.x_, end.y_);
         break;

@@ -22,13 +22,13 @@ int main(int argc, char** argv) {
     return EXIT_FAILURE;
   }
 
-  fs::path path{Config::PATH};
-  fs::path ref_filename{Config::PATH};
-  fs::path sv_filename{Config::SV_FILENAME};
-  fs::path seg_filename{Config::SEG_FILENAME};
-  fs::path index_filename{Config::INDEX_FILENAME};
-  fs::path overlaps_filename{Config::OVERLAPS_FILENAME};
-  fs::path deltas_filename{Config::DELTAS_FILENAME};
+  fs::path path(Config::PATH);
+  fs::path ref_filename(Config::REF_FILENAME);
+  fs::path sv_filename(Config::SV_FILENAME);
+  fs::path seg_filename(Config::SEG_FILENAME);
+  fs::path index_filename(Config::INDEX_FILENAME);
+  fs::path overlaps_filename(Config::OVERLAPS_FILENAME);
+  fs::path deltas_filename(Config::DELTAS_FILENAME);
 
   Dna ref, sv, segments;
 
