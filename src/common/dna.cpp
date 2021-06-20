@@ -406,7 +406,7 @@ Point Dna::FindDeltasChunk(
      * Notice that we can only reach odd (even) k-lines after odd (even) steps,
      * we increment k by 2 at each iteration.
      */
-    for (auto k = -step; k <= step; k += 2) {
+    for (int k = -step; k <= static_cast<int>(step); k += 2) {
       auto from_up = is_from_up(end_xs, k, step);
       auto prev_k = from_up ? k + 1 : k - 1;
       auto start_x = end_xs[prev_k + padding];
