@@ -326,39 +326,37 @@ void Dna::FindDeltas(const Dna& sv, size_t chunk_size) {
 
 void Dna::FindDeltasFromSegments() {
   for (const auto& [key, value_ref] : data_) {
-    try {
-      const auto& entries = overlaps_.data_.at(key);
-      unordered_set<string> used_segs;
-      Progress progress{
-          "Dna::FindDeltasFromSegments " + key,
-          entries.size(),
-          10,
-      };
+    const auto& entries = overlaps_.data_.at(key);
+    unordered_set<string> used_segs;
+    Progress progress{
+        "Dna::FindDeltasFromSegments " + key,
+        entries.size(),
+        100,
+    };
 
-      for (const auto& minimizer : entries) {
-        const auto& [range_ref, key_seg, range_seg] = minimizer;
-        if (used_segs.count(key_seg)) continue;
-        used_segs.insert(key_seg);
-
-        const auto& value_seg = *(range_seg.value_p_);
-        auto seg_size = value_seg.size();
-        int ref_start = range_ref.start_ - range_seg.start_;
-        auto ref_size = seg_size + min(ref_start, 0);
-        ref_start = max(ref_start, 0);
-
-        auto show_size = min(static_cast<size_t>(100), ref_size);
-        Logger::Debug("Dna::FindDeltasFromSegments", key + ": \tComparing:");
-        Logger::Debug("", "REF: \t" + value_ref.substr(ref_start, show_size));
-        Logger::Debug("", "SEG: \t" + value_seg.substr(0, show_size));
-
-        FindDeltasChunk(
-            key, value_ref, ref_start, ref_size, value_seg, 0, seg_size, true);
-
+    for (const auto& minimizer : entries) {
+      const auto& [range_ref, key_seg, range_seg] = minimizer;
+      if (used_segs.count(key_seg)) {
         ++progress;
+        continue;
       }
-    } catch (const out_of_range& error) {
-      Logger::Warn("Dna::FindDeltasFromSegments", error.what());
-      continue;
+      used_segs.insert(key_seg);
+
+      const auto& value_seg = *(range_seg.value_p_);
+      auto seg_size = value_seg.size();
+      int ref_start = range_ref.start_ - range_seg.start_;
+      auto ref_size = seg_size + min(ref_start, 0);
+      ref_start = max(ref_start, 0);
+
+      auto show_size = min(static_cast<size_t>(100), ref_size);
+      Logger::Debug("Dna::FindDeltasFromSegments", key + ": \tComparing:");
+      Logger::Debug("", "REF: \t" + value_ref.substr(ref_start, show_size));
+      Logger::Debug("", "SEG: \t" + value_seg.substr(0, show_size));
+
+      FindDeltasChunk(
+          key, value_ref, ref_start, ref_size, value_seg, 0, seg_size, true);
+
+      ++progress;
     }
   }
 }

@@ -73,14 +73,19 @@ void DnaOverlap::Merge() {
         auto used = merged_ref.size() >= Config::MINIMIZER_MIN_LEN &&
                     merged_seg.size() >= Config::MINIMIZER_MIN_LEN;
 
-        if (used) entries.emplace(merged_ref, key_seg.substr(1), merged_seg);
+        if (used) {
+          entries.emplace(merged_ref, key_seg.substr(1), merged_seg);
 
-        Logger::Trace("DnaOverlap::Merge", key_ref + ": \tMinimizer:");
-        Logger::Trace(
-            "Minimizer count",
-            to_string(count) + (used ? " \tused" : " \tnot used"));
-        Logger::Trace("", "REF: \t" + merged_ref.get());
-        Logger::Trace("", "SEG: \t" + merged_seg.get());
+          Logger::Debug("DnaOverlap::Merge", key_ref + ": \tMinimizer:");
+          Logger::Debug("Minimizer count", to_string(count) + " \tused");
+          Logger::Debug("", "REF: \t" + merged_ref.get());
+          Logger::Debug("", "SEG: \t" + merged_seg.get());
+        } else {
+          Logger::Trace("DnaOverlap::Merge", key_ref + ": \tMinimizer:");
+          Logger::Trace("Minimizer count", to_string(count) + " \tnot used");
+          Logger::Trace("", "REF: \t" + merged_ref.get());
+          Logger::Trace("", "SEG: \t" + merged_seg.get());
+        }
       }
     }
   }
