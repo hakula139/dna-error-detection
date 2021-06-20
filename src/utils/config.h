@@ -1,7 +1,7 @@
 #ifndef SRC_UTILS_CONFIG_H_
 #define SRC_UTILS_CONFIG_H_
 
-#include <string>
+#include <cstddef>
 
 struct Config {
   enum Level {
@@ -13,33 +13,33 @@ struct Config {
     FATAL,
   };
 
-  inline static const std::string PATH = "tests/test_2_demo/";
-  inline static const std::string REF_FILENAME = "ref.fasta";
-  inline static const std::string SV_FILENAME = "sv.fasta";
-  inline static const std::string SEG_FILENAME = "long.fasta";
-  inline static const std::string INDEX_FILENAME = "index.txt";
-  inline static const std::string OVERLAPS_FILENAME = "overlaps.txt";
-  inline static const std::string DELTAS_FILENAME = "sv.bed";
+  static constexpr char* PATH = "tests/test_2_demo";
+  static constexpr char* REF_FILENAME = "ref.fasta";
+  static constexpr char* SV_FILENAME = "sv.fasta";
+  static constexpr char* SEG_FILENAME = "long.fasta";
+  static constexpr char* INDEX_FILENAME = "index.txt";
+  static constexpr char* OVERLAPS_FILENAME = "overlaps.txt";
+  static constexpr char* DELTAS_FILENAME = "sv.bed";
 
-  inline static const int LOG_LEVEL = Config::Level::DEBUG;
-  inline static const size_t HASH_SIZE = 15;
-  inline static const size_t WINDOW_SIZE = 10;
-  inline static const size_t CHUNK_SIZE = 50000;
-  inline static const size_t SNAKE_MIN_LEN = 30;
-  inline static const size_t ERROR_MAX_LEN = 4;
-  inline static const size_t GAP_MIN_DIFF = 5;
-  inline static const size_t GAP_MAX_DIFF = 50;
-  inline static const size_t DELTA_MIN_LEN = 100;
-  inline static const size_t DELTA_MAX_LEN = 1000;
-  inline static const size_t DELTA_MAX_SIZE = 1000;
-  inline static const size_t OVERLAP_MIN_COUNT = 30;
-  inline static const size_t OVERLAP_MIN_LEN = 30;
-  inline static const size_t MINIMIZER_MIN_COUNT = 4;
-  inline static const size_t MINIMIZER_MIN_LEN = 100;
-  inline static const double MYERS_PENALTY = 0.25;
-  inline static const int DP_PENALTY = 2;
-  inline static const double STRICT_EQUAL_RATE = 0.5;
-  inline static const double FUZZY_EQUAL_RATE = 0.8;
+  static constexpr int LOG_LEVEL = Config::Level::DEBUG;
+  static constexpr size_t HASH_SIZE = 15;
+  static constexpr size_t WINDOW_SIZE = 10;
+  static constexpr size_t CHUNK_SIZE = 50000;
+  static constexpr size_t SNAKE_MIN_LEN = 30;
+  static constexpr size_t ERROR_MAX_LEN = 4;
+  static constexpr size_t GAP_MIN_DIFF = 2;
+  static constexpr size_t GAP_MAX_DIFF = 50;
+  static constexpr size_t DELTA_MIN_LEN = 100;
+  static constexpr size_t DELTA_MAX_LEN = 1000;
+  static constexpr size_t DELTA_MAX_SIZE = 1000;
+  static constexpr size_t OVERLAP_MIN_COUNT = 30;
+  static constexpr size_t OVERLAP_MIN_LEN = 30;
+  static constexpr size_t MINIMIZER_MIN_COUNT = 4;
+  static constexpr size_t MINIMIZER_MIN_LEN = 100;
+  static constexpr double MYERS_PENALTY = 0.25;
+  static constexpr int DP_PENALTY = 2;
+  static constexpr double STRICT_EQUAL_RATE = 0.5;
+  static constexpr double FUZZY_EQUAL_RATE = 0.8;
 };
 
 #endif  // SRC_UTILS_CONFIG_H_

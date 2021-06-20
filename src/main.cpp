@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <filesystem>
 #include <iostream>
 #include <unordered_map>
 
@@ -6,6 +7,8 @@
 #include "dna.h"
 #include "logger.h"
 #include "utils.h"
+
+namespace fs = std::filesystem;
 
 using std::ios;
 using std::unordered_map;
@@ -19,40 +22,46 @@ int main(int argc, char** argv) {
     return EXIT_FAILURE;
   }
 
+  fs::path path{Config::PATH};
+  fs::path ref_filename{Config::PATH};
+  fs::path sv_filename{Config::SV_FILENAME};
+  fs::path seg_filename{Config::SEG_FILENAME};
+  fs::path index_filename{Config::INDEX_FILENAME};
+  fs::path overlaps_filename{Config::OVERLAPS_FILENAME};
+  fs::path deltas_filename{Config::DELTAS_FILENAME};
+
   Dna ref, sv, segments;
 
   // Read data
-  if (!ref.Import(Config::PATH + Config::REF_FILENAME)) {
+  if (!ref.Import(path / ref_filename)) {
     return EXIT_FAILURE;
   }
 
   // Create an index of reference data
   if (arg_flags['i']) {
     ref.CreateIndex();
-    ref.PrintIndex(Config::PATH + Config::INDEX_FILENAME);
+    ref.PrintIndex(path / index_filename);
   }
 
   // Merge PacBio subsequences
   if (arg_flags['m']) {
-    if (!ref.ImportIndex(Config::PATH + Config::INDEX_FILENAME)) {
+    if (!ref.ImportIndex(path / index_filename)) {
       return EXIT_FAILURE;
     }
-    if (!segments.Import(Config::PATH + Config::SEG_FILENAME)) {
+    if (!segments.Import(path / seg_filename)) {
       return EXIT_FAILURE;
     }
     segments.FindOverlaps(ref);
-    segments.PrintOverlaps(Config::PATH + Config::OVERLAPS_FILENAME);
+    segments.PrintOverlaps(path / overlaps_filename);
   }
 
   // Main process
   if (arg_flags['s']) {
-    if (!sv.size() && !sv.Import(Config::PATH + Config::SV_FILENAME)) {
-      if (!segments.size() &&
-          !segments.Import(Config::PATH + Config::SEG_FILENAME)) {
+    if (!sv.size() && !sv.Import(path / sv_filename)) {
+      if (!segments.size() && !segments.Import(path / seg_filename)) {
         return EXIT_FAILURE;
       }
-      if (!ref.ImportOverlaps(
-              &segments, Config::PATH + Config::OVERLAPS_FILENAME)) {
+      if (!ref.ImportOverlaps(&segments, path / overlaps_filename)) {
         return EXIT_FAILURE;
       }
       ref.FindDeltasFromSegments();
@@ -60,7 +69,7 @@ int main(int argc, char** argv) {
       ref.FindDeltas(sv, Config::CHUNK_SIZE);
     }
     ref.ProcessDeltas();
-    ref.PrintDeltas(Config::PATH + Config::DELTAS_FILENAME);
+    ref.PrintDeltas(path / deltas_filename);
   }
 
   return EXIT_SUCCESS;
