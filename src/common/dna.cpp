@@ -358,8 +358,6 @@ void Dna::FindDeltasFromSegments() {
       FindDeltasChunk(
           key, value_ref, ref_start, ref_size, value_seg, 0, seg_size, false);
 
-      // Clear the delta fragments before switching to another minimizer.
-      IgnoreSmallDeltas();
       ++progress;
     }
   }
@@ -545,11 +543,6 @@ void Dna::IgnoreSmallDeltas() {
       vector<Minimizer> saved_deltas;
       for (auto&& delta : deltas) {
         if (delta.range_ref_.size() >= Config::DELTA_MIN_LEN) {
-          Logger::Debug(
-              "DnaDelta::IgnoreSmallDeltas",
-              "Saved: \t" + all_deltas.type_ + " " +
-                  delta.range_ref_.Stringify(key));
-
           saved_deltas.emplace_back(move(delta));
         }
       }

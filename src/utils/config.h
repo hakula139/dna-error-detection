@@ -32,7 +32,6 @@ struct Config {
   static const size_t DELTA_IGNORE_LEN;
   static const size_t DELTA_MIN_LEN;
   static const size_t DELTA_MAX_LEN;
-  static const size_t DELTA_MAX_SIZE;
   static const size_t OVERLAP_MIN_COUNT;
   static const size_t OVERLAP_MIN_LEN;
   static const size_t MINIMIZER_MIN_COUNT;
