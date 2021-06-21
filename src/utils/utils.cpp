@@ -11,6 +11,7 @@
 
 #include "config.h"
 #include "logger.h"
+#include "point.h"
 #include "range.h"
 
 using std::ceil;
@@ -32,8 +33,8 @@ std::pair<Range, Range> LongestCommonSubstring(
 
   auto substr_len = 0;
   Range str1_substr, str2_substr;
-  for (size_t i = 1; i <= len1; ++i) {
-    for (size_t j = 1; j <= len2; ++j) {
+  for (auto i = 1ul; i <= len1; ++i) {
+    for (auto j = 1ul; j <= len2; ++j) {
       if (str1[i - 1] == str2[j - 1]) {
         dp[i][j] = dp[i - 1][j - 1] + 1;
         if (dp[i][j] > substr_len) {
@@ -58,33 +59,41 @@ size_t LongestCommonSubstringLength(const string& str1, const string& str2) {
   return LongestCommonSubstring(str1, str2).first.get().length();
 }
 
-vector<vector<pair<int, char>>> LongestCommonSubsequence(
+vector<vector<pair<int, Direction>>> LongestCommonSubsequence(
     const string& str1, const string& str2) {
   auto len1 = str1.length();
   auto len2 = str2.length();
-  vector<vector<pair<int, char>>> dp{
+  vector<vector<pair<int, Direction>>> dp{
       len1 + 1,
-      vector<pair<int, char>>{len2 + 1, {0, -1}},
+      vector<pair<int, Direction>>{
+          len2 + 1,
+          {0, Direction::TOP_LEFT},
+      },
   };
 
-  for (size_t i = 1; i <= len1; ++i) {
-    for (size_t j = 1; j <= len2; ++j) {
+  for (auto i = 1ul; i <= len1; ++i) {
+    for (auto j = 1ul; j <= len2; ++j) {
       auto& max_cur = dp[i][j];
-      auto get_cur = [&](const pair<int, char>& prev, char from_up) {
-        const auto& [prev_len, prev_from_up] = prev;
-        auto cur = prev_len + (from_up == -1);
-        if (prev_from_up != from_up) cur = max(cur - Config::DP_PENALTY, 0);
-        if (cur > max_cur.first) max_cur = {cur, from_up};
-      };
+      auto get_cur =
+          [&max_cur](const pair<int, Direction>& prev, Direction direction) {
+            const auto& [prev_len, prev_direction] = prev;
+            auto cur = prev_len + (direction == Direction::TOP_LEFT);
+            if (prev_direction != direction) {
+              cur = max(cur - Config::DP_PENALTY, 0);
+            }
+            if (cur > max_cur.first) {
+              max_cur = {cur, direction};
+            }
+          };
 
       if (str1[i - 1] == str2[j - 1]) {
-        get_cur(dp[i - 1][j - 1], -1);
+        get_cur(dp[i - 1][j - 1], Direction::TOP_LEFT);
       }
       if (dp[i - 1][j] > dp[i][j - 1]) {
-        get_cur(dp[i - 1][j], 0);
+        get_cur(dp[i - 1][j], Direction::LEFT);
       }
       if (dp[i - 1][j] <= dp[i][j - 1]) {
-        get_cur(dp[i][j - 1], 1);
+        get_cur(dp[i][j - 1], Direction::TOP);
       }
     }
   }

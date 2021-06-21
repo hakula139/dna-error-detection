@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 
+#include "point.h"
 #include "range.h"
 
 std::pair<Range, Range> LongestCommonSubstring(
@@ -14,7 +15,7 @@ std::pair<Range, Range> LongestCommonSubstring(
 size_t LongestCommonSubstringLength(
     const std::string& str1, const std::string& str2);
 
-std::vector<std::vector<std::pair<int, char>>> LongestCommonSubsequence(
+std::vector<std::vector<std::pair<int, Direction>>> LongestCommonSubsequence(
     const std::string& str1, const std::string& str2);
 
 size_t LongestCommonSubsequenceLength(
