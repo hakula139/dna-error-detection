@@ -14,4 +14,13 @@ struct Point {
   int y_ = 0;
 };
 
+enum Direction {
+  TOP = 1,
+  BOTTOM = 1,
+  LEFT = -1,
+  RIGHT = -1,
+  TOP_LEFT = 0,
+  BOTTOM_RIGHT = 0,
+};
+
 #endif  // SRC_COMMON_POINT_H_

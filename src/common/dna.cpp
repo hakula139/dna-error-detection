@@ -378,8 +378,8 @@ void Dna::FindDeltasFromSegments() {
           "Dna::FindDeltasFromSegments",
           ref_range.Stringify(key_ref) + " " + seg_range.Stringify(key_seg));
 
-      Logger::Trace("", "REF: \t" + show_ref);
-      Logger::Trace("", "SEG: \t" + show_seg);
+      Logger::Debug("", "REF: \t" + show_ref);
+      Logger::Debug("", "SEG: \t" + show_seg);
       Logger::Trace("", "REF minimizer: \t" + range_ref.get());
       Logger::Trace("", "SEG minimizer: \t" + range_seg.get());
 
@@ -435,10 +435,14 @@ Point Dna::FindDeltasChunk(
    * Otherwise, we choose to start from the adjacent k-line which has a
    * greater x value.
    */
-  auto is_from_up = [=](const vector<int>& end_xs, int k, int step) {
-    if (k == -step) return true;
-    if (k == step) return false;
-    return end_xs[k + 1 + padding] > end_xs[k - 1 + padding];
+  auto get_direction = [=](const vector<int>& end_xs, int k, int step) {
+    if (k == -step) return Direction::TOP;
+    if (k == step) return Direction::LEFT;
+    if (end_xs[k + 1 + padding] > end_xs[k - 1 + padding]) {
+      return Direction::TOP;
+    } else {
+      return Direction::LEFT;
+    }
   };
 
   for (auto step = 0ul; step <= max_steps; ++step) {
@@ -448,12 +452,12 @@ Point Dna::FindDeltasChunk(
      * we increment k by 2 at each iteration.
      */
     for (int k = -step; k <= static_cast<int>(step); k += 2) {
-      auto from_up = is_from_up(end_xs, k, step);
-      auto prev_k = from_up ? k + 1 : k - 1;
+      auto direction = get_direction(end_xs, k, step);
+      auto prev_k = direction == Direction::TOP ? k + 1 : k - 1;
       auto start_x = end_xs[prev_k + padding];
       auto start = Point(start_x, start_x - prev_k);
 
-      auto mid_x = from_up ? start.x_ : start.x_ + 1;
+      auto mid_x = direction == Direction::TOP ? start.x_ : start.x_ + 1;
       auto mid = Point(mid_x, mid_x - k);
 
       auto end = mid;
@@ -494,7 +498,7 @@ Point Dna::FindDeltasChunk(
     if (solution_found) break;
   }
 
-  auto prev_from_up = -1;
+  auto prev_direction = Direction::TOP_LEFT;
   auto prev_end = Point();
   auto terminate_start = false;
 
@@ -508,12 +512,12 @@ Point Dna::FindDeltasChunk(
     auto end_x = end_xs[k + padding];
     auto end = Point(end_x, end_x - k);
 
-    auto from_up = is_from_up(end_xs, k, step);
-    auto prev_k = from_up ? k + 1 : k - 1;
+    auto direction = get_direction(end_xs, k, step);
+    auto prev_k = direction == Direction::BOTTOM ? k + 1 : k - 1;
     auto start_x = end_xs[prev_k + padding];
     auto start = Point(start_x, start_x - prev_k);
 
-    auto mid_x = from_up ? start.x_ : start.x_ + 1;
+    auto mid_x = direction == Direction::TOP ? start.x_ : start.x_ + 1;
     auto mid = Point(mid_x, mid_x - k);
 
     Logger::Trace(
@@ -524,7 +528,7 @@ Point Dna::FindDeltasChunk(
 
     auto insert_delta = [&](const Point& start, const Point& end) {
       auto size = end.y_ - start.y_;
-      assert(size > 0);
+      if (!size) return;
       ins_deltas_.Set(
           key_ref,
           {
@@ -536,7 +540,7 @@ Point Dna::FindDeltasChunk(
 
     auto delete_delta = [&](const Point& start, const Point& end) {
       auto size = end.x_ - start.x_;
-      assert(size > 0);
+      if (!size) return;
       del_deltas_.Set(
           key_ref,
           {
@@ -547,10 +551,10 @@ Point Dna::FindDeltasChunk(
     };
 
     // If we meet a snake or the direction is changed, we store previous deltas.
-    if (mid != end || from_up != prev_from_up) {
-      if (prev_from_up == 1 && end.y_ < prev_end.y_) {
+    if (mid != end || direction != prev_direction) {
+      if (prev_direction == Direction::TOP) {
         insert_delta(end, prev_end);
-      } else if (prev_from_up == 0 && end.x_ < prev_end.x_) {
+      } else if (prev_direction == Direction::LEFT) {
         delete_delta(end, prev_end);
       }
       prev_end = mid;
@@ -565,20 +569,20 @@ Point Dna::FindDeltasChunk(
     terminate_start = reach_start ? x_reach_start && y_reach_start
                                   : x_reach_start || y_reach_start;
 
-    if (terminate_start && prev_end != Point() && end != Point()) {
+    if (terminate_start) {
       /**
        * The unsaved deltas must have the same type as current delta, because
        * the direction must be unchanged. Otherwise, it will be handled by
        * previous procedures.
        */
-      if (from_up) {
+      if (direction == Direction::TOP) {
         insert_delta({}, prev_end);
-      } else {
+      } else if (direction == Direction::LEFT) {
         delete_delta({}, prev_end);
       }
     }
 
-    prev_from_up = mid == end ? from_up : -1;
+    prev_direction = start != mid ? direction : Direction::TOP_LEFT;
     cur = start;
   }
 
