@@ -12,6 +12,7 @@
 #include "range.h"
 #include "utils.h"
 
+using std::count;
 using std::max;
 using std::min;
 using std::ofstream;
@@ -95,7 +96,8 @@ bool DnaDelta::Combine(Minimizer* base_p, const Minimizer* value_p) const {
     }
 
     // Replace the original string.
-    auto unknown = new_value_seg_p->find('N') != string::npos;
+    auto n_count = count(new_value_seg_p->begin(), new_value_seg_p->end(), 'N');
+    auto unknown = n_count >= new_value_seg_p->size() * Config::UNKNOWN_RATE;
     Range new_seg{
         0,
         new_value_seg_p->size(),

@@ -28,3 +28,4 @@ const double Config::MYERS_PENALTY = 0.25;
 const int Config::DP_PENALTY = 2;
 const double Config::STRICT_EQUAL_RATE = 0.5;
 const double Config::FUZZY_EQUAL_RATE = 0.8;
+const double Config::UNKNOWN_RATE = 0.1;

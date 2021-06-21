@@ -41,6 +41,7 @@ struct Config {
   static const int DP_PENALTY;
   static const double STRICT_EQUAL_RATE;
   static const double FUZZY_EQUAL_RATE;
+  static const double UNKNOWN_RATE;
 };
 
 #endif  // SRC_UTILS_CONFIG_H_
