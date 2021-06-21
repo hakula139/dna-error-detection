@@ -46,13 +46,15 @@ class Dna {
   static std::string Invert(const std::string& chain);
 
   Point FindDeltasChunk(
-      const std::string& key,
+      const std::string& key_ref,
       const std::string& ref,
       size_t ref_start,
       size_t m,
+      const std::string& key_sv,
       const std::string& sv,
       size_t sv_start,
       size_t n,
+      bool reach_start = true,
       bool reach_end = false);
 
  private:

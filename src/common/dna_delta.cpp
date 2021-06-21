@@ -59,8 +59,7 @@ bool DnaDelta::Combine(Minimizer* base_p, const Minimizer* value_p) const {
   auto&& [base_range_ref, base_key_seg, base_range_seg] = *base_p;
   const auto& [range_ref, key_seg, range_seg] = *value_p;
 
-  if (base_range_seg.value_p_ == range_seg.value_p_ &&
-      StrictOverlap(base_range_ref, range_ref)) {
+  if (base_key_seg == key_seg && StrictOverlap(base_range_ref, range_ref)) {
     auto new_ref_start = min(base_range_ref.start_, range_ref.start_);
     auto new_ref_end = max(base_range_ref.end_, range_ref.end_);
     if (new_ref_end > new_ref_start + Config::DELTA_MAX_LEN) return false;

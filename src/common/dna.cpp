@@ -307,31 +307,42 @@ bool Dna::PrintOverlaps(const string& filename) const {
 }
 
 void Dna::FindDeltas(const Dna& sv, size_t chunk_size) {
-  for (const auto& [key, value_ref] : data_) {
-    const auto& value_sv = sv.data_.at(key);
-    Progress progress{"Dna::FindDeltas " + key, value_ref.length()};
+  for (const auto& [key_ref, value_ref] : data_) {
+    const auto& value_sv = sv.data_.at(key_ref);
+    Progress progress{"Dna::FindDeltas " + key_ref, value_ref.length()};
 
     for (size_t i = 0, j = 0;
          i < value_ref.length() || j < value_sv.length();) {
       auto m = min(value_ref.length() - i, chunk_size);
       auto n = min(value_sv.length() - j, chunk_size);
+      auto reach_start = true;
       auto reach_end = m < chunk_size || n < chunk_size;
+
       auto next_chunk_start = FindDeltasChunk(
-          key, value_ref, i, m, value_sv, j, n, reach_end);
+          key_ref,
+          value_ref,
+          i,
+          m,
+          key_ref,
+          value_sv,
+          j,
+          n,
+          reach_start,
+          reach_end);
+
       i += next_chunk_start.x_;
       j += next_chunk_start.y_;
-
       progress.Set(i);
     }
   }
 }
 
 void Dna::FindDeltasFromSegments() {
-  for (const auto& [key, value_ref] : data_) {
-    const auto& entries = overlaps_.data_.at(key);
+  for (const auto& [key_ref, value_ref] : data_) {
+    const auto& entries = overlaps_.data_.at(key_ref);
     unordered_set<string> used_segs;
     Progress progress{
-        "Dna::FindDeltasFromSegments " + key,
+        "Dna::FindDeltasFromSegments " + key_ref,
         entries.size(),
         100,
     };
@@ -345,18 +356,44 @@ void Dna::FindDeltasFromSegments() {
       used_segs.insert(key_seg);
 
       const auto& value_seg = *(range_seg.value_p_);
-      auto seg_size = value_seg.size();
-      int ref_start = range_ref.start_ - range_seg.start_;
-      auto ref_size = seg_size + min(ref_start, 0);
-      ref_start = max(ref_start, 0);
 
-      auto show_size = min(static_cast<size_t>(100), ref_size);
-      Logger::Trace("Dna::FindDeltasFromSegments", key + ": \tComparing:");
-      Logger::Trace("", "REF: \t" + value_ref.substr(ref_start, show_size));
-      Logger::Trace("", "SEG: \t" + value_seg.substr(0, show_size));
+      auto ref_size = value_ref.size();
+      auto seg_size = value_seg.size();
+
+      auto start_padding = range_seg.start_ + Config::DELTA_MAX_LEN;
+      auto end_padding = seg_size - range_seg.end_ + Config::DELTA_MAX_LEN;
+
+      Range ref_range{
+          max(range_ref.start_, start_padding) - start_padding,
+          min(range_ref.end_ + end_padding, ref_size),
+          &value_ref,
+      };
+      Range seg_range{0, seg_size, &value_seg};
+
+      auto show_size = min(min(ref_range.size(), seg_size), 100ul);
+      auto show_ref = value_ref.substr(ref_range.start_, show_size);
+      auto show_seg = value_seg.substr(0, show_size);
+
+      Logger::Debug(
+          "Dna::FindDeltasFromSegments",
+          ref_range.Stringify(key_ref) + " " + seg_range.Stringify(key_seg));
+
+      Logger::Trace("", "REF: \t" + show_ref);
+      Logger::Trace("", "SEG: \t" + show_seg);
+      Logger::Trace("", "REF minimizer: \t" + range_ref.get());
+      Logger::Trace("", "SEG minimizer: \t" + range_seg.get());
 
       FindDeltasChunk(
-          key, value_ref, ref_start, ref_size, value_seg, 0, seg_size, false);
+          key_ref,
+          value_ref,
+          ref_range.start_,
+          ref_range.size(),
+          key_seg,
+          value_seg,
+          seg_range.start_,
+          seg_range.size(),
+          false,
+          false);
 
       ++progress;
     }
@@ -365,13 +402,15 @@ void Dna::FindDeltasFromSegments() {
 
 // Myers' diff algorithm implementation
 Point Dna::FindDeltasChunk(
-    const string& key,
+    const string& key_ref,
     const string& ref,
     size_t ref_start,
     size_t m,
+    const string& key_sv,
     const string& sv,
     size_t sv_start,
     size_t n,
+    bool reach_start,
     bool reach_end) {
   auto max_steps = m + n;
   auto padding = max_steps;
@@ -401,7 +440,7 @@ Point Dna::FindDeltasChunk(
     return end_xs[k + 1 + padding] > end_xs[k - 1 + padding];
   };
 
-  for (size_t step = 0; step <= max_steps; ++step) {
+  for (auto step = 0ul; step <= max_steps; ++step) {
     /**
      * At each step, we can only reach the k-line ranged from -step to step.
      * Notice that we can only reach odd (even) k-lines after odd (even) steps,
@@ -417,7 +456,7 @@ Point Dna::FindDeltasChunk(
       auto mid = Point(mid_x, mid_x - k);
 
       auto end = mid;
-      size_t snake = 0;
+      auto snake = 0ul;
       for (auto [error_len, error_score] = tuple{0, 0.0};
            end.x_ < static_cast<int>(m) && end.y_ < static_cast<int>(n);
            ++end.x_, ++end.y_, ++snake) {
@@ -433,7 +472,7 @@ Point Dna::FindDeltasChunk(
           }
         } else {
           error_score = max(error_score - Config::MYERS_PENALTY, 0.0);
-          if (!error_score) error_len = 0;
+          if (!error_score) error_len = 0ul;
         }
       }
       if (snake < Config::SNAKE_MIN_LEN) end = mid;
@@ -442,7 +481,9 @@ Point Dna::FindDeltasChunk(
 
       auto x_reach_end = end.x_ >= static_cast<int>(m);
       auto y_reach_end = end.y_ >= static_cast<int>(n);
-      if (reach_end ? x_reach_end && y_reach_end : x_reach_end || y_reach_end) {
+      auto terminate_end = reach_end ? x_reach_end && y_reach_end
+                                     : x_reach_end || y_reach_end;
+      if (terminate_end) {
         solution_found = true;
         next_chunk_start = end;
         break;
@@ -454,7 +495,9 @@ Point Dna::FindDeltasChunk(
 
   auto prev_from_up = -1;
   auto prev_end = Point();
-  for (auto cur = next_chunk_start; cur.x_ > 0 || cur.y_ > 0;) {
+  auto terminate_start = false;
+
+  for (auto cur = next_chunk_start; !terminate_start;) {
     end_xs = end_xss.back();
     end_xss.pop_back();
     auto step = end_xss.size();
@@ -482,10 +525,10 @@ Point Dna::FindDeltasChunk(
       auto size = end.y_ - start.y_;
       assert(size > 0);
       ins_deltas_.Set(
-          key,
+          key_ref,
           {
               {ref_start + start.x_, ref_start + start.x_ + size, &ref},
-              "",
+              key_sv,
               {sv_start + start.y_, sv_start + end.y_, &sv},
           });
     };
@@ -494,10 +537,10 @@ Point Dna::FindDeltasChunk(
       auto size = end.x_ - start.x_;
       assert(size > 0);
       del_deltas_.Set(
-          key,
+          key_ref,
           {
               {ref_start + start.x_, ref_start + end.x_, &ref},
-              "",
+              key_ref,
               {ref_start + start.x_, ref_start + end.x_, &ref},
           });
     };
@@ -516,8 +559,12 @@ Point Dna::FindDeltasChunk(
      * If we meet the start point, we should store all unsaved deltas before the
      * loop terminates.
      */
-    auto reach_start = start.x_ <= 0 && start.y_ <= 0;
-    if (reach_start && prev_end != Point() && end != Point()) {
+    auto x_reach_start = start.x_ <= 0;
+    auto y_reach_start = start.y_ <= 0;
+    terminate_start = reach_start ? x_reach_start && y_reach_start
+                                  : x_reach_start || y_reach_start;
+
+    if (terminate_start && prev_end != Point() && end != Point()) {
       /**
        * The unsaved deltas must have the same type as current delta, because
        * the direction must be unchanged. Otherwise, it will be handled by
@@ -543,6 +590,11 @@ void Dna::IgnoreSmallDeltas() {
       vector<Minimizer> saved_deltas;
       for (auto&& delta : deltas) {
         if (delta.range_ref_.size() >= Config::DELTA_MIN_LEN) {
+          Logger::Trace(
+              "DnaDelta::Set",
+              "Saved: \t" + all_deltas.type_ + " " +
+                  delta.range_ref_.Stringify(key));
+
           saved_deltas.emplace_back(move(delta));
         }
       }
@@ -552,6 +604,8 @@ void Dna::IgnoreSmallDeltas() {
 
   ignore_small_deltas(ins_deltas_);
   ignore_small_deltas(del_deltas_);
+
+  Logger::Info("Dna::IgnoreSmallDeltas", "Done");
 }
 
 void Dna::FindDupDeltas() {
