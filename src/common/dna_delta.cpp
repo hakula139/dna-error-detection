@@ -46,13 +46,13 @@ void DnaDelta::Set(const string& key, const Minimizer& value) {
     return false;
   };
 
-  if (deltas.empty() || !exist(value)) {
-    if (value.range_ref_.size() > Config::DELTA_IGNORE_LEN) {
+  if (value.range_ref_.size() > Config::DELTA_IGNORE_LEN) {
+    if (deltas.empty() || !exist(value)) {
       deltas.emplace_back(value);
       Logger::Trace("DnaDelta::Set", "Saved: \t" + delta_str(value));
-    } else {
-      Logger::Trace("DnaDelta::Set", "Ignored: \t" + delta_str(value));
     }
+  } else {
+    Logger::Trace("DnaDelta::Set", "Ignored: \t" + delta_str(value));
   }
 }
 
