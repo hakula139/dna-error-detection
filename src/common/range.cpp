@@ -28,6 +28,10 @@ string Range::Stringify(const string& key) const {
   return (key.length() ? key + " " : "") + Stringify();
 }
 
+bool Range::Contains(const Range& that) const {
+  return start_ <= that.start_ && end_ >= that.end_;
+}
+
 bool Range::operator<(const Range& that) const {
   return end_ < that.end_ || (end_ == that.end_ && start_ < that.start_);
 }

@@ -36,7 +36,7 @@ void DnaDelta::Set(const string& key, const Minimizer& value) {
 
   auto exist = [&](const Minimizer& delta) {
     for (auto prev_i = deltas.rbegin(); prev_i < deltas.rend(); ++prev_i) {
-      if (prev_i->key_seg_ != delta.key_seg_) break;
+      // if (prev_i->key_seg_ != delta.key_seg_) break;
       if (Combine(&*prev_i, &delta)) {
         Logger::Trace("DnaDelta::Set", "Merged: \t" + delta_str(*prev_i));
         return true;
@@ -59,21 +59,53 @@ bool DnaDelta::Combine(Minimizer* base_p, const Minimizer* value_p) const {
   auto&& [base_range_ref, base_key_seg, base_range_seg] = *base_p;
   const auto& [range_ref, key_seg, range_seg] = *value_p;
 
-  if (base_key_seg == key_seg && StrictOverlap(base_range_ref, range_ref)) {
-    auto new_ref_start = min(base_range_ref.start_, range_ref.start_);
-    auto new_ref_end = max(base_range_ref.end_, range_ref.end_);
-    if (new_ref_end > new_ref_start + Config::DELTA_MAX_LEN) return false;
+  if (!StrictOverlap(base_range_ref, range_ref)) return false;
+
+  auto new_ref_start = min(base_range_ref.start_, range_ref.start_);
+  auto new_ref_end = max(base_range_ref.end_, range_ref.end_);
+  if (new_ref_end > new_ref_start + Config::DELTA_MAX_LEN) return false;
+  Range new_ref{new_ref_start, new_ref_end, base_range_ref.value_p_};
+
+  if (base_key_seg == key_seg) {
     auto new_seg_start = min(base_range_seg.start_, range_seg.start_);
     auto new_seg_end = max(base_range_seg.end_, range_seg.end_);
+    Range new_seg{new_seg_start, new_seg_end, base_range_seg.value_p_};
 
-    *base_p = {
-        {new_ref_start, new_ref_end, base_range_ref.value_p_},
-        base_key_seg,
-        {new_seg_start, new_seg_end, base_range_seg.value_p_},
+    *base_p = {new_ref, key_seg, new_seg};
+  } else if (!base_range_ref.Contains(range_ref) || base_range_seg.unknown_) {
+    // Create a new string in heap.
+    auto new_value_seg_p = new string(new_ref.size(), 'N');
+
+    auto fill_in = [new_value_seg_p](size_t start_pos, const Range& range) {
+      auto value_seg = range.get();
+      for (auto i = 0ul; i < range.size(); ++i) {
+        auto j = start_pos + i;
+        if (j >= new_value_seg_p->size()) break;
+        (*new_value_seg_p)[j] = value_seg[i];
+      }
     };
-    return true;
+
+    fill_in(base_range_ref.start_ - new_ref.start_, base_range_seg);
+    fill_in(range_ref.start_ - new_ref.start_, range_seg);
+    Logger::Debug("DnaDelta::Combine", "Created: \t" + *new_value_seg_p);
+
+    // Delete the old created string.
+    if (base_key_seg.empty() && base_range_seg.value_p_) {
+      delete base_range_seg.value_p_;
+    }
+
+    // Replace the original string.
+    auto unknown = new_value_seg_p->find('N') != string::npos;
+    Range new_seg{
+        0,
+        new_value_seg_p->size(),
+        new_value_seg_p,
+        false,
+        unknown,
+    };
+    *base_p = {new_ref, "", new_seg};
   }
-  return false;
+  return true;
 }
 
 void DnaMultiDelta::Print(ofstream& out_file) const {
