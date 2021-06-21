@@ -541,7 +541,7 @@ Point Dna::FindDeltasChunk(
           key_ref,
           {
               {ref_start + start.x_, ref_start + end.x_, &ref},
-              key_ref,
+              key_sv,
               {ref_start + start.x_, ref_start + end.x_, &ref},
           });
     };
@@ -586,11 +586,10 @@ Point Dna::FindDeltasChunk(
 }
 
 void Dna::IgnoreSmallDeltas(const string& key_ref, const string& key_seg) {
-  auto ignore_small_deltas = [&](DnaDelta& all_deltas) {
+  auto filter = [&](DnaDelta& all_deltas) {
     auto type = all_deltas.type_;
 
-    auto filter = [&type, &key_seg](
-                      vector<Minimizer>& deltas, const string& key_ref) {
+    auto filter_ref = [&](vector<Minimizer>& deltas, const string& key_ref_i) {
       for (auto delta_i = deltas.rbegin();
            delta_i < deltas.rend() && delta_i->key_seg_ == key_seg;) {
         const auto& range_ref = (delta_i++)->range_ref_;
@@ -599,23 +598,23 @@ void Dna::IgnoreSmallDeltas(const string& key_ref, const string& key_seg) {
         } else {
           Logger::Debug(
               "DnaDelta::IgnoreSmallDeltas",
-              "Saved: \t" + type + " " + range_ref.Stringify(key_ref));
+              "Saved: \t" + type + " " + range_ref.Stringify(key_ref_i));
         }
       }
     };
 
     if (key_ref.empty()) {
-      for (auto&& [key, deltas] : all_deltas.data_) {
-        filter(deltas, key);
+      for (auto&& [key_ref_i, deltas] : all_deltas.data_) {
+        filter_ref(deltas, key_ref_i);
       }
     } else {
       auto&& deltas = all_deltas.data_[key_ref];
-      filter(deltas, key_ref);
+      filter_ref(deltas, key_ref);
     }
   };
 
-  ignore_small_deltas(ins_deltas_);
-  ignore_small_deltas(del_deltas_);
+  filter(ins_deltas_);
+  filter(del_deltas_);
 
   if (key_ref.empty()) {
     Logger::Info("Dna::IgnoreSmallDeltas", "Done");
