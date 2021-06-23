@@ -17,12 +17,10 @@
 #include "range.h"
 #include "utils.h"
 
-using std::get;
 using std::greater;
 using std::max;
 using std::min;
 using std::ofstream;
-using std::pair;
 using std::priority_queue;
 using std::string;
 using std::swap;
@@ -43,16 +41,6 @@ void DnaOverlap::Insert(const string& key_ref, const Minimizer& entry) {
   data_[key_ref].emplace(entry);
 }
 
-struct MergedOverlap {
-  Range merged_ref_;
-  Range merged_seg_;
-  size_t count_;
-
-  bool operator<(const MergedOverlap& that) const {
-    return count_ < that.count_;
-  }
-};
-
 void DnaOverlap::Merge() {
   auto merge = [](Range& base, const Range& range) {
     assert(range.start_ < range.end_);
@@ -67,13 +55,10 @@ void DnaOverlap::Merge() {
   };
 
   for (auto&& [key_ref, entries] : data_) {
-    unordered_map<string, pair<MergedOverlap, MergedOverlap>> merged_overlaps;
+    unordered_map<string, tuple<Range, Range, size_t>> merged_overlaps;
 
     for (const auto& [range_ref, key_seg, range_seg] : entries) {
-      auto&& [merged_ref, merged_seg, count] =
-          range_seg.inverted_ ? merged_overlaps[key_seg].second
-                              : merged_overlaps[key_seg].first;
-
+      auto&& [merged_ref, merged_seg, count] = merged_overlaps[key_seg];
       merge(merged_ref, range_ref);
       merge(merged_seg, range_seg);
       ++count;
@@ -81,24 +66,28 @@ void DnaOverlap::Merge() {
 
     entries.clear();
     for (const auto& [key_seg, entry] : merged_overlaps) {
-      const auto& [merged_ref, merged_seg, count] = max(
-          entry.first, entry.second);
+      const auto& [merged_ref, merged_seg, count] = entry;
 
-      auto used = merged_ref.size() >= Config::MINIMIZER_MIN_LEN &&
+      auto used = count >= Config::MINIMIZER_MIN_COUNT &&
+                  merged_ref.size() >= Config::MINIMIZER_MIN_LEN &&
                   merged_seg.size() >= Config::MINIMIZER_MIN_LEN;
+
+      auto show_size = min(min(merged_ref.size(), merged_seg.size()), 100ul);
+      auto show_ref = merged_ref.get().substr(0, show_size);
+      auto show_seg = merged_seg.get().substr(0, show_size);
 
       if (used) {
         entries.emplace(merged_ref, key_seg, merged_seg);
 
-        Logger::Debug("DnaOverlap::Merge", key_ref + ": \tMinimizer:");
+        Logger::Debug("DnaOverlap::Merge " + key_ref, "Minimizer:");
         Logger::Debug("Minimizer count", to_string(count) + " \tused");
-        Logger::Debug("", "REF: \t" + merged_ref.get());
-        Logger::Debug("", "SEG: \t" + merged_seg.get());
+        Logger::Debug("", "REF: \t" + show_ref);
+        Logger::Debug("", "SEG: \t" + show_seg);
       } else {
-        Logger::Trace("DnaOverlap::Merge", key_ref + ": \tMinimizer:");
-        Logger::Trace("Minimizer count", to_string(count) + " \tnot used");
-        Logger::Trace("", "REF: \t" + merged_ref.get());
-        Logger::Trace("", "SEG: \t" + merged_seg.get());
+        Logger::Debug("DnaOverlap::Merge " + key_ref, "Minimizer:");
+        Logger::Debug("Minimizer count", to_string(count) + " \tnot used");
+        Logger::Debug("", "REF: \t" + show_ref);
+        Logger::Debug("", "SEG: \t" + show_seg);
       }
     }
   }
