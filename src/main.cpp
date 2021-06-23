@@ -57,8 +57,8 @@ int main(int argc, char** argv) {
 
   // Main process
   if (arg_flags['s']) {
-    if (!sv.size() && !sv.Import(path / sv_filename)) {
-      if (!segments.size() && !segments.Import(path / seg_filename)) {
+    if (!sv.Import(path / sv_filename)) {
+      if (!segments.Import(path / seg_filename)) {
         return EXIT_FAILURE;
       }
       if (!ref.ImportOverlaps(&segments, path / overlaps_filename)) {

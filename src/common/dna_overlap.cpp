@@ -8,6 +8,7 @@
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "config.h"
@@ -16,10 +17,12 @@
 #include "range.h"
 #include "utils.h"
 
+using std::get;
 using std::greater;
 using std::max;
 using std::min;
 using std::ofstream;
+using std::pair;
 using std::priority_queue;
 using std::string;
 using std::to_string;
@@ -39,57 +42,61 @@ void DnaOverlap::Insert(const string& key_ref, const Minimizer& entry) {
   data_[key_ref].emplace(entry);
 }
 
+struct MergedOverlap {
+  Range merged_ref_;
+  Range merged_seg_;
+  size_t count_;
+
+  bool operator<(const MergedOverlap& that) const {
+    return count_ < that.count_;
+  }
+};
+
 void DnaOverlap::Merge() {
   auto merge = [](Range& base, const Range& range) {
     assert(range.start_ < range.end_);
-    base.start_ = min(base.start_, range.start_);
-    base.end_ = max(base.end_, range.end_);
+    base = !base ? range
+                 : Range{
+                       min(base.start_, range.start_),
+                       max(base.end_, range.end_),
+                       base.value_p_,
+                   };
     assert(base.start_ < base.end_);
   };
 
   for (auto&& [key_ref, entries] : data_) {
-    unordered_map<string, vector<tuple<Range, Range, size_t>>> merged_overlaps;
+    unordered_map<string, pair<MergedOverlap, MergedOverlap>> merged_overlaps;
 
     for (const auto& [range_ref, key_seg, range_seg] : entries) {
-      auto key = (range_seg.inverted_ ? "-" : "+") + key_seg;
-      auto&& merged_overlaps_seg = merged_overlaps[key];
+      auto&& [merged_ref, merged_seg, count] =
+          range_seg.inverted_ ? merged_overlaps[key_seg].second
+                              : merged_overlaps[key_seg].first;
 
-      auto merged = false;
-      for (auto&& [merged_ref, merged_seg, count] : merged_overlaps_seg) {
-        if (FuzzyOverlap(merged_ref, range_ref)) {
-          merge(merged_ref, range_ref);
-          merge(merged_seg, range_seg);
-          merged = true;
-          ++count;
-          break;
-        }
-      }
-
-      if (!merged) {
-        merged_overlaps_seg.emplace_back(range_ref, range_seg, 1);
-      }
+      merge(merged_ref, range_ref);
+      merge(merged_seg, range_seg);
+      ++count;
     }
 
     entries.clear();
     for (const auto& [key_seg, entry] : merged_overlaps) {
-      for (const auto& [merged_ref, merged_seg, count] : entry) {
-        auto used = count >= Config::MINIMIZER_MIN_COUNT &&
-                    merged_ref.size() >= Config::MINIMIZER_MIN_LEN &&
-                    merged_seg.size() >= Config::MINIMIZER_MIN_LEN;
+      const auto& [merged_ref, merged_seg, count] = max(
+          entry.first, entry.second);
 
-        if (used) {
-          entries.emplace(merged_ref, key_seg.substr(1), merged_seg);
+      auto used = merged_ref.size() >= Config::MINIMIZER_MIN_LEN &&
+                  merged_seg.size() >= Config::MINIMIZER_MIN_LEN;
 
-          Logger::Debug("DnaOverlap::Merge", key_ref + ": \tMinimizer:");
-          Logger::Debug("Minimizer count", to_string(count) + " \tused");
-          Logger::Debug("", "REF: \t" + merged_ref.get());
-          Logger::Debug("", "SEG: \t" + merged_seg.get());
-        } else {
-          Logger::Trace("DnaOverlap::Merge", key_ref + ": \tMinimizer:");
-          Logger::Trace("Minimizer count", to_string(count) + " \tnot used");
-          Logger::Trace("", "REF: \t" + merged_ref.get());
-          Logger::Trace("", "SEG: \t" + merged_seg.get());
-        }
+      if (used) {
+        entries.emplace(merged_ref, key_seg, merged_seg);
+
+        Logger::Debug("DnaOverlap::Merge", key_ref + ": \tMinimizer:");
+        Logger::Debug("Minimizer count", to_string(count) + " \tused");
+        Logger::Debug("", "REF: \t" + merged_ref.get());
+        Logger::Debug("", "SEG: \t" + merged_seg.get());
+      } else {
+        Logger::Trace("DnaOverlap::Merge", key_ref + ": \tMinimizer:");
+        Logger::Trace("Minimizer count", to_string(count) + " \tnot used");
+        Logger::Trace("", "REF: \t" + merged_ref.get());
+        Logger::Trace("", "SEG: \t" + merged_seg.get());
       }
     }
   }

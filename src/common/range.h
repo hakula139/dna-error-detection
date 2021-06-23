@@ -17,6 +17,8 @@ struct Range {
         inverted_(inverted),
         unknown_(unknown) {}
 
+  operator bool() const { return start_ || end_; }
+
   size_t size() const { return end_ - start_; }
   std::string get() const;
   std::string Stringify() const;
