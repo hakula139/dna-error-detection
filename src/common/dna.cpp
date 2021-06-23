@@ -378,8 +378,8 @@ void Dna::FindDeltasFromSegments() {
           "Dna::FindDeltasFromSegments",
           ref_range.Stringify(key_ref) + " " + seg_range.Stringify(key_seg));
 
-      Logger::Debug("", "REF: \t" + show_ref);
-      Logger::Debug("", "SEG: \t" + show_seg);
+      Logger::Trace("", "REF: \t" + show_ref);
+      Logger::Trace("", "SEG: \t" + show_seg);
       Logger::Trace("", "REF minimizer: \t" + range_ref.get());
       Logger::Trace("", "SEG minimizer: \t" + range_seg.get());
 

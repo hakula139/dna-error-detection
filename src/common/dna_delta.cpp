@@ -88,7 +88,7 @@ bool DnaDelta::Combine(Minimizer* base_p, const Minimizer* value_p) const {
 
     fill_in(base_range_ref.start_ - new_ref.start_, base_range_seg);
     fill_in(range_ref.start_ - new_ref.start_, range_seg);
-    Logger::Debug("DnaDelta::Combine", "Created: \t" + *new_value_seg_p);
+    Logger::Debug("DnaDelta::Combine", "Created: " + *new_value_seg_p);
 
     // Delete the old created string.
     if (base_key_seg.empty() && base_range_seg.value_p_) {
