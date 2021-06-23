@@ -25,6 +25,7 @@ using std::ofstream;
 using std::pair;
 using std::priority_queue;
 using std::string;
+using std::swap;
 using std::to_string;
 using std::tuple;
 using std::unordered_map;
@@ -55,13 +56,14 @@ struct MergedOverlap {
 void DnaOverlap::Merge() {
   auto merge = [](Range& base, const Range& range) {
     assert(range.start_ < range.end_);
-    base = !base ? range
-                 : Range{
-                       min(base.start_, range.start_),
-                       max(base.end_, range.end_),
-                       base.value_p_,
-                   };
+    if (base) {
+      base.start_ = min(base.start_, range.start_);
+      base.end_ = max(base.end_, range.end_);
+    } else {
+      base = range;
+    }
     assert(base.start_ < base.end_);
+    assert(base.value_p_);
   };
 
   for (auto&& [key_ref, entries] : data_) {
@@ -109,9 +111,13 @@ void DnaOverlap::CheckCoverage() const {
     auto ref_size = entries.begin()->range_ref_.value_p_->size();
     vector<int> covered(ref_size + 1);
     for (const auto& [range_ref, key_seg, range_seg] : entries) {
+      auto start_padding = range_seg.start_;
+      auto end_padding = range_seg.value_p_->size() - range_seg.end_;
+      if (range_seg.inverted_) swap(start_padding, end_padding);
+
       Range cover_range{
-          max(range_ref.start_, range_seg.start_) - range_seg.start_,
-          range_ref.end_ + range_seg.value_p_->size() - range_seg.end_,
+          max(range_ref.start_, range_seg.start_) - start_padding,
+          range_ref.end_ + end_padding,
           nullptr,
       };
       ++covered[cover_range.start_];
