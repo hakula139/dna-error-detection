@@ -25,7 +25,12 @@ using std::to_string;
 using std::unordered_map;
 using std::vector;
 
-std::pair<Range, Range> LongestCommonSubstring(
+string Head(const string& value, size_t start, size_t size) {
+  auto display_size = min(min(value.size(), start) - start, size);
+  return value.substr(start, display_size);
+}
+
+pair<Range, Range> LongestCommonSubstring(
     const string& str1, const string& str2) {
   auto len1 = str1.length();
   auto len2 = str2.length();

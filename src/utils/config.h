@@ -22,6 +22,7 @@ struct Config {
   static const char* DELTAS_FILENAME;
 
   static const int LOG_LEVEL;
+  static const size_t DISPLAY_SIZE;
 
   static const size_t HASH_SIZE;
   static const size_t WINDOW_SIZE;

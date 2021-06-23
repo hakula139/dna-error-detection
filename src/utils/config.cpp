@@ -8,7 +8,8 @@ const char* Config::INDEX_FILENAME = "index.txt";
 const char* Config::OVERLAPS_FILENAME = "overlaps.txt";
 const char* Config::DELTAS_FILENAME = "sv.bed";
 
-const int Config::LOG_LEVEL = Config::Level::INFO;
+const int Config::LOG_LEVEL = Config::Level::TRACE;
+const size_t Config::DISPLAY_SIZE = 100;
 
 const size_t Config::HASH_SIZE = 15;
 const size_t Config::WINDOW_SIZE = 10;

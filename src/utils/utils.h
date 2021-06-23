@@ -6,8 +6,14 @@
 #include <utility>
 #include <vector>
 
+#include "config.h"
 #include "point.h"
 #include "range.h"
+
+std::string Head(
+    const std::string& value,
+    size_t start = 0,
+    size_t size = Config::DISPLAY_SIZE);
 
 std::pair<Range, Range> LongestCommonSubstring(
     const std::string& str1, const std::string& str2);

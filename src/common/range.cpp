@@ -16,6 +16,10 @@ string Range::get() const {
   return value_p_ ? value_p_->substr(start_, size) : "";
 }
 
+string Range::Head(size_t start, size_t size) const {
+  return ::Head(get(), start, size);
+}
+
 string Range::Stringify() const {
   if (inverted_) {
     return to_string(end_) + " " + to_string(start_);

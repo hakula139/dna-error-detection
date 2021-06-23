@@ -115,9 +115,9 @@ bool Dna::ImportOverlaps(Dna* segments_p, const string& filename) {
     Range range_seg{start_seg, end_seg, &value_seg};
     overlaps_.Insert(key_ref, {range_ref, key_seg, range_seg});
 
-    Logger::Trace("Dna::ImportOverlaps", key_ref + ": \tMinimizer:");
-    Logger::Trace("", "REF: \t" + range_ref.get());
-    Logger::Trace("", "SEG: \t" + range_seg.get());
+    Logger::Trace("Dna::ImportOverlaps " + key_ref, "Minimizer:");
+    Logger::Trace("", "REF: \t" + range_ref.Head());
+    Logger::Trace("", "SEG: \t" + range_seg.Head());
   }
 
   in_file.close();
@@ -364,35 +364,35 @@ void Dna::FindDeltasFromSegments() {
       auto start_padding = range_seg.start_ + Config::DELTA_MAX_LEN;
       auto end_padding = seg_size - range_seg.end_ + Config::DELTA_MAX_LEN;
 
-      Range ref_range{
+      Range ref{
           max(range_ref.start_, start_padding) - start_padding,
           min(range_ref.end_ + end_padding, ref_size),
           &value_ref,
       };
-      Range seg_range{0, seg_size, &value_seg};
-
-      auto show_size = min(min(ref_range.size(), seg_size), 100ul);
-      auto show_ref = value_ref.substr(ref_range.start_, show_size);
-      auto show_seg = value_seg.substr(0, show_size);
+      Range seg{
+          0,
+          seg_size,
+          &value_seg,
+      };
 
       Logger::Debug(
           "Dna::FindDeltasFromSegments",
-          ref_range.Stringify(key_ref) + " " + seg_range.Stringify(key_seg));
+          ref.Stringify(key_ref) + " " + seg.Stringify(key_seg));
 
-      Logger::Trace("", "REF: \t" + show_ref);
-      Logger::Trace("", "SEG: \t" + show_seg);
-      Logger::Trace("", "REF minimizer: \t" + range_ref.get());
-      Logger::Trace("", "SEG minimizer: \t" + range_seg.get());
+      Logger::Trace("", "REF: \t" + Head(value_ref, ref.start_));
+      Logger::Trace("", "SEG: \t" + Head(value_seg));
+      Logger::Trace("", "REF minimizer: \t" + range_ref.Head());
+      Logger::Trace("", "SEG minimizer: \t" + range_seg.Head());
 
       FindDeltasChunk(
           key_ref,
           value_ref,
-          ref_range.start_,
-          ref_range.size(),
+          ref.start_,
+          ref.size(),
           key_seg,
           value_seg,
-          seg_range.start_,
-          seg_range.size(),
+          seg.start_,
+          seg.size(),
           false,
           false);
 
