@@ -70,6 +70,7 @@
     "sstream": "cpp",
     "stack": "cpp",
     "stdexcept": "cpp",
+    "stop_token": "cpp",
     "streambuf": "cpp",
     "string": "cpp",
     "string_view": "cpp",
