@@ -289,6 +289,7 @@ bool Dna::FindOverlaps(const Dna& ref) {
   }
 
   overlaps_.Merge();
+  overlaps_.CheckCoverage();
   return true;
 }
 

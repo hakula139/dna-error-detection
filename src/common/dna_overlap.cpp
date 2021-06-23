@@ -1,6 +1,7 @@
 #include "dna_overlap.h"
 
 #include <algorithm>
+#include <cassert>
 #include <fstream>
 #include <functional>
 #include <queue>
@@ -40,8 +41,10 @@ void DnaOverlap::Insert(const string& key_ref, const Minimizer& entry) {
 
 void DnaOverlap::Merge() {
   auto merge = [](Range& base, const Range& range) {
+    assert(range.start_ < range.end_);
     base.start_ = min(base.start_, range.start_);
     base.end_ = max(base.end_, range.end_);
+    assert(base.start_ < base.end_);
   };
 
   for (auto&& [key_ref, entries] : data_) {
@@ -89,6 +92,35 @@ void DnaOverlap::Merge() {
         }
       }
     }
+  }
+}
+
+void DnaOverlap::CheckCoverage() const {
+  for (const auto& [key_ref, entries] : data_) {
+    if (!entries.size()) continue;
+
+    auto ref_size = entries.begin()->range_ref_.value_p_->size();
+    vector<int> covered(ref_size + 1);
+    for (const auto& [range_ref, key_seg, range_seg] : entries) {
+      Range cover_range{
+          max(range_ref.start_, range_seg.start_) - range_seg.start_,
+          range_ref.end_ + range_seg.value_p_->size() - range_seg.end_,
+          nullptr,
+      };
+      ++covered[cover_range.start_];
+      --covered[cover_range.end_];
+    }
+
+    auto covered_rate = 0.0;
+    for (auto i = 0ul; i < ref_size; ++i) {
+      if (covered[i] > 0) ++covered_rate;
+      covered[i + 1] += covered[i];
+    }
+    covered_rate /= ref_size;
+
+    Logger::Info(
+        "DnaOverlap::CheckCoverage " + key_ref,
+        "Minimizer cover rate: " + to_string(covered_rate * 100) + " %");
   }
 }
 

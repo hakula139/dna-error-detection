@@ -15,6 +15,7 @@ class DnaOverlap {
   size_t size() const;
   void Insert(const std::string& key_ref, const Minimizer& entry);
   void Merge();
+  void CheckCoverage() const;
   void Print(std::ofstream& out_file) const;
 
   DnaOverlap& operator+=(const DnaOverlap& that);
