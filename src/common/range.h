@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include "config.h"
+
 struct Range {
   Range() {}
   Range(

@@ -26,7 +26,7 @@ using std::unordered_map;
 using std::vector;
 
 string Head(const string& value, size_t start, size_t size) {
-  auto display_size = min(min(value.size(), start) - start, size);
+  auto display_size = min(max(value.size(), start) - start, size);
   return value.substr(start, display_size);
 }
 
