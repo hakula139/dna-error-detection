@@ -105,12 +105,10 @@ bool Dna::ImportOverlaps(Dna* segments_p, const string& filename) {
       if (!inverted_segs.count(key_seg)) {
         value_seg = Invert(value_seg);
         inverted_segs.emplace(key_seg);
-      } else {
-        Logger::Warn("Dna::ImportOverlaps " + key_seg, "Inverted twice");
       }
       swap(start_seg, end_seg);
-    } else {
-      assert(!inverted_segs.count(key_seg));
+    } else if (inverted_segs.count(key_seg)) {
+      Logger::Warn("Dna::ImportOverlaps " + key_seg, "Inversion conflict");
     }
 
     Range range_ref{start_ref, end_ref, &(this->data_.at(key_ref))};
