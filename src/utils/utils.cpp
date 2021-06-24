@@ -148,8 +148,8 @@ void Concat(string* base_p, const string* str_p) {
   *base_p += replace_str;
 }
 
-bool FuzzyCompare(int num1, int num2) {
-  return abs(num1 - num2) <= Config::GAP_MAX_DIFF;
+bool FuzzyCompare(int num1, int num2, size_t threshold) {
+  return abs(num1 - num2) <= threshold;
 }
 
 bool FuzzyCompare(const string& str1, const string& str2) {

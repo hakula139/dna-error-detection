@@ -42,16 +42,18 @@ void DnaOverlap::Insert(const string& key_ref, const Minimizer& entry) {
 }
 
 void DnaOverlap::Merge() {
-  auto merge = [](Range& base, const Range& range) {
+  auto merge = [](const Range& base, const Range& range) {
     assert(range.start_ < range.end_);
+    Range new_base = base;
     if (base) {
-      base.start_ = min(base.start_, range.start_);
-      base.end_ = max(base.end_, range.end_);
+      new_base.start_ = min(base.start_, range.start_);
+      new_base.end_ = max(base.end_, range.end_);
     } else {
-      base = range;
+      new_base = range;
     }
-    assert(base.start_ < base.end_);
-    assert(base.value_p_);
+    assert(new_base.start_ < new_base.end_);
+    assert(new_base.value_p_);
+    return new_base;
   };
 
   for (auto&& [key_ref, entries] : data_) {
@@ -59,9 +61,21 @@ void DnaOverlap::Merge() {
 
     for (const auto& [range_ref, key_seg, range_seg] : entries) {
       auto&& [merged_ref, merged_seg, count] = merged_overlaps[key_seg];
-      merge(merged_ref, range_ref);
-      merge(merged_seg, range_seg);
-      ++count;
+      auto new_merged_ref = merge(merged_ref, range_ref);
+      auto new_merged_seg = merge(merged_seg, range_seg);
+      auto delta_ref = new_merged_ref.size() - merged_ref.size();
+      auto delta_seg = new_merged_seg.size() - merged_seg.size();
+
+      if (FuzzyCompare(delta_ref, delta_seg, Config::OVERLAP_MAX_DIFF)) {
+        merged_ref = new_merged_ref;
+        merged_seg = new_merged_seg;
+        ++count;
+      } else {
+        Logger::Trace(
+            "DnaOverlap::Merge " + key_seg,
+            "+" + to_string(delta_ref) + " +" + to_string(delta_seg) +
+                ": deltas not matched, not merged");
+      }
     }
 
     entries.clear();
@@ -72,18 +86,21 @@ void DnaOverlap::Merge() {
                   merged_ref.size() >= Config::MINIMIZER_MIN_LEN &&
                   merged_seg.size() >= Config::MINIMIZER_MIN_LEN;
 
+      auto log_title = string("Minimizer: ") +
+                       (merged_seg.inverted_ ? "inverted" : "not inverted");
+
       if (used) {
         entries.emplace(merged_ref, key_seg, merged_seg);
 
-        Logger::Debug("DnaOverlap::Merge " + key_ref, "Minimizer:");
+        Logger::Debug("DnaOverlap::Merge " + key_ref, log_title);
         Logger::Debug("Minimizer count", to_string(count) + " \tused");
-        Logger::Debug("", "REF: \t" + merged_ref.Head());
-        Logger::Debug("", "SEG: \t" + merged_seg.Head());
+        Logger::Trace("", "REF: \t" + merged_ref.Head());
+        Logger::Trace("", "SEG: \t" + merged_seg.Head());
       } else {
-        Logger::Debug("DnaOverlap::Merge " + key_ref, "Minimizer:");
+        Logger::Debug("DnaOverlap::Merge " + key_ref, log_title);
         Logger::Debug("Minimizer count", to_string(count) + " \tnot used");
-        Logger::Debug("", "REF: \t" + merged_ref.Head());
-        Logger::Debug("", "SEG: \t" + merged_seg.Head());
+        Logger::Trace("", "REF: \t" + merged_ref.Head());
+        Logger::Trace("", "SEG: \t" + merged_seg.Head());
       }
     }
   }

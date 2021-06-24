@@ -8,7 +8,7 @@ const char* Config::INDEX_FILENAME = "index.txt";
 const char* Config::OVERLAPS_FILENAME = "overlaps.txt";
 const char* Config::DELTAS_FILENAME = "sv.bed";
 
-const int Config::LOG_LEVEL = Config::Level::TRACE;
+const int Config::LOG_LEVEL = Config::Level::DEBUG;
 const size_t Config::DISPLAY_SIZE = 100;
 
 const size_t Config::HASH_SIZE = 15;
@@ -22,6 +22,7 @@ const size_t Config::DELTA_MIN_LEN = 50;
 const size_t Config::DELTA_MAX_LEN = 1000;
 const size_t Config::OVERLAP_MIN_COUNT = 30;
 const size_t Config::OVERLAP_MIN_LEN = 30;
+const size_t Config::OVERLAP_MAX_DIFF = 2500;
 const size_t Config::MINIMIZER_MIN_COUNT = 5;
 const size_t Config::MINIMIZER_MIN_LEN = 60;
 const double Config::ERROR_MAX_SCORE = 4.0;

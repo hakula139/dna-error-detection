@@ -29,7 +29,7 @@ size_t LongestCommonSubsequenceLength(
 
 void Concat(std::string* base_p, const std::string* str_p);
 
-bool FuzzyCompare(int num1, int num2);
+bool FuzzyCompare(int num1, int num2, size_t threshold = Config::GAP_MAX_DIFF);
 bool FuzzyCompare(const std::string& str1, const std::string& str2);
 
 void ShowManual();
