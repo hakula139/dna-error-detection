@@ -6,6 +6,7 @@ build/
 tests/*demo/
 tests/**/*.bed
 tests/**/*.txt
+logs/
 
 ## Cpp
 

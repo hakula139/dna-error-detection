@@ -15,6 +15,7 @@ using std::unordered_map;
 
 int main(int argc, char** argv) {
   ios::sync_with_stdio(false);
+  Logger::Init();
 
   unordered_map<char, bool> arg_flags;
   if (!ReadArgs(&arg_flags, argc, argv)) {
