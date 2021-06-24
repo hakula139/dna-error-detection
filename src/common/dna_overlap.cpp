@@ -132,7 +132,7 @@ void DnaOverlap::SelectChain() {
         max_key = key;
       }
     }
-    Logger::Debug("DnaOverlap::SelectChain " + key_ref, "Select " + max_key);
+    Logger::Info("DnaOverlap::SelectChain " + key_ref, "Select " + max_key);
 
     for (auto entry_i = entries.begin(); entry_i != entries.end();) {
       if (!entry_i->key_seg_.compare(0, max_key.size(), max_key)) {
@@ -174,7 +174,7 @@ double DnaOverlap::CheckCoverage(
   }
   covered_rate /= ref_size;
 
-  Logger::Info(
+  Logger::Debug(
       "DnaOverlap::CheckCoverage " + key_ref,
       (key_sv.size() ? key_sv : "Total") +
           " cover rate: " + to_string(covered_rate * 100) + " %");
