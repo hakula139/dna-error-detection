@@ -288,7 +288,9 @@ bool Dna::FindOverlaps(const Dna& ref) {
   }
 
   overlaps_.Merge();
+  overlaps_.SelectChain();
   overlaps_.CheckCoverage();
+
   return true;
 }
 
@@ -520,9 +522,9 @@ Point Dna::FindDeltasChunk(
     auto mid_x = direction == Direction::TOP ? start.x_ : start.x_ + 1;
     auto mid = Point(mid_x, mid_x - k);
 
-    Logger::Trace(
-        "Dna::FindDeltasChunk",
-        start.Stringify() + " " + mid.Stringify() + " " + end.Stringify());
+    // Logger::Trace(
+    //     "Dna::FindDeltasChunk",
+    //     start.Stringify() + " " + mid.Stringify() + " " + end.Stringify());
     assert(start.x_ <= mid.x_ && start.y_ <= mid.y_);
     assert(mid.x_ <= end.x_ && mid.y_ <= end.y_);
 

@@ -106,36 +106,79 @@ void DnaOverlap::Merge() {
   }
 }
 
+void DnaOverlap::SelectChain() {
+  for (auto&& [key_ref, entries] : data_) {
+    unordered_map<string, double> coverages;
+    auto max_coverage = 0.0;
+    string max_key;
+
+    for (const auto& [range_ref, key_seg, range_seg] : entries) {
+      auto pos = key_seg.find('_');
+      assert(pos != string::npos);
+      auto key = key_seg.substr(0, pos);
+      coverages[key] = 0.0;
+    }
+
+    for (auto&& [key, coverage] : coverages) {
+      coverage = CheckCoverage(key_ref, key);
+      if (coverage > max_coverage) {
+        max_coverage = coverage;
+        max_key = key;
+      }
+    }
+    Logger::Debug("DnaOverlap::SelectChain " + key_ref, "Select " + max_key);
+
+    for (auto entry_i = entries.begin(); entry_i != entries.end();) {
+      if (!entry_i->key_seg_.compare(0, max_key.size(), max_key)) {
+        entry_i = entries.erase(entry_i);
+      } else {
+        ++entry_i;
+      }
+    }
+  }
+}
+
+double DnaOverlap::CheckCoverage(
+    const string& key_ref, const string& key_sv) const {
+  const auto& entries = data_.at(key_ref);
+  if (!entries.size()) return 0.0;
+
+  auto ref_size = entries.begin()->range_ref_.value_p_->size();
+  vector<int> covered(ref_size + 1);
+  for (const auto& [range_ref, key_seg, range_seg] : entries) {
+    if (!key_seg.compare(0, key_sv.size(), key_sv)) continue;
+
+    auto start_padding = range_seg.start_;
+    auto end_padding = range_seg.value_p_->size() - range_seg.end_;
+    if (range_seg.inverted_) swap(start_padding, end_padding);
+
+    Range cover_range{
+        max(range_ref.start_, range_seg.start_) - start_padding,
+        range_ref.end_ + end_padding,
+        nullptr,
+    };
+    ++covered[cover_range.start_];
+    --covered[cover_range.end_];
+  }
+
+  auto covered_rate = 0.0;
+  for (auto i = 0ul; i < ref_size; ++i) {
+    if (covered[i] > 0) ++covered_rate;
+    covered[i + 1] += covered[i];
+  }
+  covered_rate /= ref_size;
+
+  Logger::Info(
+      "DnaOverlap::CheckCoverage " + key_ref,
+      (key_sv.size() ? key_sv : "Total") +
+          " cover rate: " + to_string(covered_rate * 100) + " %");
+
+  return covered_rate;
+}
+
 void DnaOverlap::CheckCoverage() const {
   for (const auto& [key_ref, entries] : data_) {
-    if (!entries.size()) continue;
-
-    auto ref_size = entries.begin()->range_ref_.value_p_->size();
-    vector<int> covered(ref_size + 1);
-    for (const auto& [range_ref, key_seg, range_seg] : entries) {
-      auto start_padding = range_seg.start_;
-      auto end_padding = range_seg.value_p_->size() - range_seg.end_;
-      if (range_seg.inverted_) swap(start_padding, end_padding);
-
-      Range cover_range{
-          max(range_ref.start_, range_seg.start_) - start_padding,
-          range_ref.end_ + end_padding,
-          nullptr,
-      };
-      ++covered[cover_range.start_];
-      --covered[cover_range.end_];
-    }
-
-    auto covered_rate = 0.0;
-    for (auto i = 0ul; i < ref_size; ++i) {
-      if (covered[i] > 0) ++covered_rate;
-      covered[i + 1] += covered[i];
-    }
-    covered_rate /= ref_size;
-
-    Logger::Info(
-        "DnaOverlap::CheckCoverage " + key_ref,
-        "Minimizer cover rate: " + to_string(covered_rate * 100) + " %");
+    CheckCoverage(key_ref);
   }
 }
 
