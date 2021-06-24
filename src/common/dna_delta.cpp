@@ -5,6 +5,7 @@
 #include <iterator>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "config.h"
 #include "logger.h"
@@ -19,6 +20,7 @@ using std::ofstream;
 using std::pair;
 using std::prev;
 using std::string;
+using std::vector;
 
 void DnaDelta::Print(ofstream& out_file) const {
   for (const auto& [key_ref, deltas] : data_) {
@@ -56,11 +58,33 @@ void DnaDelta::Set(const string& key, const Minimizer& value) {
   }
 }
 
-bool DnaDelta::Combine(Minimizer* base_p, const Minimizer* value_p) const {
+void DnaDelta::Merge(const string& key) {
+  auto& deltas = data_[key];
+  vector<Minimizer> merged_deltas;
+
+  for (const auto& delta : deltas) {
+    auto merged = false;
+    for (auto&& merged_delta : merged_deltas) {
+      if (Combine(&merged_delta, &delta, false)) {
+        merged = true;
+        break;
+      }
+    }
+    if (!merged) {
+      merged_deltas.emplace_back(delta);
+    }
+  }
+
+  deltas = merged_deltas;
+}
+
+bool DnaDelta::Combine(
+    Minimizer* base_p, const Minimizer* value_p, bool strict) const {
   auto&& [base_range_ref, base_key_seg, base_range_seg] = *base_p;
   const auto& [range_ref, key_seg, range_seg] = *value_p;
 
-  if (!StrictOverlap(base_range_ref, range_ref)) return false;
+  if (strict && !StrictOverlap(base_range_ref, range_ref)) return false;
+  if (!strict && !FuzzyOverlap(base_range_ref, range_ref)) return false;
 
   auto new_ref_start = min(base_range_ref.start_, range_ref.start_);
   auto new_ref_end = max(base_range_ref.end_, range_ref.end_);

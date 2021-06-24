@@ -24,11 +24,13 @@ class DnaDelta : public DnaDeltaBase {
   explicit DnaDelta(const std::string& type) : DnaDeltaBase{type} {}
   void Print(std::ofstream& out_file) const override;
   void Set(const std::string& key, const Minimizer& value);
+  void Merge(const std::string& key);
 
   friend class Dna;
 
  protected:
-  bool Combine(Minimizer* base_p, const Minimizer* value_p) const;
+  bool Combine(
+      Minimizer* base_p, const Minimizer* value_p, bool strict = true) const;
 
  private:
   std::unordered_map<std::string, std::vector<Minimizer>> data_;

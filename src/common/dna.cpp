@@ -401,6 +401,9 @@ void Dna::FindDeltasFromSegments() {
       IgnoreSmallDeltas(key_ref, key_seg);
       ++progress;
     }
+
+    ins_deltas_.Merge(key_ref);
+    del_deltas_.Merge(key_ref);
   }
 }
 
