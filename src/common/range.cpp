@@ -60,3 +60,7 @@ bool StrictOverlap(const Range& range1, const Range& range2) {
   return range1.end_ + Config::GAP_MIN_DIFF >= range2.start_ &&
          range2.end_ + Config::GAP_MIN_DIFF >= range1.start_;
 }
+
+bool Verify(const Range& range1, const Range& range2) {
+  return range1.Head(0, Config::HASH_SIZE) == range2.Head(0, Config::HASH_SIZE);
+}

@@ -99,6 +99,7 @@ bool Dna::ImportOverlaps(Dna* segments_p, const string& filename) {
     in_file >> key_seg >> start_seg >> end_seg;
     if (!key_ref.length() || !key_seg.length()) break;
 
+    const auto& value_ref = this->data_.at(key_ref);
     // Invert the segment chain if marked inverted.
     auto&& value_seg = segments_p->data_[key_seg];
     if (start_seg > end_seg) {
@@ -111,13 +112,20 @@ bool Dna::ImportOverlaps(Dna* segments_p, const string& filename) {
       Logger::Warn("Dna::ImportOverlaps " + key_seg, "Inversion conflict");
     }
 
-    Range range_ref{start_ref, end_ref, &(this->data_.at(key_ref))};
+    Range range_ref{start_ref, end_ref, &value_ref};
     Range range_seg{start_seg, end_seg, &value_seg};
-    overlaps_.Insert(key_ref, {range_ref, key_seg, range_seg});
 
     Logger::Trace("Dna::ImportOverlaps " + key_ref, "Minimizer:");
     Logger::Trace("", "REF: \t" + range_ref.Head());
     Logger::Trace("", "SEG: \t" + range_seg.Head());
+
+    if (Verify(range_ref, range_seg)) {
+      overlaps_.Insert(key_ref, {range_ref, key_seg, range_seg});
+    } else {
+      Logger::Warn(
+          "Dna::ImportOverlaps",
+          key_ref + " " + key_seg + " minimizer not matched");
+    }
   }
 
   in_file.close();
@@ -271,6 +279,7 @@ bool Dna::FindOverlaps(const Dna& ref) {
     } else if (
         overlaps_invert.size() >= Config::OVERLAP_MIN_COUNT &&
         overlaps.size() < overlaps_invert.size()) {
+      value_seg = Invert(value_seg);
       overlaps_ += overlaps_invert;
 
       Logger::Trace(
@@ -359,31 +368,23 @@ void Dna::FindDeltasFromSegments() {
 
       const auto& value_seg = *(range_seg.value_p_);
 
-      auto ref_size = value_ref.size();
-      auto seg_size = value_seg.size();
-
-      auto start_padding = range_seg.start_ + Config::DELTA_MAX_LEN;
-      auto end_padding = seg_size - range_seg.end_ + Config::DELTA_MAX_LEN;
-
-      Range ref{
-          max(range_ref.start_, start_padding) - start_padding,
-          min(range_ref.end_ + end_padding, ref_size),
-          &value_ref,
-      };
-      Range seg{
-          0,
-          seg_size,
-          &value_seg,
-      };
+      auto ref = range_ref;
+      auto seg = range_seg;
 
       Logger::Debug(
           "Dna::FindDeltasFromSegments",
           ref.Stringify(key_ref) + " " + seg.Stringify(key_seg));
 
-      Logger::Trace("", "REF: \t" + Head(value_ref, ref.start_));
-      Logger::Trace("", "SEG: \t" + Head(value_seg));
+      // Logger::Trace("", "REF: \t" + Head(value_ref, ref.start_));
+      // Logger::Trace("", "SEG: \t" + Head(value_seg, seg.start_));
       Logger::Trace("", "REF minimizer: \t" + range_ref.Head());
       Logger::Trace("", "SEG minimizer: \t" + range_seg.Head());
+
+      if (!Verify(range_ref, range_seg)) {
+        Logger::Warn(
+            "Dna::FindDeltasFromSegments",
+            key_ref + " " + key_seg + " minimizer not matched");
+      }
 
       FindDeltasChunk(
           key_ref,

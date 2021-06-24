@@ -44,8 +44,9 @@ void DnaOverlap::Insert(const string& key_ref, const Minimizer& entry) {
 void DnaOverlap::Merge() {
   auto merge = [](const Range& base, const Range& range) {
     assert(range.start_ < range.end_);
-    Range new_base = base;
+    auto new_base = base;
     if (base) {
+      assert(base.inverted_ == range.inverted_);
       new_base.start_ = min(base.start_, range.start_);
       new_base.end_ = max(base.end_, range.end_);
     } else {
@@ -70,7 +71,8 @@ void DnaOverlap::Merge() {
         auto delta_ref = new_merged_ref.size() - merged_ref.size();
         auto delta_seg = new_merged_seg.size() - merged_seg.size();
 
-        if (FuzzyCompare(delta_ref, delta_seg, Config::OVERLAP_MAX_DIFF)) {
+        if (FuzzyCompare(delta_ref, delta_seg, Config::OVERLAP_MAX_DIFF) &&
+            Verify(new_merged_ref, new_merged_seg)) {
           merged_ref = new_merged_ref;
           merged_seg = new_merged_seg;
           ++count;
