@@ -71,7 +71,7 @@ void DnaOverlap::Merge() {
         auto delta_ref = new_merged_ref.size() - merged_ref.size();
         auto delta_seg = new_merged_seg.size() - merged_seg.size();
 
-        if (FuzzyCompare(delta_ref, delta_seg, Config::OVERLAP_MAX_DIFF) &&
+        if (FuzzyCompare(delta_ref, delta_seg, Config::MINIMIZER_MAX_DIFF) &&
             Verify(new_merged_ref, new_merged_seg)) {
           merged_ref = new_merged_ref;
           merged_seg = new_merged_seg;
