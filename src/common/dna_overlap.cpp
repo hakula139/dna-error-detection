@@ -57,50 +57,56 @@ void DnaOverlap::Merge() {
   };
 
   for (auto&& [key_ref, entries] : data_) {
-    unordered_map<string, tuple<Range, Range, size_t>> merged_overlaps;
+    using MergedOverlap = tuple<Range, Range, size_t>;
+    unordered_map<string, vector<MergedOverlap>> merged_overlaps;
 
     for (const auto& [range_ref, key_seg, range_seg] : entries) {
-      auto&& [merged_ref, merged_seg, count] = merged_overlaps[key_seg];
-      auto new_merged_ref = merge(merged_ref, range_ref);
-      auto new_merged_seg = merge(merged_seg, range_seg);
-      auto delta_ref = new_merged_ref.size() - merged_ref.size();
-      auto delta_seg = new_merged_seg.size() - merged_seg.size();
+      auto&& merged_overlaps_seg = merged_overlaps[key_seg];
+      auto merged = false;
 
-      if (FuzzyCompare(delta_ref, delta_seg, Config::OVERLAP_MAX_DIFF)) {
-        merged_ref = new_merged_ref;
-        merged_seg = new_merged_seg;
-        ++count;
-      } else {
-        Logger::Trace(
-            "DnaOverlap::Merge " + key_seg,
-            "+" + to_string(delta_ref) + " +" + to_string(delta_seg) +
-                ": deltas not matched, not merged");
+      for (auto&& [merged_ref, merged_seg, count] : merged_overlaps_seg) {
+        auto new_merged_ref = merge(merged_ref, range_ref);
+        auto new_merged_seg = merge(merged_seg, range_seg);
+        auto delta_ref = new_merged_ref.size() - merged_ref.size();
+        auto delta_seg = new_merged_seg.size() - merged_seg.size();
+
+        if (FuzzyCompare(delta_ref, delta_seg, Config::OVERLAP_MAX_DIFF)) {
+          merged_ref = new_merged_ref;
+          merged_seg = new_merged_seg;
+          ++count;
+          merged = true;
+          break;
+        }
+      }
+
+      if (!merged) {
+        merged_overlaps_seg.emplace_back(range_ref, range_seg, 1);
       }
     }
 
     entries.clear();
-    for (const auto& [key_seg, entry] : merged_overlaps) {
-      const auto& [merged_ref, merged_seg, count] = entry;
+    for (const auto& [key_seg, merged_overlaps_seg] : merged_overlaps) {
+      for (const auto& [merged_ref, merged_seg, count] : merged_overlaps_seg) {
+        auto used = count >= Config::MINIMIZER_MIN_COUNT &&
+                    merged_ref.size() >= Config::MINIMIZER_MIN_LEN &&
+                    merged_seg.size() >= Config::MINIMIZER_MIN_LEN;
 
-      auto used = count >= Config::MINIMIZER_MIN_COUNT &&
-                  merged_ref.size() >= Config::MINIMIZER_MIN_LEN &&
-                  merged_seg.size() >= Config::MINIMIZER_MIN_LEN;
+        auto log_title = string("Minimizer: ") +
+                         (merged_seg.inverted_ ? "inverted" : "not inverted");
 
-      auto log_title = string("Minimizer: ") +
-                       (merged_seg.inverted_ ? "inverted" : "not inverted");
+        if (used) {
+          entries.emplace(merged_ref, key_seg, merged_seg);
 
-      if (used) {
-        entries.emplace(merged_ref, key_seg, merged_seg);
-
-        Logger::Debug("DnaOverlap::Merge " + key_ref, log_title);
-        Logger::Debug("Minimizer count", to_string(count) + " \tused");
-        Logger::Trace("", "REF: \t" + merged_ref.Head());
-        Logger::Trace("", "SEG: \t" + merged_seg.Head());
-      } else {
-        Logger::Debug("DnaOverlap::Merge " + key_ref, log_title);
-        Logger::Debug("Minimizer count", to_string(count) + " \tnot used");
-        Logger::Trace("", "REF: \t" + merged_ref.Head());
-        Logger::Trace("", "SEG: \t" + merged_seg.Head());
+          Logger::Debug("DnaOverlap::Merge " + key_ref, log_title);
+          Logger::Debug("Minimizer count", to_string(count) + " \tused");
+          Logger::Trace("", "REF: \t" + merged_ref.Head());
+          Logger::Trace("", "SEG: \t" + merged_seg.Head());
+        } else {
+          Logger::Trace("DnaOverlap::Merge " + key_ref, log_title);
+          Logger::Trace("Minimizer count", to_string(count) + " \tnot used");
+          Logger::Trace("", "REF: \t" + merged_ref.Head());
+          Logger::Trace("", "SEG: \t" + merged_seg.Head());
+        }
       }
     }
   }
@@ -146,7 +152,7 @@ double DnaOverlap::CheckCoverage(
   auto ref_size = entries.begin()->range_ref_.value_p_->size();
   vector<int> covered(ref_size + 1);
   for (const auto& [range_ref, key_seg, range_seg] : entries) {
-    if (!key_seg.compare(0, key_sv.size(), key_sv)) continue;
+    if (key_sv.size() && !key_seg.compare(0, key_sv.size(), key_sv)) continue;
 
     auto start_padding = range_seg.start_;
     auto end_padding = range_seg.value_p_->size() - range_seg.end_;
