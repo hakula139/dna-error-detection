@@ -400,15 +400,16 @@ void Dna::FindDeltasFromSegments() {
 
       if (ins_deltas_.GetDensity(key_ref, range_ref) <= Config::NOISE_RATE) {
         ins_deltas_.Filter(key_ref, key_seg);
+      } else {
+        ins_deltas_.Merge(key_ref);
       }
       if (del_deltas_.GetDensity(key_ref, range_ref) <= Config::NOISE_RATE) {
         del_deltas_.Filter(key_ref, key_seg);
+      } else {
+        del_deltas_.Merge(key_ref);
       }
       ++progress;
     }
-
-    ins_deltas_.Merge(key_ref);
-    del_deltas_.Merge(key_ref);
   }
 }
 
