@@ -28,7 +28,7 @@ struct Config {
   static const char* LOG_PATH;
   static const char* LOG_FILENAME;
   static const char* ERROR_LOG_FILENAME;
-  static const int LOG_LEVEL;
+  static const Level LOG_LEVEL;
   static const size_t DISPLAY_SIZE;
 
   // Indexing

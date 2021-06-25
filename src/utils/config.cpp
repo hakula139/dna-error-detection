@@ -15,7 +15,7 @@ const char* Config::DELTAS_FILENAME = "sv.bed";
 const char* Config::LOG_PATH = "logs";
 const char* Config::LOG_FILENAME = "output.log";
 const char* Config::ERROR_LOG_FILENAME = "error.log";
-const int Config::LOG_LEVEL = Config::Level::DEBUG;
+const Config::Level Config::LOG_LEVEL = Config::Level::TRACE;
 const size_t Config::DISPLAY_SIZE = 100;
 
 // Indexing
@@ -46,8 +46,8 @@ const double Config::ERROR_MAX_SCORE = 5.0;
 
 // Utilities
 
-const size_t Config::GAP_MIN_DIFF = 2;
-const size_t Config::GAP_MAX_DIFF = 50;
+const size_t Config::GAP_MIN_DIFF = 0;
+const size_t Config::GAP_MAX_DIFF = 5;
 const size_t Config::OVERLAP_MIN_LEN = 30;
 const double Config::STRICT_EQUAL_RATE = 0.5;
 const double Config::FUZZY_EQUAL_RATE = 0.8;
