@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iterator>
+#include <numeric>
 #include <string>
 #include <utility>
 #include <vector>
@@ -13,13 +14,16 @@
 #include "range.h"
 #include "utils.h"
 
+using std::accumulate;
 using std::count;
+using std::fill;
 using std::max;
 using std::min;
 using std::ofstream;
 using std::pair;
 using std::prev;
 using std::string;
+using std::to_string;
 using std::vector;
 
 void DnaDelta::Print(ofstream& out_file) const {
@@ -76,6 +80,63 @@ void DnaDelta::Merge(const string& key) {
   }
 
   deltas = merged_deltas;
+}
+
+void DnaDelta::Filter(const string& key_ref, const string& key_seg) {
+  auto filter_ref = [&](vector<Minimizer>& deltas, const string& key_ref_i) {
+    for (auto delta_i = deltas.rbegin();
+         delta_i < deltas.rend() && delta_i->key_seg_ == key_seg;) {
+      const auto& range_ref = (delta_i++)->range_ref_;
+      if (range_ref.size() < Config::DELTA_MIN_LEN) {
+        deltas.erase(delta_i.base());
+      } else {
+        Logger::Debug(
+            "DnaDelta::IgnoreSmallDeltas",
+            "Saved: \t" + type_ + " " + range_ref.Stringify(key_ref_i));
+      }
+    }
+  };
+
+  if (key_ref.empty()) {
+    for (auto&& [key_ref_i, deltas] : data_) {
+      filter_ref(deltas, key_ref_i);
+    }
+  } else {
+    auto&& deltas = data_[key_ref];
+    filter_ref(deltas, key_ref);
+  }
+}
+
+double DnaDelta::GetDensity(const string& key, const Range& range) {
+  auto& deltas = data_[key];
+  auto& density = density_[key];
+  fill(density.begin(), density.end(), 0);
+
+  auto min_start = density.size();
+  auto max_end = 0ul;
+  for (const auto& delta : deltas) {
+    if (!StrictOverlap(delta.range_ref_, range)) continue;
+    const auto& delta_range = delta.range_ref_;
+
+    ++density[delta_range.start_];
+    --density[delta_range.end_];
+    min_start = min(min_start, delta_range.start_);
+    max_end = max(max_end, delta_range.end_);
+  }
+
+  for (auto i = min_start; i <= max_end; ++i) {
+    density[i + 1] += density[i];
+    density[i] = (density[i] > 0);
+  }
+
+  auto total_density = accumulate(
+      density.begin() + range.start_, density.begin() + range.end_, 0.0);
+  total_density /= Config::DENSITY_WINDOW_SIZE;
+  Logger::Debug(
+      "DnaDelta::GetDensity",
+      range.Stringify(key) + " " + to_string(total_density));
+
+  return total_density;
 }
 
 bool DnaDelta::Combine(

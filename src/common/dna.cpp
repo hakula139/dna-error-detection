@@ -50,9 +50,14 @@ bool Dna::Import(const string& filename) {
     string key, value;
 
     in_file >> key >> value;
-    if (!key.length()) break;
+    if (key.length() <= 1) break;
 
-    data_[key.substr(1)] = value;
+    key = key.substr(1);
+    data_[key] = value;
+
+    auto density_size = value.size() + Config::PADDING_SIZE;
+    ins_deltas_.density_[key].resize(density_size);
+    del_deltas_.density_[key].resize(density_size);
   }
 
   in_file.close();
@@ -368,17 +373,12 @@ void Dna::FindDeltasFromSegments() {
 
       const auto& value_seg = *(range_seg.value_p_);
 
-      auto ref = range_ref;
-      auto seg = range_seg;
-
       Logger::Debug(
           "Dna::FindDeltasFromSegments",
-          ref.Stringify(key_ref) + " " + seg.Stringify(key_seg));
+          range_ref.Stringify(key_ref) + " " + range_seg.Stringify(key_seg));
 
-      // Logger::Trace("", "REF: \t" + Head(value_ref, ref.start_));
-      // Logger::Trace("", "SEG: \t" + Head(value_seg, seg.start_));
-      Logger::Trace("", "REF minimizer: \t" + range_ref.Head());
-      Logger::Trace("", "SEG minimizer: \t" + range_seg.Head());
+      Logger::Trace("", "REF: \t" + range_ref.Head());
+      Logger::Trace("", "SEG: \t" + range_seg.Head());
 
       if (!Verify(range_ref, range_seg)) {
         Logger::Warn(
@@ -389,16 +389,21 @@ void Dna::FindDeltasFromSegments() {
       FindDeltasChunk(
           key_ref,
           value_ref,
-          ref.start_,
-          ref.size(),
+          range_ref.start_,
+          range_ref.size(),
           key_seg,
           value_seg,
-          seg.start_,
-          seg.size(),
+          range_seg.start_,
+          range_seg.size(),
           false,
           false);
 
-      IgnoreSmallDeltas(key_ref, key_seg);
+      if (ins_deltas_.GetDensity(key_ref, range_ref) <= Config::NOISE_RATE) {
+        ins_deltas_.Filter(key_ref, key_seg);
+      }
+      if (del_deltas_.GetDensity(key_ref, range_ref) <= Config::NOISE_RATE) {
+        del_deltas_.Filter(key_ref, key_seg);
+      }
       ++progress;
     }
 
@@ -596,35 +601,8 @@ Point Dna::FindDeltasChunk(
 }
 
 void Dna::IgnoreSmallDeltas(const string& key_ref, const string& key_seg) {
-  auto filter = [&](DnaDelta& all_deltas) {
-    auto type = all_deltas.type_;
-
-    auto filter_ref = [&](vector<Minimizer>& deltas, const string& key_ref_i) {
-      for (auto delta_i = deltas.rbegin();
-           delta_i < deltas.rend() && delta_i->key_seg_ == key_seg;) {
-        const auto& range_ref = (delta_i++)->range_ref_;
-        if (range_ref.size() < Config::DELTA_MIN_LEN) {
-          deltas.erase(delta_i.base());
-        } else {
-          Logger::Debug(
-              "DnaDelta::IgnoreSmallDeltas",
-              "Saved: \t" + type + " " + range_ref.Stringify(key_ref_i));
-        }
-      }
-    };
-
-    if (key_ref.empty()) {
-      for (auto&& [key_ref_i, deltas] : all_deltas.data_) {
-        filter_ref(deltas, key_ref_i);
-      }
-    } else {
-      auto&& deltas = all_deltas.data_[key_ref];
-      filter_ref(deltas, key_ref);
-    }
-  };
-
-  filter(ins_deltas_);
-  filter(del_deltas_);
+  ins_deltas_.Filter(key_ref, key_seg);
+  del_deltas_.Filter(key_ref, key_seg);
 
   if (key_ref.empty()) {
     Logger::Info("Dna::IgnoreSmallDeltas", "Done");

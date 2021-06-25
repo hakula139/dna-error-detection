@@ -25,15 +25,18 @@ class DnaDelta : public DnaDeltaBase {
   void Print(std::ofstream& out_file) const override;
   void Set(const std::string& key, const Minimizer& value);
   void Merge(const std::string& key);
+  void Filter(const std::string& key_ref, const std::string& key_seg);
 
   friend class Dna;
 
  protected:
+  double GetDensity(const std::string& key, const Range& range);
   bool Combine(
       Minimizer* base_p, const Minimizer* value_p, bool strict = true) const;
 
  private:
   std::unordered_map<std::string, std::vector<Minimizer>> data_;
+  std::unordered_map<std::string, std::vector<int>> density_;
 };
 
 class DnaMultiDelta : public DnaDeltaBase {
