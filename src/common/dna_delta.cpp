@@ -73,7 +73,7 @@ void DnaDelta::Merge(
   for (const auto& delta : deltas) {
     auto merged = false;
     if (delta.key_seg_ == key_seg) {
-      if (range && !StrictOverlap(delta.range_ref_, range)) {
+      if (range && !FuzzyOverlap(delta.range_ref_, range)) {
         continue;
       }
       for (auto&& merged_delta : merged_deltas) {
@@ -165,7 +165,8 @@ double DnaDelta::GetDensity(
         delta_range.start_ = i - density.begin() + 1ul;
       }
       delta_range.end_ = i - density.begin() + window_size + 1ul;
-    } else if (delta_range) {
+    } else if (
+        cur_density < Config::SIGNAL_RATE - Config::NOISE_RATE && delta_range) {
       delta_ranges_p->emplace_back(move(delta_range));
       delta_range = Range{};
     }
