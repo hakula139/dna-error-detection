@@ -10,6 +10,7 @@
       - [1.2.2 合并 minimizer](#122-合并-minimizer)
       - [1.2.3 匹配 ref 链和 sv 链](#123-匹配-ref-链和-sv-链)
     - [1.3 查找 SV 片段](#13-查找-sv-片段)
+  - [2. 运行代码](#2-运行代码)
 
 ## 1. 解题思路
 
@@ -78,5 +79,21 @@
 具体逻辑可参见 [src/dna.cpp](../src/dna.cpp) 中函数 `Dna::FindDeltasFromSegments` 的实现。
 
 接下来就是调整参数的工作了，在配置文件 [src/utils/config.cpp](../src/utils/config.cpp) 中有大量可以调节的参数，其中比较重要的参数有 `SIGNAL_RATE`, `DENSITY_WINDOW_SIZE`, `DELTA_MIN_LEN`, `SNAKE_MIN_LEN`, `GAP_MIN_DIFF` 等。由于时间关系，没有很多时间用来调参了，因此最后的实验结果尚不理想。目前在 Task 2 上的累计耗时可参见页首的 wakatime 徽章。
+
+## 2. 运行代码
+
+本项目使用 C++17 实现，要求使用 gcc 版本 **≥ 9.0（不支持 8.0 及以下版本）**。本项目已于 Ubuntu 18.04.5 LTS (5.4.72-microsoft-standard-WSL2) + gcc 10.3.0 环境下通过测试，Task 2 数据生成的 `sv.bed` 文件位于 [tests/test_2/sv.bed](../tests/test_2/sv.bed)。
+
+为了方便进行编译，本项目利用 GNU Make 编写了编译脚本。可用指令如下：
+
+- `make`：构建项目
+- `make help`：显示参数及其用法
+- `make run`：完整启动算法程序
+- `make index`：只创建 $\textrm{ref}$ 的索引
+- `make minimizer`：只生成 $\textrm{minimizer}$
+- `make start`：只查找 SV 片段
+- `make clean`：清除构建文件
+
+Makefile 中默认使用 g++ 作为编译器，如需改动，可以在 [Makefile](../Makefile) 文件中对应修改。Windows 环境下，推荐使用 Windows Subsystem for Linux (WSL)。
 
 [^1]: [Heng Li. Minimap2: pairwise alignment for nucleotide sequences. Bioinformatics, 34, 18, 2018: 3094–3100.](https://doi.org/10.1093/bioinformatics/bty191)
