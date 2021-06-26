@@ -71,13 +71,11 @@ void DnaDelta::Merge(
   vector<Minimizer> merged_deltas;
 
   for (const auto& delta : deltas) {
-    if (delta.key_seg_ == key_seg && range &&
-        !StrictOverlap(delta.range_ref_, range)) {
-      continue;
-    }
-
     auto merged = false;
     if (delta.key_seg_ == key_seg) {
+      if (range && !StrictOverlap(delta.range_ref_, range)) {
+        continue;
+      }
       for (auto&& merged_delta : merged_deltas) {
         if (Combine(&merged_delta, &delta, false)) {
           merged = true;
