@@ -1,6 +1,7 @@
 #include "dna_delta.h"
 
 #include <algorithm>
+#include <cassert>
 #include <fstream>
 #include <iterator>
 #include <numeric>
@@ -19,6 +20,7 @@ using std::count;
 using std::fill;
 using std::max;
 using std::min;
+using std::move;
 using std::next;
 using std::ofstream;
 using std::pair;
@@ -63,11 +65,12 @@ void DnaDelta::Set(const string& key, const Minimizer& value) {
   }
 }
 
-void DnaDelta::Merge(const string& key) {
+void DnaDelta::Merge(const string& key, const Range& range) {
   auto& deltas = data_[key];
   vector<Minimizer> merged_deltas;
 
   for (const auto& delta : deltas) {
+    if (range && !StrictOverlap(delta.range_ref_, range)) continue;
     auto merged = false;
     for (auto&& merged_delta : merged_deltas) {
       if (Combine(&merged_delta, &delta, false)) {
@@ -96,7 +99,7 @@ void DnaDelta::Filter(const string& key_ref, const string& key_seg) {
         delta_i = deltas.erase(delta_i);
       } else {
         Logger::Debug(
-            "DnaDelta::IgnoreSmallDeltas",
+            "DnaDelta::Filter",
             "Saved: \t" + type_ + " " + range_ref.Stringify(key_ref_i));
       }
     }
@@ -112,7 +115,8 @@ void DnaDelta::Filter(const string& key_ref, const string& key_seg) {
   }
 }
 
-double DnaDelta::GetDensity(const string& key, const Range& range) {
+double DnaDelta::GetDensity(
+    const string& key, const Range& range, vector<Range>* delta_ranges_p) {
   auto& deltas = data_[key];
   auto& density = density_[key];
 
@@ -144,10 +148,25 @@ double DnaDelta::GetDensity(const string& key, const Range& range) {
   auto window_size = Config::DENSITY_WINDOW_SIZE;
   auto sum = accumulate(start, start + window_size - 1, 0.0);
   auto max_density = sum / window_size;
+  Range delta_range;
+
   for (auto i = start + window_size - 1; i < end - window_size; ++i) {
     sum += (i >= start + window_size) ? *i - *(i - window_size) : *i;
     auto cur_density = sum / window_size;
     max_density = max(max_density, cur_density);
+
+    if (cur_density >= Config::SIGNAL_RATE) {
+      if (!delta_range.start_) {
+        delta_range.start_ = i - density.begin() + 1ul;
+      }
+      delta_range.end_ = i - density.begin() + window_size + 1ul;
+    } else if (delta_range) {
+      delta_ranges_p->emplace_back(move(delta_range));
+      delta_range = Range{};
+    }
+  }
+  if (delta_range) {
+    delta_ranges_p->emplace_back(move(delta_range));
   }
 
   Logger::Debug(
@@ -186,6 +205,7 @@ bool DnaDelta::Combine(
         auto j = start_pos + i;
         if (j >= new_value_seg_p->size()) break;
         if (value_seg[i] != 'N') {
+          assert(string("ATCG").find(value_seg[i]) != string::npos);
           (*new_value_seg_p)[j] = value_seg[i];
         }
       }

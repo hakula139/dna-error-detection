@@ -48,6 +48,7 @@ struct Config {
 
   static const size_t DENSITY_WINDOW_SIZE;
   static const double NOISE_RATE;
+  static const double SIGNAL_RATE;
   static const size_t DELTA_IGNORE_LEN;
   static const size_t DELTA_MIN_LEN;
   static const size_t DELTA_MAX_LEN;

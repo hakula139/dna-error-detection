@@ -13,6 +13,7 @@
 class DnaDeltaBase {
  public:
   explicit DnaDeltaBase(const std::string& type) : type_(type) {}
+
   virtual void Print(std::ofstream& out_file) const = 0;
 
  protected:
@@ -22,15 +23,19 @@ class DnaDeltaBase {
 class DnaDelta : public DnaDeltaBase {
  public:
   explicit DnaDelta(const std::string& type) : DnaDeltaBase{type} {}
+
   void Print(std::ofstream& out_file) const override;
   void Set(const std::string& key, const Minimizer& value);
-  void Merge(const std::string& key);
+  void Merge(const std::string& key, const Range& range = {});
   void Filter(const std::string& key_ref, const std::string& key_seg);
+  double GetDensity(
+      const std::string& key,
+      const Range& range,
+      std::vector<Range>* delta_ranges_p);
 
   friend class Dna;
 
  protected:
-  double GetDensity(const std::string& key, const Range& range);
   bool Combine(
       Minimizer* base_p, const Minimizer* value_p, bool strict = true) const;
 
@@ -42,6 +47,7 @@ class DnaDelta : public DnaDeltaBase {
 class DnaMultiDelta : public DnaDeltaBase {
  public:
   explicit DnaMultiDelta(const std::string& type) : DnaDeltaBase{type} {}
+
   void Print(std::ofstream& out_file) const override;
   void Set(
       const std::string& key1,

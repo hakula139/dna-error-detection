@@ -15,7 +15,7 @@ const char* Config::DELTAS_FILENAME = "sv.bed";
 const char* Config::LOG_PATH = "logs";
 const char* Config::LOG_FILENAME = "output.log";
 const char* Config::ERROR_LOG_FILENAME = "error.log";
-const Config::Level Config::LOG_LEVEL = Config::Level::TRACE;
+const Config::Level Config::LOG_LEVEL = Config::Level::DEBUG;
 const size_t Config::DISPLAY_SIZE = 100;
 
 // Indexing
@@ -35,19 +35,20 @@ const size_t Config::MINIMIZER_MAX_DIFF = 2500;
 
 const size_t Config::DENSITY_WINDOW_SIZE = 50;
 const double Config::NOISE_RATE = 0.25;
+const double Config::SIGNAL_RATE = 0.80;
 const size_t Config::DELTA_IGNORE_LEN = 0;
 const size_t Config::DELTA_MIN_LEN = 50;
 const size_t Config::DELTA_MAX_LEN = 1000;
 const size_t Config::PADDING_SIZE = 60000;
-const size_t Config::SNAKE_MIN_LEN = 0;
+const size_t Config::SNAKE_MIN_LEN = 2;
 const int Config::DP_PENALTY = 2;
 const double Config::MYERS_PENALTY = 0.25;
 const double Config::ERROR_MAX_SCORE = 5.0;
 
 // Utilities
 
-const size_t Config::GAP_MIN_DIFF = 0;
-const size_t Config::GAP_MAX_DIFF = 5;
+const size_t Config::GAP_MIN_DIFF = 2;
+const size_t Config::GAP_MAX_DIFF = 10;
 const size_t Config::OVERLAP_MIN_LEN = 30;
 const double Config::STRICT_EQUAL_RATE = 0.5;
 const double Config::FUZZY_EQUAL_RATE = 0.8;

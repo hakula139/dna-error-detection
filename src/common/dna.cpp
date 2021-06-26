@@ -398,18 +398,28 @@ void Dna::FindDeltasFromSegments() {
           false,
           false);
 
-      if (ins_deltas_.GetDensity(key_ref, range_ref) <= Config::NOISE_RATE) {
-        ins_deltas_.Filter(key_ref, key_seg);
-      } else {
-        ins_deltas_.Merge(key_ref);
-      }
-      if (del_deltas_.GetDensity(key_ref, range_ref) <= Config::NOISE_RATE) {
-        del_deltas_.Filter(key_ref, key_seg);
-      } else {
-        del_deltas_.Merge(key_ref);
-      }
+      auto merge = [](DnaDelta& deltas,
+                      const string& key_ref,
+                      const Minimizer& minimizer) {
+        const auto& [range_ref, key_seg, range_seg] = minimizer;
+        vector<Range> delta_ranges;
+
+        auto density = deltas.GetDensity(key_ref, range_ref, &delta_ranges);
+        if (density > Config::SIGNAL_RATE) {
+          for (const auto& delta_range : delta_ranges) {
+            deltas.Merge(key_ref, delta_range);
+          }
+        }
+        deltas.Filter(key_ref, key_seg);
+      };
+
+      merge(ins_deltas_, key_ref, minimizer);
+      merge(del_deltas_, key_ref, minimizer);
       ++progress;
     }
+
+    ins_deltas_.Merge(key_ref);
+    del_deltas_.Merge(key_ref);
   }
 }
 
