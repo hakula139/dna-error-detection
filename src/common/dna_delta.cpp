@@ -72,7 +72,7 @@ void DnaDelta::Merge(
 
   for (const auto& delta : deltas) {
     auto merged = false;
-    if (delta.key_seg_ == key_seg) {
+    if (key_seg.empty() || delta.key_seg_ == key_seg) {
       if (range && !FuzzyOverlap(delta.range_ref_, range)) {
         continue;
       }

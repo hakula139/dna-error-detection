@@ -35,7 +35,7 @@ const size_t Config::MINIMIZER_MAX_DIFF = 2500;
 
 const size_t Config::DENSITY_WINDOW_SIZE = 40;
 const double Config::NOISE_RATE = 0.15;
-const double Config::SIGNAL_RATE = 0.75;
+const double Config::SIGNAL_RATE = 0.60;
 const size_t Config::DELTA_IGNORE_LEN = 0;
 const size_t Config::DELTA_MIN_LEN = 50;
 const size_t Config::DELTA_MAX_LEN = 1000;
