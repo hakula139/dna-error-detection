@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
   unordered_map<char, bool> arg_flags;
   if (!ReadArgs(&arg_flags, argc, argv)) {
     ShowManual();
-    return EXIT_FAILURE;
+    return EXIT_SUCCESS;
   }
 
   fs::path path(Config::PATH);

@@ -22,11 +22,14 @@ CXXFLAGS  := -g -Wall -O3 -std=c++17 $(INC_FLAGS) -MMD -MP
 MKDIR     := mkdir -p
 RM        := rm -rf
 
-.PHONY: all test run index merge start clean
+.PHONY: all test help run index minimizer start clean
 
 all: $(BIN_DIR)/$(TARGET)
 
 test: $(BIN_DIR)/$(TEST)
+	@$<
+
+help: $(BIN_DIR)/$(TARGET)
 	@$<
 
 run: $(BIN_DIR)/$(TARGET)
@@ -35,7 +38,7 @@ run: $(BIN_DIR)/$(TARGET)
 index: $(BIN_DIR)/$(TARGET)
 	@$< -i
 
-merge: $(BIN_DIR)/$(TARGET)
+minimizer: $(BIN_DIR)/$(TARGET)
 	@$< -m
 
 start: $(BIN_DIR)/$(TARGET)
