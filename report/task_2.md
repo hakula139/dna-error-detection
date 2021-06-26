@@ -7,15 +7,16 @@
     - [1.1 建立索引](#11-建立索引)
     - [1.2 字符串片段的模糊匹配](#12-字符串片段的模糊匹配)
       - [1.2.1 生成 minimizer](#121-生成-minimizer)
-    - [1.2.2 合并 minimizer](#122-合并-minimizer)
-    - [1.2.3 匹配 ref 链和 sv 链](#123-匹配-ref-链和-sv-链)
+      - [1.2.2 合并 minimizer](#122-合并-minimizer)
+      - [1.2.3 匹配 ref 链和 sv 链](#123-匹配-ref-链和-sv-链)
+    - [1.3 查找 SV 片段](#13-查找-sv-片段)
 
 ## 1. 解题思路
 
 在 Task 1 的基础上，本题的主要难点分为两部分：
 
 1. 如何将 `long.fasta` 中的 $\textrm{read}$ 片段快速匹配到参考字符串 $\textrm{ref}$ 上
-2. 如何在 $\textrm{read}$ 片段平均 15% 的噪音干扰下，准确找到 SV 片段
+2. 如何在 $\textrm{read}$ 片段平均 $15\%$ 的噪音干扰下，准确找到 SV 片段
 
 这里我们参考了 Minimap2 [^1] 的论文思路，根据实际情况进行了简化和调整。算法核心分为以下三个步骤：
 
@@ -43,7 +44,7 @@
 
 具体逻辑可参见 [src/dna.cpp](../src/dna.cpp) 中函数 `Dna::FindOverlaps` 的实现。同时，我们提供了 `Dna::PrintOverlaps` 函数用于将 $\textrm{minimizer}$ 导出成文件，以及 `Dna::ImportOverlaps` 函数用于从文件中读取 $\textrm{minimizer}$。
 
-### 1.2.2 合并 minimizer
+#### 1.2.2 合并 minimizer
 
 生成 $\textrm{minimizer}$ 后，我们需要对它们进行过滤及合并。其中，过滤指的是将错误匹配的 $\textrm{minimizer}$ 移除，合并指的是将两个 $\textrm{minimizer}$ 根据其 $\textrm{range}_\textrm{ref}$ 的范围 $[i_1, i_1+k)$, $[i_2, i_2+k)$ 进行合并。
 
@@ -55,7 +56,7 @@
 
 具体逻辑可参见 [src/dna_overlap.cpp](../src/dna_overlap.cpp) 中函数 `DnaOverlap::Merge` 的实现。
 
-### 1.2.3 匹配 ref 链和 sv 链
+#### 1.2.3 匹配 ref 链和 sv 链
 
 由于 `long.fasta` 中同时包含了多条 $\textrm{sv}$ 链的采样，我们需要从中找到与 $\textrm{ref}$ 链匹配的 $\textrm{sv}$ 链。这里我们根据 $\textrm{minimizer}$ 在 $\textrm{ref}$ 上的覆盖率，选择覆盖率最高的 $\textrm{sv}$ 链与 $\textrm{ref}$ 链相匹配。
 
@@ -65,5 +66,17 @@
 - `NC_014616.1`: $99.17\%$ (`S2`)
 
 具体逻辑可参见 [src/dna_overlap.cpp](../src/dna_overlap.cpp) 中函数 `DnaOverlap::SelectChain` 和 `DnaOverlap::CheckCoverage` 的实现。
+
+### 1.3 查找 SV 片段
+
+最终，我们将问题化归到了类似于 Task 1 的情形。根据每个 $\textrm{minimizer}$ 中保存的 $\textrm{range}_\textrm{ref}$ 和 $\textrm{range}_\textrm{read}$，我们可以得到两个需要比较的字符串。接下来复用 `Dna::FindDeltasChunk` 函数的逻辑即可。
+
+但是，由于 Task 2 的数据含有一定量的噪声，原先对 Task 1 的数据处理方式不再适用于 Task 2，我们需要重新研究如何处理通过 `Dna::FindDeltasChunk` 函数得到的 SV。
+
+具体来说，由于噪声的存在，SV 变得更加零散，同时我们难以区分一个 SV 是真正的 SV 还是只是噪声。我们曾经尝试过利用 SV 的间隔来判断一个 SV 是否是噪声，也尝试过魔改 Myers' Diff Algorithm 来消除部分噪声，但效果都不理想。最后经过助教的提示，我们调整了方式，使用一定范围内 SV 的密度来估计 SV 可能存在的范围。这是因为如果是纯噪声，SV 的密度大约会在 $15\%$ 左右，而对于真实的 SV，其密度往往在 $50\%$ 以上。通过观察 SV 密度的变化，就有可能判断 SV 的位置。相关逻辑参见 [src/dna_delta.cpp](../src/dna_delta.cpp) 中函数 `DnaDelta::GetDensity` 的实现。
+
+具体逻辑可参见 [src/dna.cpp](../src/dna.cpp) 中函数 `Dna::FindDeltasFromSegments` 的实现。
+
+接下来就是调整参数的工作了，在配置文件 [src/utils/config.cpp](../src/utils/config.cpp) 中有大量可以调节的参数，其中比较重要的参数有 `SIGNAL_RATE`, `DENSITY_WINDOW_SIZE`, `DELTA_MIN_LEN`, `SNAKE_MIN_LEN`, `GAP_MIN_DIFF` 等。由于时间关系，没有很多时间用来调参了，因此最后的实验结果尚不理想。目前在 Task 2 上的累计耗时可参见页首的 wakatime 徽章。
 
 [^1]: [Heng Li. Minimap2: pairwise alignment for nucleotide sequences. Bioinformatics, 34, 18, 2018: 3094–3100.](https://doi.org/10.1093/bioinformatics/bty191)
