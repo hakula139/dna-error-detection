@@ -34,10 +34,10 @@ const size_t Config::MINIMIZER_MAX_DIFF = 2500;
 // Finding deltas
 
 const size_t Config::DENSITY_WINDOW_SIZE = 40;
-const double Config::NOISE_RATE = 0.20;
+const double Config::NOISE_RATE = 0.25;
 const double Config::SIGNAL_RATE = 0.50;
 const size_t Config::DELTA_IGNORE_LEN = 0;
-const size_t Config::DELTA_MIN_LEN = 50;
+const size_t Config::DELTA_MIN_LEN = 100;
 const size_t Config::DELTA_MAX_LEN = 1000;
 const size_t Config::PADDING_SIZE = 60000;
 const size_t Config::SNAKE_MIN_LEN = 3;
@@ -47,7 +47,7 @@ const double Config::ERROR_MAX_SCORE = 0.0;
 
 // Utilities
 
-const size_t Config::GAP_MIN_DIFF = 1;
+const size_t Config::GAP_MIN_DIFF = 0;
 const size_t Config::GAP_MAX_DIFF = 10;
 const size_t Config::OVERLAP_MIN_LEN = 30;
 const double Config::STRICT_EQUAL_RATE = 0.5;
