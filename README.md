@@ -5,6 +5,7 @@
 An error detection algorithm for DNA sequences, written in modern C++.
 
 - [Task 1 report](./report/task_1.md)
+- [Task 2 report](./report/task_2.md)
 
 ## Getting Started
 
@@ -18,15 +19,16 @@ To set up the environment, you need to have the following dependencies installed
 
 ### Building
 
-- `make`: build the project using GNU make, a Unix-like environment is required.
+- `make`: Build the project using GNU make, a Unix-like environment is required.
 
 ### Usages
 
-- `make run`: run all preprocessing tasks and start the main process.
-- `make index`: create an index of reference data only.
-- `make merge`: merge PacBio subsequences only.
-- `make start`: start the main process only.
+- `make help`: Show arguments and usages.
+- `make run`: Run all preprocessing tasks and start the main process.
+- `make index`: Create an index of reference data only.
+- `make minimizer`: Find minimizers only.
+- `make start`: Find sv deltas only.
 
 ### Clean
 
-- `make clean`: remove all building files.
+- `make clean`: Remove all building files.
