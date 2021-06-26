@@ -35,12 +35,12 @@ const size_t Config::MINIMIZER_MAX_DIFF = 2500;
 
 const size_t Config::DENSITY_WINDOW_SIZE = 50;
 const double Config::NOISE_RATE = 0.25;
-const double Config::SIGNAL_RATE = 0.80;
+const double Config::SIGNAL_RATE = 0.70;
 const size_t Config::DELTA_IGNORE_LEN = 0;
 const size_t Config::DELTA_MIN_LEN = 50;
 const size_t Config::DELTA_MAX_LEN = 1000;
 const size_t Config::PADDING_SIZE = 60000;
-const size_t Config::SNAKE_MIN_LEN = 2;
+const size_t Config::SNAKE_MIN_LEN = 0;
 const int Config::DP_PENALTY = 2;
 const double Config::MYERS_PENALTY = 0.25;
 const double Config::ERROR_MAX_SCORE = 5.0;

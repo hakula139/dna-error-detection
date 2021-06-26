@@ -65,17 +65,24 @@ void DnaDelta::Set(const string& key, const Minimizer& value) {
   }
 }
 
-void DnaDelta::Merge(const string& key, const Range& range) {
-  auto& deltas = data_[key];
+void DnaDelta::Merge(
+    const string& key_ref, const string& key_seg, const Range& range) {
+  auto& deltas = data_[key_ref];
   vector<Minimizer> merged_deltas;
 
   for (const auto& delta : deltas) {
-    if (range && !StrictOverlap(delta.range_ref_, range)) continue;
+    if (delta.key_seg_ == key_seg && range &&
+        !StrictOverlap(delta.range_ref_, range)) {
+      continue;
+    }
+
     auto merged = false;
-    for (auto&& merged_delta : merged_deltas) {
-      if (Combine(&merged_delta, &delta, false)) {
-        merged = true;
-        break;
+    if (delta.key_seg_ == key_seg) {
+      for (auto&& merged_delta : merged_deltas) {
+        if (Combine(&merged_delta, &delta, false)) {
+          merged = true;
+          break;
+        }
       }
     }
     if (!merged) {
@@ -182,7 +189,7 @@ bool DnaDelta::Combine(
   const auto& [range_ref, key_seg, range_seg] = *value_p;
 
   if (strict && !StrictOverlap(base_range_ref, range_ref)) return false;
-  if (!strict && !FuzzyOverlap(base_range_ref, range_ref)) return false;
+  // if (!strict && !FuzzyOverlap(base_range_ref, range_ref)) return false;
 
   auto new_ref_start = min(base_range_ref.start_, range_ref.start_);
   auto new_ref_end = max(base_range_ref.end_, range_ref.end_);

@@ -26,7 +26,10 @@ class DnaDelta : public DnaDeltaBase {
 
   void Print(std::ofstream& out_file) const override;
   void Set(const std::string& key, const Minimizer& value);
-  void Merge(const std::string& key, const Range& range = {});
+  void Merge(
+      const std::string& key_ref,
+      const std::string& key_seg = "",
+      const Range& range = {});
   void Filter(const std::string& key_ref, const std::string& key_seg);
   double GetDensity(
       const std::string& key,

@@ -407,7 +407,7 @@ void Dna::FindDeltasFromSegments() {
         auto density = deltas.GetDensity(key_ref, range_ref, &delta_ranges);
         if (density > Config::SIGNAL_RATE) {
           for (const auto& delta_range : delta_ranges) {
-            deltas.Merge(key_ref, delta_range);
+            deltas.Merge(key_ref, key_seg, delta_range);
           }
         }
         deltas.Filter(key_ref, key_seg);
