@@ -161,10 +161,11 @@ double DnaDelta::GetDensity(
     max_density = max(max_density, cur_density);
 
     if (cur_density >= Config::SIGNAL_RATE) {
+      auto cur_start = i - density.begin() - window_size + 1ul;
       if (!delta_range.start_) {
-        delta_range.start_ = i - density.begin() + 1ul;
+        delta_range.start_ = cur_start;
       }
-      delta_range.end_ = i - density.begin() + window_size + 1ul;
+      delta_range.end_ = cur_start + window_size;
     } else if (
         cur_density < Config::SIGNAL_RATE - Config::NOISE_RATE && delta_range) {
       delta_ranges_p->emplace_back(move(delta_range));
