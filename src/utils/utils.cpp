@@ -169,8 +169,8 @@ void ShowManual() {
        << "Options and arguments:\n"
        << "-a\t : run all preprocessing tasks and start the main process\n"
        << "-i\t : create an index of reference data only\n"
-       << "-m\t : merge PacBio subsequences only\n"
-       << "-s\t : start the main process only\n";
+       << "-m\t : find minimizers only\n"
+       << "-s\t : find sv deltas only\n";
 }
 
 bool ReadArgs(unordered_map<char, bool>* arg_flags, int argc, char** argv) {

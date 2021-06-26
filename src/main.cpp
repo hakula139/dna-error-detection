@@ -33,18 +33,18 @@ int main(int argc, char** argv) {
 
   Dna ref, sv, segments;
 
-  // Read data
+  // Read reference data.
   if (!ref.Import(path / ref_filename)) {
     return EXIT_FAILURE;
   }
 
-  // Create an index of reference data
+  // Create an index of reference data.
   if (arg_flags['i']) {
     ref.CreateIndex();
     ref.PrintIndex(path / index_filename);
   }
 
-  // Merge PacBio subsequences
+  // Find minimizers to match the PacBio subsequences to reference data.
   if (arg_flags['m']) {
     if (!ref.ImportIndex(path / index_filename)) {
       return EXIT_FAILURE;
@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
     segments.PrintOverlaps(path / overlaps_filename);
   }
 
-  // Main process
+  // Find SV deltas based on the reference data.
   if (arg_flags['s']) {
     if (!sv.Import(path / sv_filename)) {
       if (!segments.Import(path / seg_filename)) {
