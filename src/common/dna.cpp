@@ -679,9 +679,9 @@ void Dna::FindInvDeltas() {
           auto&& [range_ref_j, key_seg_j, range_seg_j] = *delta_j;
 
           if (FuzzyCompare(range_ref_i, range_ref_j)) {
-            auto size = range_ref_i.size();
-            range_ref_i.start_ = range_ref_j.start_;
-            range_ref_i.end_ = range_ref_j.start_ + size;
+            // auto size = range_ref_i.size();
+            // range_ref_i.start_ = range_ref_j.start_;
+            // range_ref_i.end_ = range_ref_j.start_ + size;
 
             if (FuzzyCompare(range_seg_i.get(), Invert(range_seg_j.get()))) {
               inv_deltas_.Set(key_ref, *delta_j);

@@ -40,7 +40,9 @@ pair<Range, Range> LongestCommonSubstring(
   Range str1_substr, str2_substr;
   for (auto i = 1ul; i <= len1; ++i) {
     for (auto j = 1ul; j <= len2; ++j) {
-      if (str1[i - 1] == str2[j - 1]) {
+      auto c1 = str1[i - 1];
+      auto c2 = str2[j - 1];
+      if (c1 == c2 || c1 == 'N' || c2 == 'N') {
         dp[i][j] = dp[i - 1][j - 1] + 1;
         if (dp[i][j] > substr_len) {
           substr_len = dp[i][j];
@@ -91,7 +93,9 @@ vector<vector<pair<int, Direction>>> LongestCommonSubsequence(
             }
           };
 
-      if (str1[i - 1] == str2[j - 1]) {
+      auto c1 = str1[i - 1];
+      auto c2 = str2[j - 1];
+      if (c1 == c2 || c1 == 'N' || c2 == 'N') {
         get_cur(dp[i - 1][j - 1], Direction::TOP_LEFT);
       }
       if (dp[i - 1][j] > dp[i][j - 1]) {
