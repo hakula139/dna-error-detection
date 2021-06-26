@@ -395,8 +395,8 @@ void Dna::FindDeltasFromSegments() {
           value_seg,
           range_seg.start_,
           range_seg.size(),
-          false,
-          false);
+          true,
+          true);
 
       auto merge = [](DnaDelta& deltas,
                       const string& key_ref,
