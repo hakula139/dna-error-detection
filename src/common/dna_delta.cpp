@@ -73,7 +73,7 @@ void DnaDelta::Merge(
   for (const auto& delta : deltas) {
     auto merged = false;
     if (key_seg.empty() || delta.key_seg_ == key_seg) {
-      if (range && !FuzzyOverlap(delta.range_ref_, range)) {
+      if (range && range.Contains(delta.range_ref_)) {
         continue;
       }
       for (auto&& merged_delta : merged_deltas) {
@@ -94,7 +94,8 @@ void DnaDelta::Merge(
 void DnaDelta::Filter(const string& key_ref, const string& key_seg) {
   auto filter_ref = [&](vector<Minimizer>& deltas, const string& key_ref_i) {
     for (auto delta_i = deltas.end() - 1;
-         delta_i >= deltas.begin() && delta_i->key_seg_ == key_seg;
+         delta_i >= deltas.begin() &&
+         (delta_i->key_seg_ == key_seg || delta_i->key_seg_.empty());
          --delta_i) {
       auto&& [range_ref, key_seg_i, range_seg] = *delta_i;
       if (range_ref.size() < Config::DELTA_MIN_LEN ||
@@ -106,7 +107,7 @@ void DnaDelta::Filter(const string& key_ref, const string& key_seg) {
       } else {
         Logger::Debug(
             "DnaDelta::Filter",
-            "Saved: \t" + type_ + " " + range_ref.Stringify(key_ref_i));
+            "Saved:   \t" + type_ + " " + range_ref.Stringify(key_ref_i));
       }
     }
   };
@@ -134,8 +135,8 @@ double DnaDelta::GetDensity(
       next(end, Config::DELTA_MAX_LEN),
       0);
 
-  auto min_start = density.size();
-  auto max_end = 0ul;
+  auto min_start = range.start_;
+  auto max_end = range.end_;
   for (const auto& delta : deltas) {
     if (!StrictOverlap(delta.range_ref_, range)) continue;
     const auto& delta_range = delta.range_ref_;
@@ -161,6 +162,9 @@ double DnaDelta::GetDensity(
     auto cur_density = sum / window_size;
     max_density = max(max_density, cur_density);
 
+    if (cur_density > 1) {
+      Logger::Warn("DnaDelta::GetDensity", to_string(cur_density) + " > 1");
+    }
     if (cur_density >= Config::SIGNAL_RATE) {
       auto cur_start = i - density.begin() - window_size + 1ul;
       if (!delta_range.start_) {
@@ -194,7 +198,7 @@ bool DnaDelta::Combine(
 
   auto new_ref_start = min(base_range_ref.start_, range_ref.start_);
   auto new_ref_end = max(base_range_ref.end_, range_ref.end_);
-  if (new_ref_end > new_ref_start + Config::DELTA_MAX_LEN) return false;
+  // if (new_ref_end > new_ref_start + Config::DELTA_MAX_LEN) return false;
   Range new_ref{new_ref_start, new_ref_end, base_range_ref.value_p_};
 
   if (base_key_seg == key_seg) {
@@ -212,8 +216,11 @@ bool DnaDelta::Combine(
       for (auto i = 0ul; i < range.size(); ++i) {
         auto j = start_pos + i;
         if (j >= new_value_seg_p->size()) break;
-        if (value_seg[i] != 'N') {
-          assert(string("ATCG").find(value_seg[i]) != string::npos);
+        auto c = value_seg[i];
+        if (c != 'N') {
+          if (string("ATCG").find(c) == string::npos) {
+            Logger::Warn("DnaDelta::Combine", "Invalid char: " + string(1, c));
+          }
           (*new_value_seg_p)[j] = value_seg[i];
         }
       }

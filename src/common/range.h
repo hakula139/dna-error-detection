@@ -28,7 +28,7 @@ struct Range {
 
   operator bool() const { return start_ || end_; }
 
-  size_t size() const { return end_ - start_; }
+  size_t size() const;
   std::string get() const;
   std::string Head(size_t start = 0, size_t size = Config::DISPLAY_SIZE) const;
   std::string Stringify() const;

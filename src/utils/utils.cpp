@@ -42,13 +42,15 @@ pair<Range, Range> LongestCommonSubstring(
     for (auto j = 1ul; j <= len2; ++j) {
       auto c1 = str1[i - 1];
       auto c2 = str2[j - 1];
-      if (c1 == c2 || c1 == 'N' || c2 == 'N') {
+      if (c1 == c2) {
         dp[i][j] = dp[i - 1][j - 1] + 1;
         if (dp[i][j] > substr_len) {
           substr_len = dp[i][j];
           str1_substr.end_ = i;
           str2_substr.end_ = j;
         }
+      } else if (c1 == 'N' || c2 == 'N') {
+        dp[i][j] = dp[i - 1][j - 1];
       } else {
         dp[i][j] = max(dp[i - 1][j - 1] - Config::DP_PENALTY, 0);
       }
@@ -95,7 +97,7 @@ vector<vector<pair<int, Direction>>> LongestCommonSubsequence(
 
       auto c1 = str1[i - 1];
       auto c2 = str2[j - 1];
-      if (c1 == c2 || c1 == 'N' || c2 == 'N') {
+      if (c1 == c2) {
         get_cur(dp[i - 1][j - 1], TOP_LEFT);
       }
       if (dp[i - 1][j] > dp[i][j - 1]) {

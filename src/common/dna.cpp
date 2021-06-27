@@ -106,15 +106,18 @@ bool Dna::ImportOverlaps(Dna* segments_p, const string& filename) {
     const auto& value_ref = this->data_.at(key_ref);
     // Invert the segment chain if marked inverted.
     auto&& value_seg = segments_p->data_[key_seg];
+
+    auto mode = 0;
     if (start_seg <= 0 && end_seg <= 0) {
-      value_seg = Transform(value_seg, COMPLEMENT);
+      mode |= 2;
       start_seg = -start_seg;
       end_seg = -end_seg;
     }
     if (start_seg > end_seg) {
-      value_seg = Transform(value_seg, REVERSE);
+      mode |= 1;
       swap(start_seg, end_seg);
     }
+    value_seg = Transform(value_seg, static_cast<Mode>(mode));
 
     Range range_ref{
         static_cast<size_t>(start_ref),
@@ -416,7 +419,15 @@ void Dna::FindDeltasFromSegments() {
         auto density = deltas.GetDensity(key_ref, range_ref, &delta_ranges);
         if (density > Config::SIGNAL_RATE) {
           for (const auto& delta_range : delta_ranges) {
-            deltas.Merge(key_ref, key_seg, delta_range);
+            auto range_ref_content = Range{
+                range_ref.start_ + Config::HASH_SIZE,
+                range_ref.end_ - Config::HASH_SIZE,
+                range_ref.value_p_,
+            };
+            if (range_ref_content.Contains(delta_range) &&
+                delta_range.size() <= Config::DELTA_MAX_LEN) {
+              deltas.Merge(key_ref, key_seg, delta_range);
+            }
           }
         }
         deltas.Filter(key_ref, key_seg);
@@ -802,7 +813,7 @@ void Dna::ProcessDeltas() {
   IgnoreSmallDeltas();
   FindDupDeltas();
   FindInvDeltas();
-  FindTraDeltas();
+  // FindTraDeltas();
 }
 
 bool Dna::PrintDeltas(const string& filename) const {

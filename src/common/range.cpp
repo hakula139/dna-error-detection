@@ -1,6 +1,7 @@
 #include "range.h"
 
 #include <algorithm>
+#include <cassert>
 #include <string>
 
 #include "config.h"
@@ -11,9 +12,14 @@ using std::min;
 using std::string;
 using std::to_string;
 
+size_t Range::size() const {
+  if (value_p_) return min(end_, value_p_->size()) - start_;
+  return end_ - start_;
+}
+
 string Range::get() const {
-  auto size = min(this->size(), value_p_->size() - start_);
-  return value_p_ ? value_p_->substr(start_, size) : "";
+  assert(value_p_);
+  return value_p_->substr(start_, size());
 }
 
 string Range::Head(size_t start, size_t size) const {
