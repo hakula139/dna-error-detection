@@ -176,6 +176,7 @@ struct HashPos {
 
 void Dna::CreateIndex() {
   assert(Config::HASH_SIZE > 0 && Config::HASH_SIZE <= 30);
+  unordered_map<string, size_t> index_count;
 
   for (const auto& [key_ref, value_ref] : data_) {
     uint64_t hash = 0;
@@ -187,6 +188,7 @@ void Dna::CreateIndex() {
     HashPos prev_min_hash;
     auto i_end = value_ref.length() - Config::HASH_SIZE + 1;
     Progress progress{"Dna::CreateIndex " + key_ref, i_end, 10000};
+
     for (size_t i = 0; i < i_end; ++i) {
       while (hashes.size() && hashes.top().pos_ + Config::WINDOW_SIZE <= i) {
         hashes.pop();
@@ -203,6 +205,7 @@ void Dna::CreateIndex() {
         };
         range_index_.emplace(min_hash.hash_, pair{key_ref, range_ref});
         prev_min_hash = min_hash;
+        ++index_count[key_ref];
 
         Logger::Trace(
             "Dna::CreateIndex",
@@ -211,6 +214,10 @@ void Dna::CreateIndex() {
 
       ++progress;
     }
+
+    Logger::Debug(
+        "Dna::CreateIndex " + key_ref,
+        "Count: " + to_string(index_count[key_ref]));
   }
 }
 
