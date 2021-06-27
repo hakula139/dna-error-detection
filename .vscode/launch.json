@@ -28,7 +28,7 @@
       "preLaunchTask": "Build all files using Make"
     },
     {
-      "name": "(gdb) merge",
+      "name": "(gdb) minimizer",
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/bin/solution",
