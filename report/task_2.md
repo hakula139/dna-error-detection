@@ -39,7 +39,7 @@
 
 #### 1.2.1 生成 minimizer
 
-建立完索引后，我们就可以在每个 $\textrm{read}$ 片段中遍历所有长度为 $k$ 的子字符串，根据其哈希值查找是否有相同哈希值的 $\textrm{k-mer}$。同时，我们对于 $\textrm{read}$ 片段的反向互补序列 $\textrm{read'}$ 也进行同样的操作。对于每个找到的 $\textrm{k-mer}$，我们保存一个这样的结构：$\{ \textrm{range}_\textrm{ref},\,\textrm{key}_\textrm{read},\,\textrm{range}_\textrm{read} \}$，我们称其为一个 $\textrm{minimizer}$。其中，$\textrm{range}_\textrm{ref}$ 表示 $\textrm{k-mer}$ 映射到 $\textrm{ref}$ 上的位置 $[i, i+k)$，$\textrm{key}_\textrm{read}$ 表示 $\textrm{read}$ 的编号（例如 $\textrm{S1_1}$），$\textrm{range}_\textrm{read}$ 表示这个子字符串在 $\textrm{read}$（或 $\textrm{read'}$）上的位置 $[j, j+k)$。同时，在每个 $\textrm{range}$ 中还额外保存了一个原字符串（$\textrm{ref}$ 或 $\textrm{read}$）的指针，用于之后读取及合并这个子字符串的值。在 $\textrm{range}_\textrm{read}$ 中还额外保存了 `inverted` 字段和 `unknown` 字段，分别用于指示当前 $\textrm{read}$ 是否进行了反向互补操作，以及是否包含一定数量的未知字符 `N`（在合并时用于提高效率，不关键）。
+建立完索引后，我们就可以在每个 $\textrm{read}$ 片段中遍历所有长度为 $k$ 的子字符串，根据其哈希值查找是否有相同哈希值的 $\textrm{k-mer}$。同时，我们对于 $\textrm{read}$ 片段的反向互补序列 $\textrm{read'}$ 也进行同样的操作。对于每个找到的 $\textrm{k-mer}$，我们保存一个这样的结构：$\{ \textrm{range}_\textrm{ref},\,\textrm{key}_\textrm{read},\,\textrm{range}_\textrm{read} \}$，我们称其为一个 $\textrm{minimizer}$。其中，$\textrm{range}_\textrm{ref}$ 表示 $\textrm{k-mer}$ 映射到 $\textrm{ref}$ 上的位置 $[i, i+k)$，$\textrm{key}_\textrm{read}$ 表示 $\textrm{read}$ 的编号（例如 $\textrm{S1_1}$），$\textrm{range}_\textrm{read}$ 表示这个子字符串在 $\textrm{read}$（或 $\textrm{read'}$）上的位置 $[j, j+k)$。同时，在每个 $\textrm{range}$ 中还额外保存了一个原字符串（$\textrm{ref}$ 或 $\textrm{read}$）的指针，用于之后读取及合并这个子字符串的值。在 $\textrm{range}_\textrm{read}$ 中还额外保存了 `mode` 字段和 `unknown` 字段，分别用于指示当前 $\textrm{read}$ 的模式（是否是反向互补序列），以及是否包含一定数量的未知字符 `N`（在合并时用于提高效率，不关键）。
 
 随后，我们根据 $\textrm{read}$ 和 $\textrm{read'}$ 片段上 $\textrm{minimizer}$ 的数量，决定是否对 $\textrm{read}$ 进行反向互补操作。即如果 $\textrm{read'}$ 上的 $\textrm{minimizer}$ 较多，则进行反向互补操作，反之则不进行。
 
@@ -63,8 +63,8 @@
 
 在 [src/utils/config.cpp](../src/utils/config.cpp) 中修改 `LOG_LEVEL` 为 `DEBUG`，即可在日志 [logs/output.log](../logs/output.log) 中看到 $\textrm{minimizer}$ 的覆盖率（搜索 `cover rate`）。对于本题的测试数据，我们的覆盖率分别达到了：
 
-- `NZ_AP012323.1`: $98.88\%$ (`S1`)
-- `NC_014616.1`: $99.17\%$ (`S2`)
+- `NC_014616.1`: $99.15\%$ (`S1`)
+- `NZ_AP012323.1`: $98.85\%$ (`S2`)
 
 具体逻辑可参见 [src/dna_overlap.cpp](../src/dna_overlap.cpp) 中函数 `DnaOverlap::SelectChain` 和 `DnaOverlap::CheckCoverage` 的实现。
 
