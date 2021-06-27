@@ -99,12 +99,12 @@ void DnaOverlap::Merge() {
           entries.emplace(merged_ref, key_seg, merged_seg);
 
           Logger::Debug("DnaOverlap::Merge " + key_ref, log_title);
-          Logger::Debug("Minimizer count", to_string(count) + " \tused");
+          Logger::Debug("Minimizer count", to_string(count) + " used");
           Logger::Trace("", "REF: \t" + merged_ref.Head());
           Logger::Trace("", "SEG: \t" + merged_seg.Head());
         } else {
           Logger::Trace("DnaOverlap::Merge " + key_ref, log_title);
-          Logger::Trace("Minimizer count", to_string(count) + " \tnot used");
+          Logger::Trace("Minimizer count", to_string(count) + " not used");
           Logger::Trace("", "REF: \t" + merged_ref.Head());
           Logger::Trace("", "SEG: \t" + merged_seg.Head());
         }
@@ -116,6 +116,7 @@ void DnaOverlap::Merge() {
 void DnaOverlap::SelectChain() {
   for (auto&& [key_ref, entries] : data_) {
     unordered_map<string, double> coverages;
+    auto max_coverage = 0.0;
     string max_key;
 
     for (const auto& [range_ref, key_seg, range_seg] : entries) {
@@ -125,7 +126,7 @@ void DnaOverlap::SelectChain() {
       coverages[key] = 0.0;
     }
 
-    for (auto&& [key, max_coverage] : coverages) {
+    for (auto&& [key, _coverage] : coverages) {
       auto coverage = CheckCoverage(key_ref, key);
       if (coverage > max_coverage) {
         max_coverage = coverage;
