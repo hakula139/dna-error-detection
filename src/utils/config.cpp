@@ -2,7 +2,7 @@
 
 // File input / Output
 
-const char* Config::PATH = "tests/test_2_demo";
+const char* Config::PATH = "tests/test_2";
 const char* Config::REF_FILENAME = "ref.fasta";
 const char* Config::SV_FILENAME = "sv.fasta";
 const char* Config::SEG_FILENAME = "long.fasta";
