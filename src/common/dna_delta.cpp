@@ -97,7 +97,8 @@ void DnaDelta::Filter(const string& key_ref, const string& key_seg) {
          delta_i >= deltas.begin() && delta_i->key_seg_ == key_seg;
          --delta_i) {
       auto&& [range_ref, key_seg_i, range_seg] = *delta_i;
-      if (range_ref.size() < Config::DELTA_MIN_LEN) {
+      if (range_ref.size() < Config::DELTA_MIN_LEN ||
+          range_ref.size() > Config::DELTA_MAX_LEN) {
         if (key_seg_i.empty()) {
           delete range_seg.value_p_;
         }
