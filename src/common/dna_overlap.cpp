@@ -137,7 +137,7 @@ void DnaOverlap::SelectChain() {
     Logger::Info("DnaOverlap::SelectChain " + key_ref, "Select " + max_key);
 
     for (auto entry_i = entries.begin(); entry_i != entries.end();) {
-      if (!entry_i->key_seg_.compare(0, max_key.size(), max_key)) {
+      if (entry_i->key_seg_.compare(0, max_key.size(), max_key)) {
         entry_i = entries.erase(entry_i);
       } else {
         ++entry_i;
@@ -154,7 +154,7 @@ double DnaOverlap::CheckCoverage(
   auto ref_size = entries.begin()->range_ref_.value_p_->size();
   vector<int> covered(ref_size + 1);
   for (const auto& [range_ref, key_seg, range_seg] : entries) {
-    if (key_sv.size() && !key_seg.compare(0, key_sv.size(), key_sv)) continue;
+    if (key_sv.size() && key_seg.compare(0, key_sv.size(), key_sv)) continue;
 
     auto start_padding = range_seg.start_;
     auto end_padding = range_seg.value_p_->size() - range_seg.end_;
