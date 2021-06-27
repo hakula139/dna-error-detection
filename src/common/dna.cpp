@@ -26,6 +26,7 @@ using std::endl;
 using std::greater;
 using std::ifstream;
 using std::max;
+using std::max_element;
 using std::min;
 using std::move;
 using std::ofstream;
@@ -93,12 +94,10 @@ bool Dna::ImportOverlaps(Dna* segments_p, const string& filename) {
     return false;
   }
 
-  unordered_set<string> inverted_segs;
-
   while (!in_file.eof()) {
     string key_ref, key_seg;
-    size_t start_ref, end_ref;
-    size_t start_seg, end_seg;
+    int64_t start_ref, end_ref;
+    int64_t start_seg, end_seg;
 
     in_file >> key_ref >> start_ref >> end_ref;
     in_file >> key_seg >> start_seg >> end_seg;
@@ -107,18 +106,26 @@ bool Dna::ImportOverlaps(Dna* segments_p, const string& filename) {
     const auto& value_ref = this->data_.at(key_ref);
     // Invert the segment chain if marked inverted.
     auto&& value_seg = segments_p->data_[key_seg];
+    if (start_seg <= 0 && end_seg <= 0) {
+      value_seg = Transform(value_seg, COMPLEMENT);
+      start_seg = -start_seg;
+      end_seg = -end_seg;
+    }
     if (start_seg > end_seg) {
-      if (!inverted_segs.count(key_seg)) {
-        value_seg = Invert(value_seg);
-        inverted_segs.emplace(key_seg);
-      }
+      value_seg = Transform(value_seg, REVERSE);
       swap(start_seg, end_seg);
-    } else if (inverted_segs.count(key_seg)) {
-      Logger::Warn("Dna::ImportOverlaps " + key_seg, "Inversion conflict");
     }
 
-    Range range_ref{start_ref, end_ref, &value_ref};
-    Range range_seg{start_seg, end_seg, &value_seg};
+    Range range_ref{
+        static_cast<size_t>(start_ref),
+        static_cast<size_t>(end_ref),
+        &value_ref,
+    };
+    Range range_seg{
+        static_cast<size_t>(start_seg),
+        static_cast<size_t>(end_seg),
+        &value_seg,
+    };
 
     Logger::Trace("Dna::ImportOverlaps " + key_ref, "Minimizer:");
     Logger::Trace("", "REF: \t" + range_ref.Head());
@@ -246,8 +253,9 @@ bool Dna::FindOverlaps(const Dna& ref) {
 
   auto find_overlaps = [&](const string& key_seg,
                            const string& raw_chain_seg,
-                           bool inverted) {
-    auto chain_seg = inverted ? Invert(raw_chain_seg) : raw_chain_seg;
+                           Mode mode) {
+    auto chain_seg = Transform(raw_chain_seg, mode);
+    assert(chain_seg.length() > 0);
 
     uint64_t hash = 0;
     for (size_t i = 0; i < Config::HASH_SIZE - 1; ++i) {
@@ -260,7 +268,7 @@ bool Dna::FindOverlaps(const Dna& ref) {
 
       if (ref.range_index_.count(hash)) {
         const auto& entry_ref_range = ref.range_index_.equal_range(hash);
-        Range range_seg{i, i + Config::HASH_SIZE, &raw_chain_seg, inverted};
+        Range range_seg{i, i + Config::HASH_SIZE, &raw_chain_seg, mode};
 
         for (auto j = entry_ref_range.first; j != entry_ref_range.second; ++j) {
           const auto& [key_ref, range_ref] = j->second;
@@ -277,32 +285,26 @@ bool Dna::FindOverlaps(const Dna& ref) {
 
   Progress progress{"Dna::FindOverlaps", data_.size(), 100};
   for (auto&& [key_seg, value_seg] : data_) {
-    auto overlaps = find_overlaps(key_seg, value_seg, false);
-    auto overlaps_invert = find_overlaps(key_seg, value_seg, true);
+    vector<DnaOverlap> overlaps_map;
+    for (auto mode : {NORMAL, REVERSE, COMPLEMENT, REVR_COMP}) {
+      overlaps_map.push_back(find_overlaps(key_seg, value_seg, mode));
+    }
 
-    if (overlaps.size() >= Config::OVERLAP_MIN_COUNT &&
-        overlaps.size() >= overlaps_invert.size()) {
-      overlaps_ += overlaps;
+    auto best_i = max_element(overlaps_map.begin(), overlaps_map.end());
 
+    auto overlap_count = best_i->size();
+    if (overlap_count < Config::OVERLAP_MIN_COUNT) {
       Logger::Trace(
-          "Dna::FindOverlaps",
-          key_seg + ": " + to_string(overlaps.size()) + " > " +
-              to_string(overlaps_invert.size()) + " \tnot inverted");
-    } else if (
-        overlaps_invert.size() >= Config::OVERLAP_MIN_COUNT &&
-        overlaps.size() < overlaps_invert.size()) {
-      value_seg = Invert(value_seg);
-      overlaps_ += overlaps_invert;
-
-      Logger::Trace(
-          "Dna::FindOverlaps",
-          key_seg + ": " + to_string(overlaps.size()) + " < " +
-              to_string(overlaps_invert.size()) + " \tinverted");
+          "Dna::FindOverlaps " + key_seg,
+          to_string(overlap_count) + " not used");
     } else {
-      Logger::Trace(
-          "Dna::FindOverlaps",
-          key_seg + ": " + to_string(overlaps.size()) + " & " +
-              to_string(overlaps_invert.size()) + " \tnot used");
+      auto mode = static_cast<Mode>(best_i - overlaps_map.begin());
+      value_seg = Transform(value_seg, mode);
+      overlaps_ += *best_i;
+
+      Logger::Debug(
+          "Dna::FindOverlaps " + key_seg,
+          to_string(overlap_count) + " using mode: " + to_string(mode));
     }
 
     ++progress;
@@ -465,12 +467,12 @@ Point Dna::FindDeltasChunk(
    * greater x value.
    */
   auto get_direction = [=](const vector<int>& end_xs, int k, int step) {
-    if (k == -step) return Direction::TOP;
-    if (k == step) return Direction::LEFT;
+    if (k == -step) return TOP;
+    if (k == step) return LEFT;
     if (end_xs[k + 1 + padding] > end_xs[k - 1 + padding]) {
-      return Direction::TOP;
+      return TOP;
     } else {
-      return Direction::LEFT;
+      return LEFT;
     }
   };
 
@@ -482,11 +484,11 @@ Point Dna::FindDeltasChunk(
      */
     for (int k = -step; k <= static_cast<int>(step); k += 2) {
       auto direction = get_direction(end_xs, k, step);
-      auto prev_k = direction == Direction::TOP ? k + 1 : k - 1;
+      auto prev_k = direction == TOP ? k + 1 : k - 1;
       auto start_x = end_xs[prev_k + padding];
       auto start = Point(start_x, start_x - prev_k);
 
-      auto mid_x = direction == Direction::TOP ? start.x_ : start.x_ + 1;
+      auto mid_x = direction == TOP ? start.x_ : start.x_ + 1;
       auto mid = Point(mid_x, mid_x - k);
 
       auto end = mid;
@@ -527,7 +529,7 @@ Point Dna::FindDeltasChunk(
     if (solution_found) break;
   }
 
-  auto prev_direction = Direction::TOP_LEFT;
+  auto prev_direction = TOP_LEFT;
   auto prev_end = Point();
   auto terminate_start = false;
 
@@ -542,11 +544,11 @@ Point Dna::FindDeltasChunk(
     auto end = Point(end_x, end_x - k);
 
     auto direction = get_direction(end_xs, k, step);
-    auto prev_k = direction == Direction::BOTTOM ? k + 1 : k - 1;
+    auto prev_k = direction == BOTTOM ? k + 1 : k - 1;
     auto start_x = end_xs[prev_k + padding];
     auto start = Point(start_x, start_x - prev_k);
 
-    auto mid_x = direction == Direction::TOP ? start.x_ : start.x_ + 1;
+    auto mid_x = direction == TOP ? start.x_ : start.x_ + 1;
     auto mid = Point(mid_x, mid_x - k);
 
     // Logger::Trace(
@@ -581,9 +583,9 @@ Point Dna::FindDeltasChunk(
 
     // If we meet a snake or the direction is changed, we store previous deltas.
     if (mid != end || direction != prev_direction) {
-      if (prev_direction == Direction::TOP) {
+      if (prev_direction == TOP) {
         insert_delta(end, prev_end);
-      } else if (prev_direction == Direction::LEFT) {
+      } else if (prev_direction == LEFT) {
         delete_delta(end, prev_end);
       }
       prev_end = mid;
@@ -604,14 +606,14 @@ Point Dna::FindDeltasChunk(
        * the direction must be unchanged. Otherwise, it will be handled by
        * previous procedures.
        */
-      if (direction == Direction::TOP) {
+      if (direction == TOP) {
         insert_delta({}, prev_end);
-      } else if (direction == Direction::LEFT) {
+      } else if (direction == LEFT) {
         delete_delta({}, prev_end);
       }
     }
 
-    prev_direction = start != mid ? direction : Direction::TOP_LEFT;
+    prev_direction = start != mid ? direction : TOP_LEFT;
     cur = start;
   }
 
@@ -657,7 +659,7 @@ void Dna::FindDupDeltas() {
   Logger::Info("Dna::FindDupDeltas", "Done");
 }
 
-string Dna::Invert(const string& chain) {
+string Dna::Transform(const string& chain, Mode mode) {
   const unordered_map<char, char> dna_base_pair{
       {'A', 'T'},
       {'T', 'A'},
@@ -665,11 +667,31 @@ string Dna::Invert(const string& chain) {
       {'G', 'C'},
       {'N', 'N'},
   };
-  string inverted_chain;
-  for (auto i = chain.rbegin(); i < chain.rend(); ++i) {
-    inverted_chain += dna_base_pair.at(*i);
+
+  string output_chain;
+
+  switch (mode) {
+    case REVERSE:
+      for (auto i = chain.rbegin(); i < chain.rend(); ++i) {
+        output_chain += *i;
+      }
+      break;
+    case COMPLEMENT:
+      for (auto i = chain.begin(); i < chain.end(); ++i) {
+        output_chain += dna_base_pair.at(*i);
+      }
+      break;
+    case REVR_COMP:
+      for (auto i = chain.rbegin(); i < chain.rend(); ++i) {
+        output_chain += dna_base_pair.at(*i);
+      }
+      break;
+    case NORMAL:
+    default:
+      output_chain = chain;
+      break;
   }
-  return inverted_chain;
+  return output_chain;
 }
 
 void Dna::FindInvDeltas() {
@@ -690,7 +712,9 @@ void Dna::FindInvDeltas() {
             // range_ref_i.start_ = range_ref_j.start_;
             // range_ref_i.end_ = range_ref_j.start_ + size;
 
-            if (FuzzyCompare(range_seg_i.get(), Invert(range_seg_j.get()))) {
+            if (FuzzyCompare(
+                    range_seg_i.get(),
+                    Transform(range_seg_j.get(), REVR_COMP))) {
               inv_deltas_.Set(key_ref, *delta_j);
               delta_i = deltas_ins.erase(delta_i);
               delta_j = deltas_del.erase(delta_j);

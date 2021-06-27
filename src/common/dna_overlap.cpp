@@ -46,7 +46,7 @@ void DnaOverlap::Merge() {
     assert(range.start_ < range.end_);
     auto new_base = base;
     if (base) {
-      assert(base.inverted_ == range.inverted_);
+      assert(base.mode_ == range.mode_);
       new_base.start_ = min(base.start_, range.start_);
       new_base.end_ = max(base.end_, range.end_);
     } else {
@@ -93,8 +93,7 @@ void DnaOverlap::Merge() {
                     merged_ref.size() >= Config::MINIMIZER_MIN_LEN &&
                     merged_seg.size() >= Config::MINIMIZER_MIN_LEN;
 
-        auto log_title = string("Minimizer: ") +
-                         (merged_seg.inverted_ ? "inverted" : "not inverted");
+        auto log_title = string("Mode: ") + to_string(merged_seg.mode_);
 
         if (used) {
           entries.emplace(merged_ref, key_seg, merged_seg);
@@ -157,7 +156,9 @@ double DnaOverlap::CheckCoverage(
 
     auto start_padding = range_seg.start_;
     auto end_padding = range_seg.value_p_->size() - range_seg.end_;
-    if (range_seg.inverted_) swap(start_padding, end_padding);
+    if (range_seg.mode_ == REVERSE || range_seg.mode_ == REVR_COMP) {
+      swap(start_padding, end_padding);
+    }
 
     Range cover_range{
         max(range_ref.start_, range_seg.start_) - start_padding,
@@ -204,4 +205,8 @@ DnaOverlap& DnaOverlap::operator+=(const DnaOverlap& that) {
     }
   }
   return *this;
+}
+
+bool DnaOverlap::operator<(const DnaOverlap& that) const {
+  return size() < that.size();
 }

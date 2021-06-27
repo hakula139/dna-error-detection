@@ -21,10 +21,18 @@ string Range::Head(size_t start, size_t size) const {
 }
 
 string Range::Stringify() const {
-  if (inverted_) {
-    return to_string(end_) + " " + to_string(start_);
-  } else {
-    return to_string(start_) + " " + to_string(end_);
+  auto start = to_string(start_);
+  auto end = to_string(end_);
+  switch (mode_) {
+    case REVERSE:
+      return end + " " + start;
+    case COMPLEMENT:
+      return "-" + start + " -" + end;
+    case REVR_COMP:
+      return "-" + end + " -" + start;
+    case NORMAL:
+    default:
+      return start + " " + end;
   }
 }
 

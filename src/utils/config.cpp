@@ -15,7 +15,7 @@ const char* Config::DELTAS_FILENAME = "sv.bed";
 const char* Config::LOG_PATH = "logs";
 const char* Config::LOG_FILENAME = "output.log";
 const char* Config::ERROR_LOG_FILENAME = "error.log";
-const Config::Level Config::LOG_LEVEL = Config::Level::DEBUG;
+const Config::Level Config::LOG_LEVEL = Config::Level::TRACE;
 const size_t Config::DISPLAY_SIZE = 100;
 
 // Indexing
@@ -26,10 +26,10 @@ const size_t Config::CHUNK_SIZE = 50000;
 
 // Finding minimizers
 
-const size_t Config::OVERLAP_MIN_COUNT = 30;
+const size_t Config::OVERLAP_MIN_COUNT = 10;
 const size_t Config::MINIMIZER_MIN_COUNT = 4;
-const size_t Config::MINIMIZER_MIN_LEN = 500;
-const size_t Config::MINIMIZER_MAX_DIFF = 1200;
+const size_t Config::MINIMIZER_MIN_LEN = 200;
+const size_t Config::MINIMIZER_MAX_DIFF = 2000;
 
 // Finding deltas
 

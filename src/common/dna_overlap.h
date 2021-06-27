@@ -22,6 +22,7 @@ class DnaOverlap {
   void Print(std::ofstream& out_file) const;
 
   DnaOverlap& operator+=(const DnaOverlap& that);
+  bool operator<(const DnaOverlap& that) const;
 
   friend class Dna;
 

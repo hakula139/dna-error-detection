@@ -235,7 +235,7 @@ bool DnaDelta::Combine(
         0,
         new_value_seg_p->size(),
         new_value_seg_p,
-        false,
+        NORMAL,
         unknown,
     };
     *base_p = {new_ref, "", new_seg};

@@ -10,6 +10,7 @@
 #include "dna_delta.h"
 #include "dna_overlap.h"
 #include "point.h"
+#include "range.h"
 
 class Dna {
  public:
@@ -44,7 +45,7 @@ class Dna {
 
  protected:
   static uint64_t NextHash(uint64_t hash, char next_base);
-  static std::string Invert(const std::string& chain);
+  static std::string Transform(const std::string& chain, Mode mode);
 
   Point FindDeltasChunk(
       const std::string& key_ref,

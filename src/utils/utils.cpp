@@ -74,7 +74,7 @@ vector<vector<pair<int, Direction>>> LongestCommonSubsequence(
       len1 + 1,
       vector<pair<int, Direction>>{
           len2 + 1,
-          {0, Direction::TOP_LEFT},
+          {0, TOP_LEFT},
       },
   };
 
@@ -84,7 +84,7 @@ vector<vector<pair<int, Direction>>> LongestCommonSubsequence(
       auto get_cur =
           [&max_cur](const pair<int, Direction>& prev, Direction direction) {
             const auto& [prev_len, prev_direction] = prev;
-            auto cur = prev_len + (direction == Direction::TOP_LEFT);
+            auto cur = prev_len + (direction == TOP_LEFT);
             if (prev_direction != direction) {
               cur = max(cur - Config::DP_PENALTY, 0);
             }
@@ -96,13 +96,13 @@ vector<vector<pair<int, Direction>>> LongestCommonSubsequence(
       auto c1 = str1[i - 1];
       auto c2 = str2[j - 1];
       if (c1 == c2 || c1 == 'N' || c2 == 'N') {
-        get_cur(dp[i - 1][j - 1], Direction::TOP_LEFT);
+        get_cur(dp[i - 1][j - 1], TOP_LEFT);
       }
       if (dp[i - 1][j] > dp[i][j - 1]) {
-        get_cur(dp[i - 1][j], Direction::LEFT);
+        get_cur(dp[i - 1][j], LEFT);
       }
       if (dp[i - 1][j] <= dp[i][j - 1]) {
-        get_cur(dp[i][j - 1], Direction::TOP);
+        get_cur(dp[i][j - 1], TOP);
       }
     }
   }
