@@ -52,6 +52,7 @@ struct Config {
   static const size_t DELTA_IGNORE_LEN;
   static const size_t DELTA_MIN_LEN;
   static const size_t DELTA_MAX_LEN;
+  static const size_t DELTA_ALLOW_LEN;
   static const size_t PADDING_SIZE;
   static const size_t SNAKE_MIN_LEN;
   static const int DP_PENALTY;

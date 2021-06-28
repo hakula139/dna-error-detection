@@ -425,7 +425,7 @@ void Dna::FindDeltasFromSegments() {
                 range_ref.value_p_,
             };
             if (range_ref_content.Contains(delta_range) &&
-                delta_range.size() <= Config::DELTA_MAX_LEN) {
+                delta_range.size() <= Config::DELTA_ALLOW_LEN) {
               deltas.Merge(key_ref, key_seg, delta_range);
             }
           }
@@ -631,12 +631,12 @@ Point Dna::FindDeltasChunk(
   return next_chunk_start;
 }
 
-void Dna::IgnoreSmallDeltas(const string& key_ref, const string& key_seg) {
+void Dna::FilterDeltas(const string& key_ref, const string& key_seg) {
   ins_deltas_.Filter(key_ref, key_seg);
   del_deltas_.Filter(key_ref, key_seg);
 
   if (key_ref.empty()) {
-    Logger::Info("Dna::IgnoreSmallDeltas", "Done");
+    Logger::Info("Dna::FilterDeltas", "Done");
   }
 }
 
@@ -810,7 +810,7 @@ void Dna::FindTraDeltas() {
 }
 
 void Dna::ProcessDeltas() {
-  IgnoreSmallDeltas();
+  FilterDeltas();
   FindDupDeltas();
   FindInvDeltas();
   // FindTraDeltas();

@@ -198,7 +198,7 @@ bool DnaDelta::Combine(
 
   auto new_ref_start = min(base_range_ref.start_, range_ref.start_);
   auto new_ref_end = max(base_range_ref.end_, range_ref.end_);
-  // if (new_ref_end > new_ref_start + Config::DELTA_MAX_LEN) return false;
+  if (new_ref_end > new_ref_start + Config::DELTA_ALLOW_LEN) return false;
   Range new_ref{new_ref_start, new_ref_end, base_range_ref.value_p_};
 
   if (base_key_seg == key_seg) {
