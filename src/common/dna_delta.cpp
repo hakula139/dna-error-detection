@@ -73,7 +73,7 @@ void DnaDelta::Merge(
   for (const auto& delta : deltas) {
     auto merged = false;
     if (key_seg.empty() || delta.key_seg_ == key_seg) {
-      if (range && range.Contains(delta.range_ref_)) {
+      if (range && !range.Contains(delta.range_ref_)) {
         continue;
       }
       for (auto&& merged_delta : merged_deltas) {

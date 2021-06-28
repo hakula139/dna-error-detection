@@ -35,7 +35,7 @@ const size_t Config::MINIMIZER_MAX_DIFF = 1200;
 
 const size_t Config::DENSITY_WINDOW_SIZE = 40;
 const double Config::NOISE_RATE = 0.25;
-const double Config::SIGNAL_RATE = 0.55;
+const double Config::SIGNAL_RATE = 0.5;
 const size_t Config::DELTA_IGNORE_LEN = 1;
 const size_t Config::DELTA_MIN_LEN = 100;
 const size_t Config::DELTA_MAX_LEN = 1000;
@@ -49,7 +49,7 @@ const double Config::ERROR_MAX_SCORE = 0.0;
 // Utilities
 
 const size_t Config::GAP_MIN_DIFF = 1;
-const size_t Config::GAP_MAX_DIFF = 100;
+const size_t Config::GAP_MAX_DIFF = 30;
 const size_t Config::OVERLAP_MIN_LEN = 30;
 const double Config::STRICT_EQUAL_RATE = 0.4;
 const double Config::FUZZY_EQUAL_RATE = 0.7;
