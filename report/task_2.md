@@ -61,10 +61,11 @@
 
 由于 `long.fasta` 中同时包含了多条 $\textrm{sv}$ 链的采样，我们需要从中找到与 $\textrm{ref}$ 链匹配的 $\textrm{sv}$ 链。这里我们根据 $\textrm{minimizer}$ 在 $\textrm{ref}$ 上的覆盖率，选择覆盖率最高的 $\textrm{sv}$ 链与 $\textrm{ref}$ 链相匹配。
 
-在 [src/utils/config.cpp](../src/utils/config.cpp) 中修改 `LOG_LEVEL` 为 `DEBUG`，即可在日志 [logs/output.log](../logs/output.log) 中看到 $\textrm{minimizer}$ 的覆盖率（搜索 `cover rate`）。对于本题的测试数据，我们的覆盖率分别达到了：
+在 [src/utils/config.cpp](../src/utils/config.cpp) 中修改 `LOG_LEVEL` 为 `DEBUG`，即可在日志 [logs/output.log](../logs/output.log) 中看到 $\textrm{minimizer}$ 的覆盖率（搜索 `cover rate`）。对于本题的正式数据，我们的覆盖率分别达到了：
 
-- `NC_014616.1`: $99.15\%$ (`S1`)
-- `NZ_AP012323.1`: $98.85\%$ (`S2`)
+- `NC_017999.1`: $99.05\%$ (`S3`)
+- `NC_010513.1`: $99.01\%$ (`S1`)
+- `NC_014752.1`: $98.07\%$ (`S2`)
 
 具体逻辑可参见 [src/dna_overlap.cpp](../src/dna_overlap.cpp) 中函数 `DnaOverlap::SelectChain` 和 `DnaOverlap::CheckCoverage` 的实现。
 
