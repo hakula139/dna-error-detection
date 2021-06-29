@@ -32,3 +32,11 @@ To set up the environment, you need to have the following dependencies installed
 ### Clean
 
 - `make clean`: Remove all building files.
+
+## Contributors
+
+- [**Hakula Chen**](https://github.com/hakula139)<[i@hakula.xyz](mailto:i@hakula.xyz)> - Fudan University
+
+## License
+
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](./LICENSE) file for details.
